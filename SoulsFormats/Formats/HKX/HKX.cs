@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
+using System.Numerics;
 
 namespace SoulsFormats
 {
@@ -18,8 +19,13 @@ namespace SoulsFormats
         public HKXSection TypeSection;
         public HKXSection DataSection;
 
+        // BB, DS2, and DS3 all use the same havok version, but have different implementations of the same classes.
+        // Hence the enum to help disambiguate the games.
         public enum HKXVariation
         {
+            HKSDeS,
+            HKXDS1,
+            HKXDS2,
             HKXDS3,
             HKXBloodBorne
         };
@@ -29,21 +35,34 @@ namespace SoulsFormats
 
         internal override bool Is(BinaryReaderEx br)
         {
-            return true;
+            return (br.ReadUInt32() == 0x57E0E057);
         }
 
         internal override void Read(BinaryReaderEx br)
         {
             br.BigEndian = false;
 
+            // Peek ahead and read the endian byte
+            br.StepIn(0x11);
+            br.BigEndian = (br.ReadByte() == 0x0) ? true : false;
+            br.StepOut();
+
             // Read header
             Header = new HKXHeader();
             Header.Magic0 = br.AssertUInt32(0x57E0E057);
             Header.Magic1 = br.AssertUInt32(0x10C0C010);
             Header.UserTag = br.AssertInt32(0);
-            Header.Version = br.AssertInt32(0x0B);
-            Header.PointerSize = br.AssertByte(8);
-            Header.Endian = br.AssertByte(1);
+            Header.Version = br.AssertInt32(0x05, 0x08, 0x0B);
+            if (Header.Version == 0x05)
+            {
+                Variation = HKXVariation.HKSDeS;
+            }
+            else if (Header.Version == 0x08)
+            {
+                Variation = HKXVariation.HKXDS1;
+            }
+            Header.PointerSize = br.AssertByte(4, 8);
+            Header.Endian = br.AssertByte(0, 1);
             Header.PaddingOption = br.AssertByte(0, 1);
             Header.BaseClass = br.AssertByte(1); // ?
             Header.SectionCount = br.AssertInt32(3); // Always 3 sections pretty sure
@@ -53,23 +72,31 @@ namespace SoulsFormats
             Header.ContentsClassNameSectionOffset = br.ReadInt32();
             Header.ContentsVersionString = br.ReadFixStr(16); // Should be hk_2014.1.0-r1
             Header.Flags = br.ReadInt32();
-            Header.Unk3C = br.ReadInt16();
-            Header.SectionOffset = br.ReadInt16();
-            Header.Unk40 = br.ReadInt32();
-            //br.AssertInt32(0);
-            br.ReadUInt32();
-            //br.AssertInt32(0);
-            br.ReadUInt32();
-            //br.AssertInt32(0);
-            br.ReadUInt32();
 
-            // Read the 3 sections in the file
-            br.Position = Header.SectionOffset + 0x40;
-            ClassSection = new HKXSection(br);
+            // Later versions of Havok have an extended header
+            if (Header.Version >= 0x0B)
+            {
+                Header.Unk3C = br.ReadInt16();
+                Header.SectionOffset = br.ReadInt16();
+                Header.Unk40 = br.ReadUInt32();
+                Header.Unk44 = br.ReadUInt32();
+                Header.Unk48 = br.ReadUInt32();
+                Header.Unk4C = br.ReadUInt32();
+
+                // Read the 3 sections in the file
+                br.Position = Header.SectionOffset + 0x40;
+            }
+            else
+            {
+                // Just padding
+                br.AssertUInt32(0xFFFFFFFF);
+            }
+
+            ClassSection = new HKXSection(br, Variation);
             ClassSection.SectionID = 0;
-            TypeSection = new HKXSection(br);
+            TypeSection = new HKXSection(br, Variation);
             TypeSection.SectionID = 1;
-            DataSection = new HKXSection(br);
+            DataSection = new HKXSection(br, Variation);
             DataSection.SectionID = 2;
 
             // Process the class names
@@ -104,8 +131,19 @@ namespace SoulsFormats
             return file;
         }
 
+        public static HKX Read(string path, bool deserializeObjects = true)
+        {
+            return Read(path, HKXVariation.HKXDS3, deserializeObjects);
+        }
+
+        public static HKX Read(byte[] data, bool deserializeObjects = true)
+        {
+            return Read(data, HKXVariation.HKXDS3, deserializeObjects);
+        }
+
         internal override void Write(BinaryWriterEx bw)
         {
+            bw.BigEndian = (Header.Endian == 0) ? true : false;
             bw.WriteUInt32(Header.Magic0);
             bw.WriteUInt32(Header.Magic1);
             bw.WriteInt32(Header.UserTag);
@@ -121,19 +159,52 @@ namespace SoulsFormats
             bw.WriteInt32(Header.ContentsClassNameSectionOffset);
             bw.WriteFixStr(Header.ContentsVersionString, 16, 0xFF);
             bw.WriteInt32(Header.Flags);
-            bw.WriteInt16(Header.Unk3C);
-            bw.WriteInt16(Header.SectionOffset);
-            bw.WriteInt32(Header.Unk40);
-            bw.WriteInt32(0);
-            bw.WriteInt32(0);
-            bw.WriteInt32(0);
+            if (Header.Version >= 0x0B)
+            {
+                bw.WriteInt16(Header.Unk3C);
+                bw.WriteInt16(Header.SectionOffset);
+                bw.WriteUInt32(Header.Unk40);
+                bw.WriteUInt32(Header.Unk44);
+                bw.WriteUInt32(Header.Unk48);
+                bw.WriteUInt32(Header.Unk4C);
+            }
+            else
+            {
+                bw.WriteUInt32(0xFFFFFFFF);
+            }
 
-            ClassSection.WriteHeader(bw);
-            TypeSection.WriteHeader(bw);
-            DataSection.WriteHeader(bw);
+            ClassSection.WriteHeader(bw, Variation);
+            TypeSection.WriteHeader(bw, Variation);
+            DataSection.WriteHeader(bw, Variation);
             ClassSection.WriteData(bw, this, HKXVariation.HKXDS3);
             TypeSection.WriteData(bw, this, HKXVariation.HKXDS3);
             DataSection.WriteData(bw, this, HKXVariation.HKXDS3);
+        }
+
+        // Utility for asserting an empty pointer that accounts for the hkx pointer size
+        static private ulong AssertPointer(HKX hkx, BinaryReaderEx br)
+        {
+            if (hkx.Header.PointerSize == 8)
+            {
+                return br.AssertUInt64(0);
+            }
+            else
+            {
+                return br.AssertUInt32(0);
+            }
+        }
+
+        // Writes an empty pointer taking into accound the HKX pointer size
+        static private void WriteEmptyPointer(HKX hkx, BinaryWriterEx bw)
+        {
+            if (hkx.Header.PointerSize == 8)
+            {
+                bw.WriteUInt64(0);
+            }
+            else
+            {
+                bw.WriteUInt32(0);
+            }
         }
 
         public class HKXHeader
@@ -155,7 +226,10 @@ namespace SoulsFormats
             public int Flags;
             public short Unk3C;
             public short SectionOffset;
-            public int Unk40;
+            public uint Unk40;
+            public uint Unk44;
+            public uint Unk48;
+            public uint Unk4C;
         }
 
         public class LocalFixup
@@ -231,7 +305,7 @@ namespace SoulsFormats
 
             public byte[] SectionData;
 
-            internal HKXSection(BinaryReaderEx br)
+            internal HKXSection(BinaryReaderEx br, HKXVariation variation)
             {
                 SectionTag = br.ReadFixStr(19);
                 br.AssertByte(0xFF);
@@ -287,10 +361,13 @@ namespace SoulsFormats
                 }
                 br.StepOut();
 
-                br.AssertUInt32(0xFFFFFFFF);
-                br.AssertUInt32(0xFFFFFFFF);
-                br.AssertUInt32(0xFFFFFFFF);
-                br.AssertUInt32(0xFFFFFFFF);
+                if (variation == HKXVariation.HKXBloodBorne || variation == HKXVariation.HKXDS3)
+                {
+                    br.AssertUInt32(0xFFFFFFFF);
+                    br.AssertUInt32(0xFFFFFFFF);
+                    br.AssertUInt32(0xFFFFFFFF);
+                    br.AssertUInt32(0xFFFFFFFF);
+                }
 
                 LocalReferences = new List<HKXLocalReference>();
                 GlobalReferences = new List<HKXGlobalReference>();
@@ -298,7 +375,7 @@ namespace SoulsFormats
                 Objects = new List<HKXObject>();
             }
 
-            public void WriteHeader(BinaryWriterEx bw)
+            public void WriteHeader(BinaryWriterEx bw, HKXVariation variation)
             {
                 bw.WriteFixStr(SectionTag, 19);
                 bw.WriteByte(0xFF);
@@ -309,10 +386,13 @@ namespace SoulsFormats
                 bw.ReserveUInt32("expoffset" + SectionID);
                 bw.ReserveUInt32("impoffset" + SectionID);
                 bw.ReserveUInt32("endoffset" + SectionID);
-                bw.WriteUInt32(0xFFFFFFFF);
-                bw.WriteUInt32(0xFFFFFFFF);
-                bw.WriteUInt32(0xFFFFFFFF);
-                bw.WriteUInt32(0xFFFFFFFF);
+                if (variation == HKXVariation.HKXBloodBorne || variation == HKXVariation.HKXDS3)
+                {
+                    bw.WriteUInt32(0xFFFFFFFF);
+                    bw.WriteUInt32(0xFFFFFFFF);
+                    bw.WriteUInt32(0xFFFFFFFF);
+                    bw.WriteUInt32(0xFFFFFFFF);
+                }
             }
 
             public void WriteData(BinaryWriterEx bw, HKX hkx, HKXVariation variation)
@@ -374,7 +454,7 @@ namespace SoulsFormats
             // Should be used on a data section after initial reading for object deserialization
             internal void ReadDataObjects(HKX hkx, HKXVariation variation, bool deserializeObjects)
             {
-                BinaryReaderEx br = new BinaryReaderEx(false, SectionData);
+                BinaryReaderEx br = new BinaryReaderEx((hkx.Header.Endian == 0) ? true : false, SectionData);
 
                 // Virtual fixup table defines the hkx class instances
                 for (int i = 0; i < VirtualFixups.Count; i++)
@@ -396,6 +476,11 @@ namespace SoulsFormats
                         else if (reference.ClassName.ClassName == "hknpCompressedMeshShapeData")
                         {
                             hkobject = new HKNPCompressedMeshShapeData();
+                            hkobject.Read(hkx, this, br, variation);
+                        }
+                        else if (reference.ClassName.ClassName == "hkpStorageExtendedMeshShapeMeshSubpartStorage")
+                        {
+                            hkobject = new HKPStorageExtendedMeshShapeMeshSubpartStorage();
                             hkobject.Read(hkx, this, br, variation);
                         }
                         else
@@ -630,10 +715,10 @@ namespace SoulsFormats
                 return null;
             }
 
-            internal HKXLocalReference ResolveLocalReference(HKXSection section, BinaryReaderEx br)
+            internal HKXLocalReference ResolveLocalReference(HKX hkx, HKXSection section, BinaryReaderEx br)
             {
-                br.Position += 8;
-                return ResolveLocalReference(section, (uint)br.Position - SectionOffset - 8);
+                br.Position += hkx.Header.PointerSize;
+                return ResolveLocalReference(section, (uint)br.Position - SectionOffset - hkx.Header.PointerSize);
             }
 
             // Finds and resolves a local fixup representing a reference at an object relative offset
@@ -666,10 +751,10 @@ namespace SoulsFormats
                 return null;
             }
 
-            internal HKXGlobalReference ResolveGlobalReference(HKXSection section, BinaryReaderEx br)
+            internal HKXGlobalReference ResolveGlobalReference(HKX hkx, HKXSection section, BinaryReaderEx br)
             {
-                br.Position += 8;
-                return ResolveGlobalReference(section, (uint)br.Position - SectionOffset - 8);
+                br.Position += hkx.Header.PointerSize;
+                return ResolveGlobalReference(section, (uint)br.Position - SectionOffset - hkx.Header.PointerSize);
             }
 
             // Find all references to this object and link them
@@ -795,7 +880,14 @@ namespace SoulsFormats
 
                 // Placeholder replaced with data pointer upon load in C++
                 uint pointerOffset = (uint)br.Position - source.SectionOffset;
-                br.AssertUInt64(0);
+                if (hkx.Header.PointerSize == 8)
+                {
+                    br.AssertUInt64(0);
+                }
+                else
+                {
+                    br.AssertUInt32(0);
+                }
                 Size = br.ReadUInt32();
 
                 uint capAndFlags = br.ReadUInt32();
@@ -829,7 +921,14 @@ namespace SoulsFormats
                 {
                     Data.SourceLocalOffset = (uint)bw.Position - SourceObject.SectionOffset - sectionBaseOffset;
                 }
-                bw.WriteUInt64(0); // Pointer placeholder
+                if (hkx.Header.PointerSize == 8)
+                {
+                    bw.WriteUInt64(0); // Pointer placeholder
+                }
+                else
+                {
+                    bw.WriteUInt32(0);
+                }
                 bw.WriteUInt32(Size);
                 bw.WriteUInt32(Capacity | (((uint)Flags) << 24));
             }
@@ -850,6 +949,24 @@ namespace SoulsFormats
                     return null;
                 }
                 return (HKArrayData<T>)Data.DestObject;
+            }
+
+            /// <summary>
+            /// Replaces the array data with a user supplied array and updates everything
+            /// </summary>
+            /// <param name="data">Array to replace with</param>
+            public void SetArray(List<T> data)
+            {
+                Size = (uint)data.Count;
+                Capacity = (uint)data.Count;
+                ((HKArrayData<T>)Data.DestObject).Elements = data;
+            }
+
+            // Allow indexing as an array
+            public T this[int i]
+            {
+                get { return GetArrayData().Elements[i]; }
+                set { GetArrayData().Elements[i] = value; }
             }
         }
 
@@ -878,6 +995,36 @@ namespace SoulsFormats
             public override void Write(HKX hkx, HKXSection section, BinaryWriterEx bw, uint sectionBaseOffset, HKXVariation variation)
             {
                 bw.WriteUInt16(data);
+            }
+        }
+
+        public class HKByte : IHKXSerializable
+        {
+            public byte data;
+            public HKByte() { data = 0; }
+            public HKByte(byte b) { data = b; }
+            public override void Read(HKX hkx, HKXSection section, HKXObject source, BinaryReaderEx br, HKXVariation variation)
+            {
+                data = br.ReadByte();
+            }
+
+            public override void Write(HKX hkx, HKXSection section, BinaryWriterEx bw, uint sectionBaseOffset, HKXVariation variation)
+            {
+                bw.WriteByte(data);
+            }
+        }
+
+        public class HKVector4 : IHKXSerializable
+        {
+            public Vector4 Vector;
+            public override void Read(HKX hkx, HKXSection section, HKXObject source, BinaryReaderEx br, HKXVariation variation)
+            {
+                Vector = br.ReadVector4();
+            }
+
+            public override void Write(HKX hkx, HKXSection section, BinaryWriterEx bw, uint sectionBaseOffset, HKXVariation variation)
+            {
+                bw.WriteVector4(Vector);
             }
         }
 
@@ -962,6 +1109,7 @@ namespace SoulsFormats
 
             public void WriteWithReferences(HKX hkx, HKXSection section, BinaryWriterEx bw, uint sectionBaseOffset, HKXVariation variation)
             {
+                bw.BigEndian = (hkx.Header.Endian == 0) ? true : false;
                 Write(hkx, section, bw, sectionBaseOffset, variation);
                 foreach (var reference in LocalReferences)
                 {
@@ -992,9 +1140,9 @@ namespace SoulsFormats
             {
                 ClassNames = new List<HKXClassName>();
                 OffsetClassNamesMap = new Dictionary<uint, HKXClassName>();
-                while (br.ReadUInt32() != 0xFFFFFFFF)
+                while (br.ReadUInt16() != 0xFFFF)
                 {
-                    br.Position -= 4;
+                    br.Position -= 2;
                     uint stringStart = (uint)br.Position + 5;
                     var className = new HKXClassName(br);
                     ClassNames.Add(className);

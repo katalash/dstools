@@ -21,4 +21,13 @@ public class MSB3SFXRegion : MSB3Region
         FFXID = region.FFXID;
         StartDisabled = region.StartDisabled;
     }
+
+    public MSB3.Region.SFX Serialize(GameObject parent)
+    {
+        var region = new MSB3.Region.SFX(ID, parent.name);
+        _Serialize(region, parent);
+        region.FFXID = FFXID;
+        region.StartDisabled = StartDisabled;
+        return region;
+    }
 }

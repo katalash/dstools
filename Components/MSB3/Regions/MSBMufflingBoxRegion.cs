@@ -15,4 +15,12 @@ public class MSB3MufflingBoxRegion : MSB3Region
         setBaseRegion(region);
         UnkT00 = region.UnkT00;
     }
+
+    public MSB3.Region.MufflingBox Serialize(GameObject parent)
+    {
+        var region = new MSB3.Region.MufflingBox(ID, parent.name);
+        _Serialize(region, parent);
+        region.UnkT00 = UnkT00;
+        return region;
+    }
 }

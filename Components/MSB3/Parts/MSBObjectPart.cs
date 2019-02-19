@@ -42,7 +42,7 @@ public class MSB3ObjectPart : MSB3Part
     {
         var part = new MSB3.Part.Object(ID, parent.name);
         _Serialize(part, parent);
-        part.CollisionName = CollisionName;
+        part.CollisionName = (CollisionName == "") ? null : CollisionName;
         part.UnkT04 = UnkT04;
         part.UnkT06 = UnkT06;
         part.UnkT07 = UnkT07;

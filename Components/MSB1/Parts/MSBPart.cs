@@ -102,11 +102,11 @@ public class MSB1Part : MonoBehaviour
         part.PlaceholderModel = Placeholder;
         part.Index = ID;
 
-        part.PosX = -parent.transform.position.x;
+        part.PosX = parent.transform.position.x;
         part.PosY = parent.transform.position.y;
         part.PosZ = parent.transform.position.z;
         part.RotX = parent.transform.eulerAngles.x;
-        part.RotY = -parent.transform.eulerAngles.y;
+        part.RotY = parent.transform.eulerAngles.y;
         part.RotZ = parent.transform.eulerAngles.z;
         part.ScaleX = parent.transform.localScale.x;
         part.ScaleY = parent.transform.localScale.y;

@@ -27,4 +27,14 @@ public class MSB3MessageRegion : MSB3Region
         UnkT02 = region.UnkT02;
         Hidden = region.Hidden;
     }
+
+    public MSB3.Region.Message Serialize(GameObject parent)
+    {
+        var region = new MSB3.Region.Message(ID, parent.name);
+        _Serialize(region, parent);
+        region.MessageID = MessageID;
+        region.UnkT02 = UnkT02;
+        region.Hidden = Hidden;
+        return region;
+    }
 }

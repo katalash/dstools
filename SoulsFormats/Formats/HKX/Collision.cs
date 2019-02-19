@@ -9,7 +9,25 @@ namespace SoulsFormats
 {
     public partial class HKX
     {
-        // From's basic collision class
+        // Represents a tree node for a mesh's BVH tree when it's expanded from its packed format
+        public class BVHNode
+        {
+            // Bounding box AABB that contains all the children as well
+            public Vector3 Min;
+            public Vector3 Max;
+
+            // Left and right children nodes
+            public BVHNode Left;
+            public BVHNode Right;
+
+            // Terminal leaf in the node whihc means it points directly to a chunk or a triangle
+            public bool IsTerminal;
+
+            // If a terminal, this is the index of the chunk/triangle for this terminal
+            public uint Index;
+        }
+
+        // From's basic collision class for DS3/BB
         public class FSNPCustomParamCompressedMeshShape : HKXObject
         {
             public byte Unk10;
@@ -59,7 +77,7 @@ namespace SoulsFormats
                 br.AssertUInt32(0xFFFFFFFF);
                 br.AssertUInt32(0);
 
-                MeshShapeData = ResolveGlobalReference(section, br);
+                MeshShapeData = ResolveGlobalReference(hkx, section, br);
 
                 Unk68 = new HKArray<HKUInt>(hkx, section, this, br, variation);
                 Unk78 = br.ReadInt32();
@@ -71,7 +89,7 @@ namespace SoulsFormats
 
                 br.AssertUInt64(0);
 
-                CustomParam = ResolveGlobalReference(section, br);
+                CustomParam = ResolveGlobalReference(hkx, section, br);
 
                 UnkA8 = new HKArray<HKUInt>(hkx, section, this, br, variation);
                 if (variation == HKXVariation.HKXDS3)
@@ -146,31 +164,87 @@ namespace SoulsFormats
             }
         }
 
-        // Weird 5-byte structure
-        public class UnknownStructure1 : IHKXSerializable
+        // Compressed mesh level BVH node
+        public class CompressedMeshBVHNode : IHKXSerializable
         {
-            public byte Unk0;
-            public byte Unk1;
-            public byte Unk2;
-            public byte Unk3;
-            public byte Unk4;
+            public byte BBX;
+            public byte BBY;
+            public byte BBZ;
+            public byte IDX0;
+            public byte IDX1;
 
             public override void Read(HKX hkx, HKXSection section, HKXObject source, BinaryReaderEx br, HKXVariation variation)
             {
-                Unk0 = br.ReadByte();
-                Unk1 = br.ReadByte();
-                Unk2 = br.ReadByte();
-                Unk3 = br.ReadByte();
-                Unk4 = br.ReadByte();
+                BBX = br.ReadByte();
+                BBY = br.ReadByte();
+                BBZ = br.ReadByte();
+                IDX0 = br.ReadByte();
+                IDX1 = br.ReadByte();
             }
 
             public override void Write(HKX hkx, HKXSection section, BinaryWriterEx bw, uint sectionBaseOffset, HKXVariation variation)
             {
-                bw.WriteByte(Unk0);
-                bw.WriteByte(Unk1);
-                bw.WriteByte(Unk2);
-                bw.WriteByte(Unk3);
-                bw.WriteByte(Unk4);
+                bw.WriteByte(BBX);
+                bw.WriteByte(BBY);
+                bw.WriteByte(BBZ);
+                bw.WriteByte(IDX0);
+                bw.WriteByte(IDX1);
+            }
+
+            public Vector3 DecompressMin(Vector3 parentMin, Vector3 parentMax)
+            {
+                float x = ((float)(BBX >> 4) * (float)(BBX >> 4)) * (1.0f / 226.0f) * (parentMax.X - parentMin.X) + parentMin.X;
+                float y = ((float)(BBY >> 4) * (float)(BBY >> 4)) * (1.0f / 226.0f) * (parentMax.Y - parentMin.Y) + parentMin.Y;
+                float z = ((float)(BBZ >> 4) * (float)(BBZ >> 4)) * (1.0f / 226.0f) * (parentMax.Z - parentMin.Z) + parentMin.Z;
+                return new Vector3(x, y, z);
+            }
+
+            public Vector3 DecompressMax(Vector3 parentMin, Vector3 parentMax)
+            {
+                float x = -((float)(BBX & 0x0F) * (float)(BBX & 0x0F)) * (1.0f / 226.0f) * (parentMax.X - parentMin.X) + parentMax.X;
+                float y = -((float)(BBY & 0x0F) * (float)(BBY & 0x0F)) * (1.0f / 226.0f) * (parentMax.Y - parentMin.Y) + parentMax.Y;
+                float z = -((float)(BBZ & 0x0F) * (float)(BBZ & 0x0F)) * (1.0f / 226.0f) * (parentMax.Z - parentMin.Z) + parentMax.Z;
+                return new Vector3(x, y, z);
+            }
+        }
+
+        public class CompressedChunkBVHNode : IHKXSerializable
+        {
+            public byte BBX;
+            public byte BBY;
+            public byte BBZ;
+            public byte IDX;
+
+            public override void Read(HKX hkx, HKXSection section, HKXObject source, BinaryReaderEx br, HKXVariation variation)
+            {
+                BBX = br.ReadByte();
+                BBY = br.ReadByte();
+                BBZ = br.ReadByte();
+                IDX = br.ReadByte();
+            }
+
+            public override void Write(HKX hkx, HKXSection section, BinaryWriterEx bw, uint sectionBaseOffset, HKXVariation variation)
+            {
+                bw.WriteByte(BBX);
+                bw.WriteByte(BBY);
+                bw.WriteByte(BBZ);
+                bw.WriteByte(IDX);
+            }
+
+            public Vector3 DecompressMin(Vector3 parentMin, Vector3 parentMax)
+            {
+                float x = ((float)(BBX >> 4) * (float)(BBX >> 4)) * (1.0f / 226.0f) * (parentMax.X - parentMin.X) + parentMin.X;
+                float y = ((float)(BBY >> 4) * (float)(BBY >> 4)) * (1.0f / 226.0f) * (parentMax.Y - parentMin.Y) + parentMin.Y;
+                float z = ((float)(BBZ >> 4) * (float)(BBZ >> 4)) * (1.0f / 226.0f) * (parentMax.Z - parentMin.Z) + parentMin.Z;
+                return new Vector3(x, y, z);
+            }
+
+            public Vector3 DecompressMax(Vector3 parentMin, Vector3 parentMax)
+            {
+                float x = -((float)(BBX & 0x0F) * (float)(BBX & 0x0F)) * (1.0f / 226.0f) * (parentMax.X - parentMin.X) + parentMax.X;
+                float y = -((float)(BBY & 0x0F) * (float)(BBY & 0x0F)) * (1.0f / 226.0f) * (parentMax.Y - parentMin.Y) + parentMax.Y;
+                float z = -((float)(BBZ & 0x0F) * (float)(BBZ & 0x0F)) * (1.0f / 226.0f) * (parentMax.Z - parentMin.Z) + parentMax.Z;
+                return new Vector3(x, y, z);
             }
         }
 
@@ -262,15 +336,9 @@ namespace SoulsFormats
         {
             HKXObject SourceObject;
 
-            public HKArray<HKUInt> Unk0;
-            public Vector4 Unk10;
-            public Vector4 Unk20;
-            public float Unk30;
-            public float Unk34;
-            public float Unk38;
-            public float Unk3C;
-            public float Unk40;
-            public float Unk44;
+            public HKArray<CompressedChunkBVHNode> CompressedBVH;
+            public Vector4 BoundingBoxMin;
+            public Vector4 BoundingBoxMax;
 
             public Vector3 SmallVertexOffset;
             public Vector3 SmallVertexScale;
@@ -291,9 +359,9 @@ namespace SoulsFormats
 
             public override void Read(HKX hkx, HKXSection section, HKXObject source, BinaryReaderEx br, HKXVariation variation)
             {
-                Unk0 = new HKArray<HKUInt>(hkx, section, source, br, variation);
-                Unk10 = br.ReadVector4();
-                Unk20 = br.ReadVector4();
+                CompressedBVH = new HKArray<CompressedChunkBVHNode>(hkx, section, source, br, variation);
+                BoundingBoxMin = br.ReadVector4();
+                BoundingBoxMax = br.ReadVector4();
                 SmallVertexOffset = br.ReadVector3();
                 SmallVertexScale = br.ReadVector3();
 
@@ -317,9 +385,9 @@ namespace SoulsFormats
 
             public override void Write(HKX hkx, HKXSection section, BinaryWriterEx bw, uint sectionBaseOffset, HKXVariation variation)
             {
-                Unk0.Write(hkx, section, bw, sectionBaseOffset, variation);
-                bw.WriteVector4(Unk10);
-                bw.WriteVector4(Unk20);
+                CompressedBVH.Write(hkx, section, bw, sectionBaseOffset, variation);
+                bw.WriteVector4(BoundingBoxMin);
+                bw.WriteVector4(BoundingBoxMax);
                 bw.WriteVector3(SmallVertexOffset);
                 bw.WriteVector3(SmallVertexScale);
                 bw.WriteUInt32(SmallVerticesBase);
@@ -334,7 +402,55 @@ namespace SoulsFormats
 
             internal override void WriteReferenceData(HKX hkx, HKXSection section, BinaryWriterEx bw, uint sectionBaseOffset, HKXVariation variation)
             {
-                Unk0.WriteReferenceData(hkx, section, bw, sectionBaseOffset, variation);
+                CompressedBVH.WriteReferenceData(hkx, section, bw, sectionBaseOffset, variation);
+            }
+
+            // Recursively builds the BVH tree from the compressed packed array
+            private BVHNode buildBVHTree(Vector3 parentBBMin, Vector3 parentBBMax, uint nodeIndex)
+            {
+                BVHNode node = new BVHNode();
+                CompressedChunkBVHNode cnode = CompressedBVH.GetArrayData().Elements[(int)nodeIndex];
+                node.Min = cnode.DecompressMin(parentBBMin, parentBBMax);
+                node.Max = cnode.DecompressMax(parentBBMin, parentBBMax);
+
+                if ((cnode.IDX & 0x01) > 0)
+                {
+                    node.Left = buildBVHTree(node.Min, node.Max, nodeIndex + 1);
+                    node.Right = buildBVHTree(node.Min, node.Max, nodeIndex + ((uint)cnode.IDX & 0xFE));
+                }
+                else
+                {
+                    node.IsTerminal = true;
+                    node.Index = (uint)cnode.IDX / 2;
+                }
+                return node;
+            }
+
+            // Extracts an easily processable BVH tree from the packed version in the mesh data
+            public BVHNode getChunkBVH()
+            {
+                if (CompressedBVH.Size == 0 || CompressedBVH.GetArrayData() == null)
+                {
+                    return null;
+                }
+
+                BVHNode root = new BVHNode();
+                root.Min = new Vector3(BoundingBoxMin.X, BoundingBoxMin.Y, BoundingBoxMin.Z);
+                root.Max = new Vector3(BoundingBoxMax.X, BoundingBoxMax.Y, BoundingBoxMax.Z);
+
+                CompressedChunkBVHNode cnode = CompressedBVH.GetArrayData().Elements[0];
+                if ((cnode.IDX & 0x01) > 0)
+                {
+                    root.Left = buildBVHTree(root.Min, root.Max, 1);
+                    root.Right = buildBVHTree(root.Min, root.Max, (uint)cnode.IDX & 0xFE);
+                }
+                else
+                {
+                    root.IsTerminal = true;
+                    root.Index = (uint)cnode.IDX / 2;
+                }
+
+                return root;
             }
         }
 
@@ -437,7 +553,7 @@ namespace SoulsFormats
         // Collision data
         public class HKNPCompressedMeshShapeData : HKXObject
         {
-            public HKArray<UnknownStructure1> Unk10;
+            public HKArray<CompressedMeshBVHNode> CompressedBVH;
 
             public Vector4 BoundingBoxMin;
             public Vector4 BoundingBoxMax;
@@ -461,10 +577,10 @@ namespace SoulsFormats
             {
                 SectionOffset = (uint)br.Position;
 
-                br.AssertUInt64(0);
-                br.AssertUInt64(0);
+                AssertPointer(hkx, br);
+                AssertPointer(hkx, br);
 
-                Unk10 = new HKArray<UnknownStructure1>(hkx, section, this, br, variation);
+                CompressedBVH = new HKArray<CompressedMeshBVHNode>(hkx, section, this, br, variation);
                 BoundingBoxMin = br.ReadVector4();
                 BoundingBoxMax = br.ReadVector4();
 
@@ -491,10 +607,10 @@ namespace SoulsFormats
             {
                 SectionOffset = (uint)bw.Position - sectionBaseOffset;
 
-                bw.WriteUInt64(0);
-                bw.WriteUInt64(0);
+                WriteEmptyPointer(hkx, bw);
+                WriteEmptyPointer(hkx, bw);
 
-                Unk10.Write(hkx, section, bw, sectionBaseOffset, variation);
+                CompressedBVH.Write(hkx, section, bw, sectionBaseOffset, variation);
                 bw.WriteVector4(BoundingBoxMin);
                 bw.WriteVector4(BoundingBoxMax);
 
@@ -514,7 +630,7 @@ namespace SoulsFormats
                 bw.WriteUInt64(UnkC8);
 
                 DataSize = (uint)bw.Position - sectionBaseOffset - SectionOffset;
-                Unk10.WriteReferenceData(hkx, section, bw, sectionBaseOffset, variation);
+                CompressedBVH.WriteReferenceData(hkx, section, bw, sectionBaseOffset, variation);
                 Chunks.WriteReferenceData(hkx, section, bw, sectionBaseOffset, variation);
                 MeshIndices.WriteReferenceData(hkx, section, bw, sectionBaseOffset, variation);
                 VertexIndices.WriteReferenceData(hkx, section, bw, sectionBaseOffset, variation);
@@ -523,6 +639,181 @@ namespace SoulsFormats
                 UnkA0.WriteReferenceData(hkx, section, bw, sectionBaseOffset, variation);
                 UnkB8.WriteReferenceData(hkx, section, bw, sectionBaseOffset, variation);
             }
-        };
+            
+            // Recursively builds the BVH tree from the compressed packed array
+            private BVHNode buildBVHTree(Vector3 parentBBMin, Vector3 parentBBMax, uint nodeIndex)
+            {
+                BVHNode node = new BVHNode();
+                CompressedMeshBVHNode cnode = CompressedBVH.GetArrayData().Elements[(int)nodeIndex];
+                node.Min = cnode.DecompressMin(parentBBMin, parentBBMax);
+                node.Max = cnode.DecompressMax(parentBBMin, parentBBMax);
+
+                if ((cnode.IDX0 & 0x80) > 0)
+                {
+                    node.Left = buildBVHTree(node.Min, node.Max, nodeIndex + 1);
+                    node.Right = buildBVHTree(node.Min, node.Max, nodeIndex + ((((uint)cnode.IDX0 & 0x7F) << 8) | (uint)cnode.IDX1) * 2);
+                }
+                else
+                {
+                    node.IsTerminal = true;
+                    node.Index = (((uint)cnode.IDX0 & 0x7F) << 8) | (uint)cnode.IDX1;
+                }
+                return node;
+            }
+
+            // Extracts an easily processable BVH tree from the packed version in the mesh data
+            public BVHNode getMeshBVH()
+            {
+                if (CompressedBVH.Size == 0 || CompressedBVH.GetArrayData() == null)
+                {
+                    return null;
+                }
+
+                BVHNode root = new BVHNode();
+                root.Min = new Vector3(BoundingBoxMin.X, BoundingBoxMin.Y, BoundingBoxMin.Z);
+                root.Max = new Vector3(BoundingBoxMax.X, BoundingBoxMax.Y, BoundingBoxMax.Z);
+
+                CompressedMeshBVHNode cnode = CompressedBVH.GetArrayData().Elements[0];
+                if ((cnode.IDX0 & 0x80) > 0)
+                {
+                    root.Left = buildBVHTree(root.Min, root.Max, 1);
+                    root.Right = buildBVHTree(root.Min, root.Max, ((((uint)cnode.IDX0 & 0x7F) << 8) | (uint)cnode.IDX1) * 2);
+                }
+                else
+                {
+                    root.IsTerminal = true;
+                    root.Index = (((uint)cnode.IDX0 & 0x7F) << 8) | (uint)cnode.IDX1;
+                }
+
+                return root;
+            }
+        }
+
+        // Used in DeS/DS1/DS2 to store collision mesh data
+        public class HKPStorageExtendedMeshShapeMeshSubpartStorage : HKXObject
+        {
+            public HKArray<HKVector4> Vertices;
+            public HKArray<HKUShort> Indices16;
+            public override void Read(HKX hkx, HKXSection section, BinaryReaderEx br, HKXVariation variation)
+            {
+                // By no means complete but currently quickly extracts most meshes
+                SectionOffset = (uint)br.Position;
+
+                // vtable stuff
+                AssertPointer(hkx, br);
+                AssertPointer(hkx, br);
+
+                Vertices = new HKArray<HKVector4>(hkx, section, this, br, variation);
+                if (variation != HKXVariation.HKSDeS)
+                {
+                    // Supposed to be 8-bit indices for collision, but doesn't seem to be used much if at all, so implement later
+                    AssertPointer(hkx, br);
+                    br.ReadUInt64();
+                }
+                Indices16 = new HKArray<HKUShort>(hkx, section, this, br, variation);
+
+                // More stuff to implement (seemingly unused)
+
+                DataSize = (uint)br.Position - SectionOffset;
+                ResolveDestinations(hkx, section);
+            }
+
+            public override void Write(HKX hkx, HKXSection section, BinaryWriterEx bw, uint sectionBaseOffset, HKXVariation variation)
+            {
+                SectionOffset = (uint)bw.Position - sectionBaseOffset;
+                WriteEmptyPointer(hkx, bw);
+                WriteEmptyPointer(hkx, bw);
+
+                Vertices.Write(hkx, section, bw, sectionBaseOffset, variation);
+                if (variation != HKXVariation.HKSDeS)
+                {
+                    WriteEmptyPointer(hkx, bw);
+                    bw.WriteUInt32(0);
+                    bw.WriteUInt32(0x80000000);
+                }
+                Indices16.Write(hkx, section, bw, sectionBaseOffset, variation);
+
+                // Bunch of empty arrays
+                WriteEmptyPointer(hkx, bw);
+                bw.WriteUInt32(0);
+                bw.WriteUInt32(0x80000000);
+
+                WriteEmptyPointer(hkx, bw);
+                bw.WriteUInt32(0);
+                bw.WriteUInt32(0x80000000);
+
+                WriteEmptyPointer(hkx, bw);
+                bw.WriteUInt32(0);
+                bw.WriteUInt32(0x80000000);
+
+                WriteEmptyPointer(hkx, bw);
+                bw.WriteUInt32(0);
+                bw.WriteUInt32(0x80000000);
+
+                WriteEmptyPointer(hkx, bw);
+                bw.WriteUInt32(0);
+                bw.WriteUInt32(0x80000000);
+
+                bw.WriteUInt32(0);
+                bw.WriteUInt32(0);
+
+                DataSize = (uint)bw.Position - sectionBaseOffset - SectionOffset;
+                Vertices.WriteReferenceData(hkx, section, bw, sectionBaseOffset, variation);
+                Indices16.WriteReferenceData(hkx, section, bw, sectionBaseOffset, variation);
+            }
+        }
+
+        // Stores MoppCode
+        public class hkpMoppCode : HKXObject
+        {
+            public float Unk10;
+            public float Unk14;
+            public float Unk18;
+            public float Unk1C;
+
+            public HKArray<HKByte> MoppCode;
+
+            public override void Read(HKX hkx, HKXSection section, BinaryReaderEx br, HKXVariation variation)
+            {
+                SectionOffset = (uint)br.Position;
+
+                // vtable stuff
+                AssertPointer(hkx, br);
+                AssertPointer(hkx, br);
+                AssertPointer(hkx, br);
+                AssertPointer(hkx, br);
+
+                Unk10 = br.ReadSingle();
+                Unk14 = br.ReadSingle();
+                Unk18 = br.ReadSingle();
+                Unk1C = br.ReadSingle();
+
+                MoppCode = new HKArray<HKByte>(hkx, section, this, br, variation);
+                br.AssertUInt32(0);
+
+                DataSize = (uint)br.Position - SectionOffset;
+                ResolveDestinations(hkx, section);
+            }
+
+            public override void Write(HKX hkx, HKXSection section, BinaryWriterEx bw, uint sectionBaseOffset, HKXVariation variation)
+            {
+                SectionOffset = (uint)bw.Position - sectionBaseOffset;
+                WriteEmptyPointer(hkx, bw);
+                WriteEmptyPointer(hkx, bw);
+                WriteEmptyPointer(hkx, bw);
+                WriteEmptyPointer(hkx, bw);
+
+                bw.WriteSingle(Unk10);
+                bw.WriteSingle(Unk14);
+                bw.WriteSingle(Unk18);
+                bw.WriteSingle(Unk1C);
+
+                MoppCode.Write(hkx, section, bw, sectionBaseOffset, variation);
+                bw.WriteUInt32(0);
+
+                DataSize = (uint)bw.Position - sectionBaseOffset - SectionOffset;
+                MoppCode.WriteReferenceData(hkx, section, bw, sectionBaseOffset, variation);
+            }
+        }
     }
 }

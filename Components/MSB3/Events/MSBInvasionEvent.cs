@@ -51,4 +51,18 @@ public class MSB3InvasionEvent : MSB3Event
         FlagsMaybe = evt.FlagsMaybe;
         UnkT18 = evt.UnkT18;
     }
+
+    public MSB3.Event.Invasion Serialize(GameObject parent)
+    {
+        var evt = new MSB3.Event.Invasion(ID, parent.name);
+        _Serialize(evt, parent);
+        evt.HostEventEntityID = HostEventEntityID;
+        evt.InvasionEventEntityID = InvasionEventEntityID;
+        evt.InvasionRegionIndex = InvasionRegionIndex;
+        evt.SoundIDMaybe = SoundIDMaybe;
+        evt.MapEventIDMaybe = MapEventIDMaybe;
+        evt.FlagsMaybe = FlagsMaybe;
+        evt.UnkT18 = UnkT18;
+        return evt;
+    }
 }

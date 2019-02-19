@@ -1,0 +1,19 @@
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using SoulsFormats;
+
+public class MSBBBEnemyModel : MSBBBModel
+{
+    public void SetModel(MSBBB.Model.Enemy model)
+    {
+        setBaseModel(model);
+    }
+
+    public MSBBB.Model.Enemy Serialize(GameObject parent)
+    {
+        var model = new MSBBB.Model.Enemy(ID, parent.name);
+        _Serialize(model, parent);
+        return model;
+    }
+}

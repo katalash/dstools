@@ -15,4 +15,12 @@ public class MSB3InvasionPointRegion : MSB3Region
         setBaseRegion(region);
         Priority = region.Priority;
     }
+
+    public MSB3.Region.InvasionPoint Serialize(GameObject parent)
+    {
+        var region = new MSB3.Region.InvasionPoint(ID, parent.name);
+        _Serialize(region, parent);
+        region.Priority = Priority;
+        return region;
+    }
 }

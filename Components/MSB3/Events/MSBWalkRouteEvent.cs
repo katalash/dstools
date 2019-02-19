@@ -21,4 +21,18 @@ public class MSB3WalkRouteEvent : MSB3Event
         UnkT00 = evt.UnkT00;
         WalkPointNames = evt.WalkPointNames;
     }
+
+    public MSB3.Event.WalkRoute Serialize(GameObject parent)
+    {
+        var evt = new MSB3.Event.WalkRoute(ID, parent.name);
+        _Serialize(evt, parent);
+        evt.UnkT00 = UnkT00;
+        for (int i = 0; i < 32; i++)
+        {
+            if (i >= WalkPointNames.Length)
+                break;
+            evt.WalkPointNames[i] = (WalkPointNames[i] == "") ? null : WalkPointNames[i];
+        }
+        return evt;
+    }
 }

@@ -9,7 +9,7 @@ public class MSB3DummyObjectPart : MSB3ObjectPart
     {
         var part = new MSB3.Part.DummyObject(ID, parent.name);
         _Serialize(part, parent);
-        part.CollisionName = CollisionName;
+        part.CollisionName = (CollisionName == "") ? null : CollisionName;
         part.UnkT04 = UnkT04;
         part.UnkT06 = UnkT06;
         part.UnkT07 = UnkT07;

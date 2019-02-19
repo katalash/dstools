@@ -22,4 +22,20 @@ public class MSB3GroupTourEvent : MSB3Event
         UnkT04 = evt.UnkT04;
         GroupPartsNames = evt.GroupPartsNames;
     }
+
+    public MSB3.Event.GroupTour Serialize(GameObject parent)
+    {
+        var evt = new MSB3.Event.GroupTour(ID, parent.name);
+        _Serialize(evt, parent);
+        evt.UnkT00 = UnkT00;
+        evt.UnkT04 = UnkT04;
+        for (int i = 0; i < 32; i++)
+        {
+            if (i >= GroupPartsNames.Length)
+                break;
+            evt.GroupPartsNames[i] = (GroupPartsNames[i] == "") ? null : GroupPartsNames[i];
+        }
+
+        return evt;
+    }
 }

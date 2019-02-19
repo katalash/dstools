@@ -9,4 +9,11 @@ public class MSB3WalkRouteRegion : MSB3Region
     {
         setBaseRegion(region);
     }
+
+    public MSB3.Region.WalkRoute Serialize(GameObject parent)
+    {
+        var part = new MSB3.Region.WalkRoute(ID, parent.name);
+        _Serialize(part, parent);
+        return part;
+    }
 }

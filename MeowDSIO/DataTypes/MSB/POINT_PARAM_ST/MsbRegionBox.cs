@@ -25,7 +25,8 @@ namespace MeowDSIO.DataTypes.MSB.POINT_PARAM_ST
 
         public MsbRegionBox(MsbRegionList parentList)
         {
-            this.Index = parentList.Count;
+            if (parentList != null)
+                this.Index = parentList.Count;
         }
 
         internal override (int, int, int) GetOffsetDeltas()

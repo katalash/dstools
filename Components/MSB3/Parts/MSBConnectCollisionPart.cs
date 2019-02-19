@@ -29,7 +29,7 @@ public class MSB3ConnectCollisionPart : MSB3Part
     {
         var part = new MSB3.Part.ConnectCollision(ID, parent.name);
         _Serialize(part, parent);
-        part.CollisionName = CollisionName;
+        part.CollisionName = (CollisionName == "") ? null : CollisionName;
         part.MapID1 = MapID1;
         part.MapID2 = MapID2;
         part.MapID3 = MapID3;

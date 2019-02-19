@@ -21,4 +21,11 @@ public class MSB3WindSFXRegion : MSB3Region
         FFXID = region.FFXID;
         WindAreaName = region.WindAreaName;
     }
+
+    public MSB3.Region.WindSFX Serialize(GameObject parent)
+    {
+        var part = new MSB3.Region.WindSFX(ID, parent.name);
+        _Serialize(part, parent);
+        return part;
+    }
 }

@@ -9,7 +9,7 @@ public class MSB3DummyEnemyPart : MSB3EnemyPart
     {
         var part = new MSB3.Part.DummyEnemy(ID, parent.name);
         _Serialize(part, parent);
-        part.CollisionName = CollisionName;
+        part.CollisionName = (CollisionName == "") ? null : CollisionName;
         part.ThinkParamID = ThinkParamID;
         part.NPCParamID = NPCParamID;
         part.TalkID = TalkID;

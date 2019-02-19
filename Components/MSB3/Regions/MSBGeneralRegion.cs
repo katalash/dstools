@@ -9,4 +9,11 @@ public class MSB3GeneralRegion : MSB3Region
     {
         setBaseRegion(region);
     }
+
+    public MSB3.Region.General Serialize(GameObject parent)
+    {
+        var region = new MSB3.Region.General(ID, parent.name);
+        _Serialize(region, parent);
+        return region;
+    }
 }

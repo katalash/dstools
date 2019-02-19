@@ -27,4 +27,18 @@ public class MSB3SoundRegion : MSB3Region
         SoundID = region.SoundID;
         ChildRegionNames = region.ChildRegionNames;
     }
+
+    public MSB3.Region.Sound Serialize(GameObject parent)
+    {
+        var region = new MSB3.Region.Sound(ID, parent.name);
+        _Serialize(region, parent);
+        region.SoundID = SoundID;
+        for (int i = 0; i < 16; i++)
+        {
+            if (i >= ChildRegionNames.Length)
+                break;
+            region.ChildRegionNames[i] = (ChildRegionNames[i] == "") ? null : ChildRegionNames[i];
+        }
+        return region;
+    }
 }

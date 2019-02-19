@@ -72,8 +72,9 @@ public class MSB3EnemyPart : MSB3Part
     public MSB3.Part.Enemy Serialize(GameObject parent)
     {
         var part = new MSB3.Part.Enemy(ID, parent.name);
+
         _Serialize(part, parent);
-        part.CollisionName = CollisionName;
+        part.CollisionName = (CollisionName == "") ? null : CollisionName;
         part.ThinkParamID = ThinkParamID;
         part.NPCParamID = NPCParamID;
         part.TalkID = TalkID;

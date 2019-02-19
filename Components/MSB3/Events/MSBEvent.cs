@@ -40,13 +40,13 @@ public class MSB3Event : MonoBehaviour
         EventEntityID = evt.EventEntityID;
     }
 
-    void Start()
+    internal void _Serialize(MSB3.Event evt, GameObject parent)
     {
-        
-    }
-
-    void Update()
-    {
-        
+        evt.Name = parent.name;
+        evt.EventIndex = EventIndex;
+        evt.ID = ID;
+        evt.PartName = (PartName == "") ? null : PartName;
+        evt.PointName = (PointName == "") ? null : PointName;
+        evt.EventEntityID = EventEntityID;
     }
 }

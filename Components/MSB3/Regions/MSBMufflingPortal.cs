@@ -9,4 +9,11 @@ public class MSB3MufflingPortal : MSB3Region
     {
         setBaseRegion(region);
     }
+
+    public MSB3.Region.MufflingPortal Serialize(GameObject parent)
+    {
+        var region = new MSB3.Region.MufflingPortal(ID, parent.name);
+        _Serialize(region, parent);
+        return region;
+    }
 }

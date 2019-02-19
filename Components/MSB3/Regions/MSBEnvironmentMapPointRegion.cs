@@ -15,4 +15,12 @@ public class MSB3EnvironmentMapPointRegion : MSB3Region
         setBaseRegion(region);
         UnkFlags = region.UnkFlags;
     }
+
+    public MSB3.Region.EnvironmentMapPoint Serialize(GameObject parent)
+    {
+        var region = new MSB3.Region.EnvironmentMapPoint(ID, parent.name);
+        _Serialize(region, parent);
+        region.UnkFlags = UnkFlags;
+        return region;
+    }
 }

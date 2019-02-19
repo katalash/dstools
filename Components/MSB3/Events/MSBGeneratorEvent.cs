@@ -70,4 +70,32 @@ public class MSB3GeneratorEvent : MSB3Event
         UnkT14 = evt.UnkT14;
         UnkT18 = evt.UnkT18;
     }
+
+    public MSB3.Event.Generator Serialize(GameObject parent)
+    {
+        var evt = new MSB3.Event.Generator(ID, parent.name);
+        _Serialize(evt, parent);
+        evt.MaxNum = MaxNum;
+        evt.LimitNum = LimitNum;
+        evt.MinGenNum = MinGenNum;
+        evt.MaxGenNum = MaxGenNum;
+        evt.MinInterval = MinInterval;
+        evt.MaxInterval = MaxInterval;
+        for (int i = 0; i < 8; i++)
+        {
+            if (i >= SpawnPointNames.Length)
+                break;
+            evt.SpawnPointNames[i] = (SpawnPointNames[i] == "") ? null : SpawnPointNames[i];
+        }
+        for (int i = 0; i < 32; i++)
+        {
+            if (i >= SpawnPartNames.Length)
+                break;
+            evt.SpawnPartNames[i] = (SpawnPartNames[i] == "") ? null : SpawnPartNames[i];
+        }
+        evt.UnkT10 = UnkT10;
+        evt.UnkT14 = UnkT14;
+        evt.UnkT18 = UnkT18;
+        return evt;
+    }
 }

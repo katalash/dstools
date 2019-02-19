@@ -9,4 +9,11 @@ public class MSB3EventRegion : MSB3Region
     {
         setBaseRegion(region);
     }
+
+    public MSB3.Region.Event Serialize(GameObject parent)
+    {
+        var region = new MSB3.Region.Event(ID, parent.name);
+        _Serialize(region, parent);
+        return region;
+    }
 }

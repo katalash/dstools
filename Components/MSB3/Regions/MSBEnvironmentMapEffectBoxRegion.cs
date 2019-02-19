@@ -28,4 +28,15 @@ public class MSB3EnvironmentEffectBoxRegion : MSB3Region
         UnkT08 = region.UnkT08;
         UnkT0A = region.UnkT0A;
     }
+
+    public MSB3.Region.EnvironmentMapEffectBox Serialize(GameObject parent)
+    {
+        var region = new MSB3.Region.EnvironmentMapEffectBox(ID, parent.name);
+        _Serialize(region, parent);
+        region.UnkT00 = UnkT00;
+        region.UnkT04 = UnkT04;
+        region.UnkT08 = UnkT08;
+        region.UnkT0A = UnkT0A;
+        return region;
+    }
 }

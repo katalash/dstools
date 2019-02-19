@@ -40,4 +40,17 @@ public class MSB3TreasureEvent : MSB3Event
         InChest = evt.InChest;
         StartDisabled = evt.StartDisabled;
     }
+
+    public MSB3.Event.Treasure Serialize(GameObject parent)
+    {
+        var evt = new MSB3.Event.Treasure(ID, parent.name);
+        _Serialize(evt, parent);
+        evt.PartName2 = (PartName2 == "") ? null : PartName2;
+        evt.ItemLot1 = ItemLot1;
+        evt.ItemLot2 = ItemLot2;
+        evt.PickupAnimID = PickupAnimID;
+        evt.InChest = InChest;
+        evt.StartDisabled = StartDisabled;
+        return evt;
+    }
 }
