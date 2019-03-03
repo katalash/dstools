@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
 
+[AddComponentMenu("Dark Souls 3/Parts/Player")]
 public class MSB3PlayerPart : MSB3Part
 {
     public void SetPart(MSB3.Part.Player part)

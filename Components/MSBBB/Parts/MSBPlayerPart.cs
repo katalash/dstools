@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
 
+[AddComponentMenu("Bloodborne/Parts/Player")]
 public class MSBBBPlayerPart : MSBBBPart
 {
     public void SetPart(MSBBB.Part.Player part)

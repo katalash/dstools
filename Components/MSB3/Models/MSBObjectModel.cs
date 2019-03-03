@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
 
+[AddComponentMenu("Dark Souls 3/Model Declarations/Object")]
 public class MSB3ObjectModel : MSB3Model
 {
     /// <summary>

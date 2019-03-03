@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
 
+[AddComponentMenu("Bloodborne/Parts/Map Piece")]
 public class MSBBBMapPiecePart : MSBBBPart
 {
     /// <summary>

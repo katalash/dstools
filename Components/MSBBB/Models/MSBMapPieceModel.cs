@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
 
+[AddComponentMenu("Bloodborne/Model Declarations/Map Piece")]
 public class MSBBBMapPieceModel : MSBBBModel
 {
     /// <summary>

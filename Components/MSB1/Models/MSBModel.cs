@@ -6,7 +6,7 @@ using MeowDSIO.DataTypes.MSB;
 using MeowDSIO.DataTypes.MSB.MODEL_PARAM_ST;
 
 // Stores all the MSB specific fields for a part
-public class MSB1Model : MonoBehaviour
+public abstract class MSB1Model : MonoBehaviour
 {
     /// <summary>
     /// The placeholder used for this model in MapStudio.

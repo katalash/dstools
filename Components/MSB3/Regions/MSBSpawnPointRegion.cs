@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
 
+[AddComponentMenu("Dark Souls 3/Regions/Spawn Point")]
 public class MSB3SpawnPointRegion : MSB3Region
 {
     /// <summary>

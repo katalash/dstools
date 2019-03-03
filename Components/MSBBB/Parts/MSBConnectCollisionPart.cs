@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
 
+[AddComponentMenu("Bloodborne/Parts/Connect Collision")]
 public class MSBBBConnectCollisionPart : MSBBBPart
 {
     /// <summary>

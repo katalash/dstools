@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
 
+[AddComponentMenu("Bloodborne/Model Declarations/Other")]
 public class MSBBBOtherModel : MSBBBModel
 {
     public void SetModel(MSBBB.Model.Other model)

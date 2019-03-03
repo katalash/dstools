@@ -4,7 +4,7 @@ using System;
 using UnityEngine;
 using SoulsFormats;
 
-public class MSB3Region : MonoBehaviour
+public abstract class MSB3Region : MonoBehaviour
 {
     /// <summary>
     /// Whether this region has additional type data. The only region type where this actually varies is Sound.
@@ -24,7 +24,7 @@ public class MSB3Region : MonoBehaviour
     /// <summary>
     /// Not sure if this is exactly a drawgroup, but it's what makes messages not appear in dark Firelink.
     /// </summary>
-    public uint DrawGroup;
+    public uint MapStudioLayer;
 
     /// <summary>
     /// Region is inactive unless this part is drawn; null for always active.
@@ -48,7 +48,7 @@ public class MSB3Region : MonoBehaviour
         Unk2 = region.Unk2;
         Unk3 = region.Unk3;
         Unk4 = region.Unk4;
-        DrawGroup = region.DrawGroup;
+        MapStudioLayer = region.MapStudioLayer;
         ActivationPartName = region.ActivationPartName;
         EventEntityID = region.EventEntityID;
 
@@ -112,7 +112,7 @@ public class MSB3Region : MonoBehaviour
         region.Unk2 = Unk2;
         region.Unk3 = Unk3;
         region.Unk4 = Unk4;
-        region.DrawGroup = DrawGroup;
+        region.MapStudioLayer = MapStudioLayer;
         region.ActivationPartName = (ActivationPartName == "") ? null : ActivationPartName;
         region.EventEntityID = EventEntityID;
 

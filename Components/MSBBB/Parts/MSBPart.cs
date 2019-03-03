@@ -5,7 +5,7 @@ using SoulsFormats;
 using System.Numerics;
 
 // Stores all the MSB specific fields for a part
-public class MSBBBPart : MonoBehaviour
+public abstract class MSBBBPart : MonoBehaviour
 {
     /// <summary>
     /// The placeholder model for this part.
@@ -25,12 +25,16 @@ public class MSBBBPart : MonoBehaviour
     /// <summary>
     /// Unknown.
     /// </summary>
-    public int UnkF64, UnkF68, UnkF6C, UnkF70, UnkF74, UnkF78, UnkF7C, UnkF80, UnkF84, UnkF88, UnkF8C, UnkF90, UnkF94, UnkF98, UnkF9C, UnkFA0, UnkFA4, UnkFA8;
+    public uint DrawGroup1, DrawGroup2, DrawGroup3, DrawGroup4, DrawGroup5, DrawGroup6, DrawGroup7, DrawGroup8;
+
+    public uint DispGroup1, DispGroup2, DispGroup3, DispGroup4, DispGroup5, DispGroup6, DispGroup7, DispGroup8;
+
+    public uint BackreadGroup1, BackreadGroup2, BackreadGroup3, BackreadGroup4, BackreadGroup5, BackreadGroup6, BackreadGroup7, BackreadGroup8;
 
     /// <summary>
     /// Unknown.
     /// </summary>
-    public uint DrawGroup1, DrawGroup2, DrawGroup3, DrawGroup4, DispGroup1, DispGroup2, DispGroup3, DispGroup4;
+    public int UnkFA4;
 
     /// <summary>
     /// Used to identify the part in event scripts.
@@ -57,32 +61,31 @@ public class MSBBBPart : MonoBehaviour
         Placeholder = part.Placeholder;
         ID = part.ID;
         ModelName = part.ModelName;
-        DrawGroup1 = part.DrawGroup1;
-        DrawGroup2 = part.DrawGroup2;
-        DrawGroup3 = part.DrawGroup3;
-        DrawGroup4 = part.DrawGroup4;
-        DispGroup1 = part.DispGroup1;
-        DispGroup2 = part.DispGroup2;
-        DispGroup3 = part.DispGroup3;
-        DispGroup4 = part.DispGroup4;
-        UnkF64 = part.UnkF64;
-        UnkF68 = part.UnkF68;
-        UnkF6C = part.UnkF6C;
-        UnkF70 = part.UnkF70;
-        UnkF74 = part.UnkF74;
-        UnkF78 = part.UnkF78;
-        UnkF7C = part.UnkF7C;
-        UnkF80 = part.UnkF80;
-        UnkF84 = part.UnkF84;
-        UnkF88 = part.UnkF88;
-        UnkF8C = part.UnkF8C;
-        UnkF90 = part.UnkF90;
-        UnkF94 = part.UnkF94;
-        UnkF98 = part.UnkF98;
-        UnkF9C = part.UnkF9C;
-        UnkFA0 = part.UnkFA0;
+        DrawGroup1 = part.DrawGroups[0];
+        DrawGroup2 = part.DrawGroups[1];
+        DrawGroup3 = part.DrawGroups[2];
+        DrawGroup4 = part.DrawGroups[3];
+        DrawGroup5 = part.DrawGroups[4];
+        DrawGroup6 = part.DrawGroups[5];
+        DrawGroup7 = part.DrawGroups[6];
+        DrawGroup8 = part.DrawGroups[7];
+        DispGroup1 = part.DispGroups[0];
+        DispGroup2 = part.DispGroups[1];
+        DispGroup3 = part.DispGroups[2];
+        DispGroup4 = part.DispGroups[3];
+        DispGroup5 = part.DispGroups[4];
+        DispGroup6 = part.DispGroups[5];
+        DispGroup7 = part.DispGroups[6];
+        DispGroup8 = part.DispGroups[7];
+        BackreadGroup1 = part.BackreadGroups[0];
+        BackreadGroup2 = part.BackreadGroups[1];
+        BackreadGroup3 = part.BackreadGroups[2];
+        BackreadGroup4 = part.BackreadGroups[3];
+        BackreadGroup5 = part.BackreadGroups[4];
+        BackreadGroup6 = part.BackreadGroups[5];
+        BackreadGroup7 = part.BackreadGroups[6];
+        BackreadGroup8 = part.BackreadGroups[7];
         UnkFA4 = part.UnkFA4;
-        UnkFA8 = part.UnkFA8;
 
         EventEntityID = part.EventEntityID;
         OldLightID = part.OldLightID;
@@ -152,25 +155,33 @@ public class MSBBBPart : MonoBehaviour
         part.Scale.Z = parent.transform.localScale.z;
 
         part.ModelName = ModelName;
-        part.UnkF64 = UnkF64;
-        part.UnkF68 = UnkF68;
-        part.UnkF8C = UnkF8C;
-        part.UnkF90 = UnkF90;
-        part.UnkF94 = UnkF94;
-        part.UnkF98 = UnkF98;
-        part.UnkF9C = UnkF9C;
-        part.UnkFA0 = UnkFA0;
-        part.UnkFA4 = UnkFA4;
-        part.UnkFA8 = UnkFA8;
+        part.DrawGroups[0] = DrawGroup1;
+        part.DrawGroups[1] = DrawGroup2;
+        part.DrawGroups[2] = DrawGroup3;
+        part.DrawGroups[3] = DrawGroup4;
+        part.DrawGroups[4] = DrawGroup5;
+        part.DrawGroups[5] = DrawGroup6;
+        part.DrawGroups[6] = DrawGroup7;
+        part.DrawGroups[7] = DrawGroup8;
 
-        part.DrawGroup1 = DrawGroup1;
-        part.DrawGroup2 = DrawGroup2;
-        part.DrawGroup3 = DrawGroup3;
-        part.DrawGroup4 = DrawGroup4;
-        part.DispGroup1 = DispGroup1;
-        part.DispGroup2 = DispGroup2;
-        part.DispGroup3 = DispGroup3;
-        part.DispGroup4 = DispGroup4;
+        part.DispGroups[0] = DispGroup1;
+        part.DispGroups[1] = DispGroup2;
+        part.DispGroups[2] = DispGroup3;
+        part.DispGroups[3] = DispGroup4;
+        part.DispGroups[4] = DispGroup5;
+        part.DispGroups[5] = DispGroup6;
+        part.DispGroups[6] = DispGroup7;
+        part.DispGroups[7] = DispGroup8;
+
+        part.BackreadGroups[0] = BackreadGroup1;
+        part.BackreadGroups[1] = BackreadGroup2;
+        part.BackreadGroups[2] = BackreadGroup3;
+        part.BackreadGroups[3] = BackreadGroup4;
+        part.BackreadGroups[4] = BackreadGroup5;
+        part.BackreadGroups[5] = BackreadGroup6;
+        part.BackreadGroups[6] = BackreadGroup7;
+        part.BackreadGroups[7] = BackreadGroup8;
+        part.UnkFA4 = UnkFA4;
 
         part.EventEntityID = EventEntityID;
         part.OldLightID = OldLightID;

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
 
+[AddComponentMenu("Dark Souls 3/Regions/General")]
 public class MSB3GeneralRegion : MSB3Region
 {
     public void SetRegion(MSB3.Region.General region)

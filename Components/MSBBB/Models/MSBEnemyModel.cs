@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
 
+[AddComponentMenu("Bloodborne/Model Declarations/Enemy")]
 public class MSBBBEnemyModel : MSBBBModel
 {
     public void SetModel(MSBBB.Model.Enemy model)

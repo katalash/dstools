@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
 
+[AddComponentMenu("Bloodborne/Model Declarations/Object")]
 public class MSBBBObjectModel : MSBBBModel
 {
     /// <summary>

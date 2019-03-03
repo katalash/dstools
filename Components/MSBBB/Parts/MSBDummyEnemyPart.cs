@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
 
+[AddComponentMenu("Bloodborne/Parts/Dummy Enemy")]
 public class MSBBBDummyEnemyPart : MSBBBEnemyPart
 {
     public new MSBBB.Part.DummyEnemy Serialize(GameObject parent)
@@ -14,7 +15,6 @@ public class MSBBBDummyEnemyPart : MSBBBEnemyPart
         part.NPCParamID = NPCParamID;
         part.TalkID = TalkID;
         part.CharaInitID = CharaInitID;
-        part.UnkT04 = UnkT04;
         part.UnkT07 = UnkT07;
         part.UnkT08 = UnkT08;
         part.UnkT09 = UnkT09;
@@ -25,9 +25,6 @@ public class MSBBBDummyEnemyPart : MSBBBEnemyPart
         part.UnkT14 = UnkT14;
         part.UnkT15 = UnkT15;
         part.UnkT16 = UnkT16;
-        part.UnkT17 = UnkT17;
-        part.UnkT18 = UnkT18;
-        part.UnkT19 = UnkT19;
         return part;
     }
 }

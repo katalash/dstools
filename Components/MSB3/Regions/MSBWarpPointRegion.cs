@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
 
+[AddComponentMenu("Dark Souls 3/Regions/Warp Point")]
 public class MSB3WarpPointRegion : MSB3Region
 {
     public void SetRegion(MSB3.Region.WarpPoint region)

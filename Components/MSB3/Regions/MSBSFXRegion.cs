@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
 
+[AddComponentMenu("Dark Souls 3/Regions/SFX")]
 public class MSB3SFXRegion : MSB3Region
 {
     /// <summary>

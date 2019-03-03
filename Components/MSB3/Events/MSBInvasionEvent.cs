@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
 
+[AddComponentMenu("Dark Souls 3/Events/Invasion")]
 public class MSB3InvasionEvent : MSB3Event
 {
     /// <summary>
@@ -40,7 +41,7 @@ public class MSB3InvasionEvent : MSB3Event
     /// </summary>
     public int UnkT18;
 
-    public void SetEvent(MSB3.Event.Invasion evt)
+    public void SetEvent(MSB3.Event.PseudoMultiplayer evt)
     {
         setBaseEvent(evt);
         HostEventEntityID = evt.HostEventEntityID;
@@ -52,9 +53,9 @@ public class MSB3InvasionEvent : MSB3Event
         UnkT18 = evt.UnkT18;
     }
 
-    public MSB3.Event.Invasion Serialize(GameObject parent)
+    public MSB3.Event.PseudoMultiplayer Serialize(GameObject parent)
     {
-        var evt = new MSB3.Event.Invasion(ID, parent.name);
+        var evt = new MSB3.Event.PseudoMultiplayer(ID, parent.name);
         _Serialize(evt, parent);
         evt.HostEventEntityID = HostEventEntityID;
         evt.InvasionEventEntityID = InvasionEventEntityID;

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
 
+[AddComponentMenu("Dark Souls 3/Parts/Connect Collision")]
 public class MSB3ConnectCollisionPart : MSB3Part
 {
     /// <summary>

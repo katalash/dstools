@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
 
+[AddComponentMenu("Dark Souls 3/Model Declarations/Collision")]
 public class MSB3CollisionModel : MSB3Model
 {
     public void SetModel(MSB3.Model.Collision model)

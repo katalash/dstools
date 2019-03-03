@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
 
+[AddComponentMenu("Dark Souls 3/Events/Walk Route")]
 public class MSB3WalkRouteEvent : MSB3Event
 {
     /// <summary>

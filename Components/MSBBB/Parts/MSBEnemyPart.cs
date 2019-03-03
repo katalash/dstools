@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
 
+[AddComponentMenu("Bloodborne/Parts/Enemy")]
 public class MSBBBEnemyPart : MSBBBPart
 {
     /// <summary>
@@ -33,7 +34,7 @@ public class MSBBBEnemyPart : MSBBBPart
     /// <summary>
     /// Unknown, probably more paramIDs.
     /// </summary>
-    public int UnkT04, UnkT07, UnkT08, UnkT09;
+    public int UnkT07, UnkT08, UnkT09;
 
     /// <summary>
     /// Unknown.
@@ -43,7 +44,7 @@ public class MSBBBEnemyPart : MSBBBPart
     /// <summary>
     /// Unknown.
     /// </summary>
-    public int UnkT11, UnkT12, UnkT13, UnkT14, UnkT15, UnkT16, UnkT17, UnkT18, UnkT19;
+    public int UnkT11, UnkT12, UnkT13, UnkT14, UnkT15, UnkT16;
 
     public void SetPart(MSBBB.Part.Enemy part)
     {
@@ -53,7 +54,6 @@ public class MSBBBEnemyPart : MSBBBPart
         NPCParamID = part.NPCParamID;
         TalkID = part.TalkID;
         CharaInitID = part.CharaInitID;
-        UnkT04 = part.UnkT04;
         UnkT07 = part.UnkT07;
         UnkT08 = part.UnkT08;
         UnkT09 = part.UnkT09;
@@ -64,9 +64,6 @@ public class MSBBBEnemyPart : MSBBBPart
         UnkT14 = part.UnkT14;
         UnkT15 = part.UnkT15;
         UnkT16 = part.UnkT16;
-        UnkT17 = part.UnkT17;
-        UnkT18 = part.UnkT18;
-        UnkT19 = part.UnkT19;
     }
 
     public MSBBB.Part.Enemy Serialize(GameObject parent)
@@ -79,7 +76,6 @@ public class MSBBBEnemyPart : MSBBBPart
         part.NPCParamID = NPCParamID;
         part.TalkID = TalkID;
         part.CharaInitID = CharaInitID;
-        part.UnkT04 = UnkT04;
         part.UnkT07 = UnkT07;
         part.UnkT08 = UnkT08;
         part.UnkT09 = UnkT09;
@@ -90,9 +86,6 @@ public class MSBBBEnemyPart : MSBBBPart
         part.UnkT14 = UnkT14;
         part.UnkT15 = UnkT15;
         part.UnkT16 = UnkT16;
-        part.UnkT17 = UnkT17;
-        part.UnkT18 = UnkT18;
-        part.UnkT19 = UnkT19;
         return part;
     }
 }

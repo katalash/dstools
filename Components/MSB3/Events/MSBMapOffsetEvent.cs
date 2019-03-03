@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
 
+[AddComponentMenu("Dark Souls 3/Events/Map Offset")]
 public class MSB3MapOffsetEvent : MSB3Event
 {
     /// <summary>

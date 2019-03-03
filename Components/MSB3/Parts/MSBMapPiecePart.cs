@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
 
+[AddComponentMenu("Dark Souls 3/Parts/Map Piece")]
 public class MSB3MapPiecePart : MSB3Part
 {
     /// <summary>

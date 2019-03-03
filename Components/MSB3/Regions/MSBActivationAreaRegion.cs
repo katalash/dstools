@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
 
+[AddComponentMenu("Dark Souls 3/Regions/Activation Area")]
 public class MSB3ActivationAreaRegion : MSB3Region
 {
     public void SetRegion(MSB3.Region.ActivationArea region)

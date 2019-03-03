@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
 
+[AddComponentMenu("Bloodborne/Parts/Collision")]
 public class MSBBBCollisionPart : MSBBBPart
 {
     /// <summary>
@@ -30,10 +31,7 @@ public class MSBBBCollisionPart : MSBBBPart
     /// </summary>
     public short MapNameID;
 
-    /// <summary>
-    /// Unknown.
-    /// </summary>
-    public bool DisableStart;
+    public short UnkT08b;
 
     /// <summary>
     /// Disables a bonfire with this entity ID when an enemy is touching this collision.
@@ -58,12 +56,7 @@ public class MSBBBCollisionPart : MSBBBPart
     /// <summary>
     /// Unknown.
     /// </summary>
-    public int UnkT2C, UnkT34, UnkT50, UnkT54, UnkT58, UnkT5C, UnkT74;
-
-    /// <summary>
-    /// Unknown.
-    /// </summary>
-    public float UnkT78;
+    public int UnkT14, UnkT18, UnkT1C, UnkT20, UnkT24, UnkT38, UnkT40, UnkT44, UnkT48, UnkT4C, UnkT70, UnkT74;
 
     public void SetPart(MSBBB.Part.Collision part)
     {
@@ -73,20 +66,24 @@ public class MSBBBCollisionPart : MSBBBPart
         EnvLightMapSpotIndex = part.EnvLightMapSpotIndex;
         ReflectPlaneHeight = part.ReflectPlaneHeight;
         MapNameID = part.MapNameID;
-        //DisableStart = part.DisableStart;
+        UnkT08b = part.UnkT08b;
         DisableBonfireEntityID = part.DisableBonfireEntityID;
         PlayRegionID = part.PlayRegionID;
         LockCamID1 = part.LockCamID1;
         LockCamID2 = part.LockCamID2;
         UnkHitName = part.UnkHitName;
-        UnkT2C = part.UnkT2C;
-        UnkT34 = part.UnkT34;
-        UnkT50 = part.UnkT50;
-        UnkT54 = part.UnkT54;
-        UnkT58 = part.UnkT58;
-        UnkT5C = part.UnkT5C;
+        UnkT14 = part.UnkT14;
+        UnkT18 = part.UnkT18;
+        UnkT1C = part.UnkT1C;
+        UnkT20 = part.UnkT20;
+        UnkT24 = part.UnkT24;
+        UnkT38 = part.UnkT38;
+        UnkT40 = part.UnkT40;
+        UnkT44 = part.UnkT44;
+        UnkT48 = part.UnkT48;
+        UnkT4C = part.UnkT4C;
+        UnkT70 = part.UnkT70;
         UnkT74 = part.UnkT74;
-        UnkT78 = part.UnkT78;
     }
 
     public MSBBB.Part.Collision Serialize(GameObject parent)
@@ -98,7 +95,7 @@ public class MSBBBCollisionPart : MSBBBPart
         part.EnvLightMapSpotIndex = EnvLightMapSpotIndex;
         part.ReflectPlaneHeight = ReflectPlaneHeight;
         part.MapNameID = MapNameID;
-        //part.DisableStart = DisableStart;
+        part.UnkT08b = UnkT08b;
         part.DisableBonfireEntityID = DisableBonfireEntityID;
         part.PlayRegionID = PlayRegionID;
         part.LockCamID1 = LockCamID1;
@@ -107,14 +104,18 @@ public class MSBBBCollisionPart : MSBBBPart
             part.UnkHitName = null;
         else
             part.UnkHitName = UnkHitName;
-        part.UnkT2C = UnkT2C;
-        part.UnkT34 = UnkT34;
-        part.UnkT50 = UnkT50;
-        part.UnkT54 = UnkT54;
-        part.UnkT58 = UnkT58;
-        part.UnkT5C = UnkT5C;
+        part.UnkT14 = UnkT14;
+        part.UnkT18 = UnkT18;
+        part.UnkT1C = UnkT1C;
+        part.UnkT20 = UnkT20;
+        part.UnkT24 = UnkT24;
+        part.UnkT38 = UnkT38;
+        part.UnkT40 = UnkT40;
+        part.UnkT44 = UnkT44;
+        part.UnkT48 = UnkT48;
+        part.UnkT4C = UnkT4C;
+        part.UnkT70 = UnkT70;
         part.UnkT74 = UnkT74;
-        part.UnkT78 = UnkT78;
         return part;
     }
 }

@@ -5,6 +5,7 @@ using SoulsFormats;
 using MeowDSIO.DataTypes.MSB;
 using MeowDSIO.DataTypes.MSB.MODEL_PARAM_ST;
 
+[AddComponentMenu("Dark Souls 1/Model Declarations/Object")]
 public class MSB1ObjectModel : MSB1Model
 {
     public void SetModel(MsbModelObject model)

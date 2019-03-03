@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
 
+[AddComponentMenu("Dark Souls 3/Regions/Sound")]
 public class MSB3SoundRegion : MSB3Region
 {
     /// <summary>
@@ -33,6 +34,7 @@ public class MSB3SoundRegion : MSB3Region
         var region = new MSB3.Region.Sound(ID, parent.name);
         _Serialize(region, parent);
         region.SoundID = SoundID;
+        region.SoundType = SoundType;
         for (int i = 0; i < 16; i++)
         {
             if (i >= ChildRegionNames.Length)

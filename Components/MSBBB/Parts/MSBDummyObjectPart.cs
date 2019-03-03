@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
 
+[AddComponentMenu("Bloodborne/Parts/Dummy Object")]
 public class MSBBBDummyObjectPart : MSBBBObjectPart
 {
     public new MSBBB.Part.DummyObject Serialize(GameObject parent)

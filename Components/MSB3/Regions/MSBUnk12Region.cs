@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
 
+[AddComponentMenu("Dark Souls 3/Regions/Unk 12")]
 public class MSB3Unk12Region : MSB3Region
 {
     public void SetRegion(MSB3.Region.Unk12 region)

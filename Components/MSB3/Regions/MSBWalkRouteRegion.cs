@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
 
+[AddComponentMenu("Dark Souls 3/Regions/Walk Route")]
 public class MSB3WalkRouteRegion : MSB3Region
 {
     public void SetRegion(MSB3.Region.WalkRoute region)

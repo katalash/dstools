@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
 
+[AddComponentMenu("Dark Souls 3/Events/Group Tour")]
 public class MSB3GroupTourEvent : MSB3Event
 {
     /// <summary>
     /// Unknown.
     /// </summary>
-    public int UnkT00, UnkT04;
+    public int PlatoonIDScriptActivate, State;
 
     /// <summary>
     /// Unknown.
@@ -18,8 +19,8 @@ public class MSB3GroupTourEvent : MSB3Event
     public void SetEvent(MSB3.Event.GroupTour evt)
     {
         setBaseEvent(evt);
-        UnkT00 = evt.UnkT00;
-        UnkT04 = evt.UnkT04;
+        PlatoonIDScriptActivate = evt.PlatoonIDScriptActivate;
+        State = evt.State;
         GroupPartsNames = evt.GroupPartsNames;
     }
 
@@ -27,8 +28,8 @@ public class MSB3GroupTourEvent : MSB3Event
     {
         var evt = new MSB3.Event.GroupTour(ID, parent.name);
         _Serialize(evt, parent);
-        evt.UnkT00 = UnkT00;
-        evt.UnkT04 = UnkT04;
+        evt.PlatoonIDScriptActivate = PlatoonIDScriptActivate;
+        evt.State = State;
         for (int i = 0; i < 32; i++)
         {
             if (i >= GroupPartsNames.Length)

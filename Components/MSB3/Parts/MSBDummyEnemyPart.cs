@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
 
+[AddComponentMenu("Dark Souls 3/Parts/Dummy Enemy")]
 public class MSB3DummyEnemyPart : MSB3EnemyPart
 {
     public new MSB3.Part.DummyEnemy Serialize(GameObject parent)
@@ -15,19 +16,20 @@ public class MSB3DummyEnemyPart : MSB3EnemyPart
         part.TalkID = TalkID;
         part.CharaInitID = CharaInitID;
         part.UnkT04 = UnkT04;
-        part.UnkT07 = UnkT07;
-        part.UnkT08 = UnkT08;
-        part.UnkT09 = UnkT09;
-        part.UnkT10 = UnkT10;
-        part.UnkT11 = UnkT11;
-        part.UnkT12 = UnkT12;
-        part.UnkT13 = UnkT13;
-        part.UnkT14 = UnkT14;
-        part.UnkT15 = UnkT15;
-        part.UnkT16 = UnkT16;
-        part.UnkT17 = UnkT17;
-        part.UnkT18 = UnkT18;
-        part.UnkT19 = UnkT19;
+        part.ChrManipulatorAllocationParameter = ChrManipulatorAllocationParameter;
+        part.UnkT20 = UnkT20;
+        part.BackupEventAnimID = BackupEventAnimID;
+        part.UnkT78 = UnkT78;
+        part.UnkT84 = UnkT84;
+        part.UnkT8C = UnkT8C;
+        part.UnkT94 = UnkT94;
+        part.UnkT9C = UnkT9C;
+        part.UnkTA4 = UnkTA4;
+        part.UnkTAC = UnkTAC;
+        part.UnkTC0 = UnkTC0;
+        part.UnkTC4 = UnkTC4;
+        part.UnkTC8 = UnkTC8;
+        part.UnkTCC = UnkTCC;
         return part;
     }
 }

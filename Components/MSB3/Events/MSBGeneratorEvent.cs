@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
 
+[AddComponentMenu("Dark Souls 3/Events/Generator")]
 public class MSB3GeneratorEvent : MSB3Event
 {
     /// <summary>
@@ -48,7 +49,7 @@ public class MSB3GeneratorEvent : MSB3Event
     /// <summary>
     /// Unknown.
     /// </summary>
-    public int UnkT10;
+    public int SessionCondition;
 
     /// <summary>
     /// Unknown.
@@ -66,7 +67,7 @@ public class MSB3GeneratorEvent : MSB3Event
         MaxInterval = evt.MaxInterval;
         SpawnPointNames = evt.SpawnPointNames;
         SpawnPartNames = evt.SpawnPartNames;
-        UnkT10 = evt.UnkT10;
+        SessionCondition = evt.SessionCondition;
         UnkT14 = evt.UnkT14;
         UnkT18 = evt.UnkT18;
     }
@@ -93,7 +94,7 @@ public class MSB3GeneratorEvent : MSB3Event
                 break;
             evt.SpawnPartNames[i] = (SpawnPartNames[i] == "") ? null : SpawnPartNames[i];
         }
-        evt.UnkT10 = UnkT10;
+        evt.SessionCondition = SessionCondition;
         evt.UnkT14 = UnkT14;
         evt.UnkT18 = UnkT18;
         return evt;

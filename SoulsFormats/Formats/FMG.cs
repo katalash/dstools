@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace SoulsFormats
 {
@@ -14,14 +15,34 @@ namespace SoulsFormats
         public List<Entry> Entries;
 
         /// <summary>
-        /// If true, use DS3 format with 64-bit string offsets.
+        /// Indicates file format; 0 - DeS, 1 - DS1/DS2, 2 - DS3/BB.
         /// </summary>
-        public bool Long;
+        public FMGVersion Version;
 
         /// <summary>
-        /// Creates an uninitialized FMG. Should not be used publicly; use FMG.Read instead.
+        /// FMG file endianness. (Big = true)
         /// </summary>
-        public FMG() { }
+        public bool BigEndian;
+
+        /// <summary>
+        /// Creates an empty FMG configured for DS1/DS2.
+        /// </summary>
+        public FMG()
+        {
+            Entries = new List<Entry>();
+            Version = FMGVersion.DarkSouls1;
+            BigEndian = false;
+        }
+
+        /// <summary>
+        /// Creates an empty FMG configured for the specified version.
+        /// </summary>
+        public FMG(FMGVersion version)
+        {
+            Entries = new List<Entry>();
+            Version = version;
+            BigEndian = Version == FMGVersion.DemonsSouls;
+        }
 
         internal override bool Is(BinaryReaderEx br)
         {
@@ -30,52 +51,60 @@ namespace SoulsFormats
 
         internal override void Read(BinaryReaderEx br)
         {
-            br.BigEndian = false;
+            br.AssertByte(0);
+            BigEndian = br.ReadBoolean();
+            Version = br.ReadEnum8<FMGVersion>();
+            br.AssertByte(0);
 
-            br.AssertByte(0);
-            br.AssertByte(0);
-            Long = br.AssertByte(1, 2) == 2;
-            br.AssertByte(0);
+            br.BigEndian = BigEndian;
+            bool wide = Version == FMGVersion.DarkSouls3;
 
             int fileSize = br.ReadInt32();
-            br.AssertInt32(1);
+            br.AssertByte(1);
+            br.AssertByte((byte)(Version == FMGVersion.DemonsSouls ? 0xFF : 0x00));
+            br.AssertByte(0);
+            br.AssertByte(0);
             int groupCount = br.ReadInt32();
             int stringCount = br.ReadInt32();
 
-            if (Long)
+            if (wide)
                 br.AssertInt32(0xFF);
 
             long stringOffsetsOffset;
-            if (Long)
+            if (wide)
                 stringOffsetsOffset = br.ReadInt64();
             else
                 stringOffsetsOffset = br.ReadInt32();
 
-            br.AssertInt32(0);
-            br.AssertInt32(0);
+            if (wide)
+                br.AssertInt64(0);
+            else
+                br.AssertInt32(0);
 
-            Entries = new List<Entry>();
+            Entries = new List<Entry>(groupCount);
             for (int i = 0; i < groupCount; i++)
             {
                 int offsetIndex = br.ReadInt32();
                 int firstID = br.ReadInt32();
                 int lastID = br.ReadInt32();
 
-                if (Long)
+                if (wide)
                     br.AssertInt32(0);
 
-                br.StepIn(stringOffsetsOffset + offsetIndex * (Long ? 8 : 4));
-                for (int j = 0; j < lastID - firstID + 1; j++)
+                br.StepIn(stringOffsetsOffset + offsetIndex * (wide ? 8 : 4));
                 {
-                    long stringOffset;
-                    if (Long)
-                        stringOffset = br.ReadInt64();
-                    else
-                        stringOffset = br.ReadInt32();
+                    for (int j = 0; j < lastID - firstID + 1; j++)
+                    {
+                        long stringOffset;
+                        if (wide)
+                            stringOffset = br.ReadInt64();
+                        else
+                            stringOffset = br.ReadInt32();
 
-                    int id = firstID + j;
-                    string text = stringOffset != 0 ? br.GetUTF16(stringOffset) : null;
-                    Entries.Add(new Entry(id, text));
+                        int id = firstID + j;
+                        string text = stringOffset != 0 ? br.GetUTF16(stringOffset) : null;
+                        Entries.Add(new Entry(id, text));
+                    }
                 }
                 br.StepOut();
             }
@@ -83,28 +112,34 @@ namespace SoulsFormats
 
         internal override void Write(BinaryWriterEx bw)
         {
-            bw.BigEndian = false;
+            bw.BigEndian = BigEndian;
+            bool wide = Version == FMGVersion.DarkSouls3;
 
             bw.WriteByte(0);
-            bw.WriteByte(0);
-            bw.WriteByte((byte)(Long ? 2 : 1));
+            bw.WriteBoolean(bw.BigEndian);
+            bw.WriteByte((byte)Version);
             bw.WriteByte(0);
 
             bw.ReserveInt32("FileSize");
-            bw.WriteInt32(1);
+            bw.WriteByte(1);
+            bw.WriteByte((byte)(Version == FMGVersion.DemonsSouls ? 0xFF : 0x00));
+            bw.WriteByte(0);
+            bw.WriteByte(0);
             bw.ReserveInt32("GroupCount");
             bw.WriteInt32(Entries.Count);
 
-            if (Long)
+            if (wide)
                 bw.WriteInt32(0xFF);
 
-            if (Long)
+            if (wide)
                 bw.ReserveInt64("StringOffsets");
             else
                 bw.ReserveInt32("StringOffsets");
 
-            bw.WriteInt32(0);
-            bw.WriteInt32(0);
+            if (wide)
+                bw.WriteInt64(0);
+            else
+                bw.WriteInt32(0);
 
             int groupCount = 0;
             Entries.Sort((e1, e2) => e1.ID.CompareTo(e2.ID));
@@ -116,21 +151,21 @@ namespace SoulsFormats
                     i++;
                 bw.WriteInt32(Entries[i].ID);
 
-                if (Long)
+                if (wide)
                     bw.WriteInt32(0);
 
                 groupCount++;
             }
             bw.FillInt32("GroupCount", groupCount);
 
-            if (Long)
+            if (wide)
                 bw.FillInt64("StringOffsets", bw.Position);
             else
                 bw.FillInt32("StringOffsets", (int)bw.Position);
 
             for (int i = 0; i < Entries.Count; i++)
             {
-                if (Long)
+                if (wide)
                     bw.ReserveInt64($"StringOffset{i}");
                 else
                     bw.ReserveInt32($"StringOffset{i}");
@@ -140,10 +175,10 @@ namespace SoulsFormats
             {
                 string text = Entries[i].Text;
 
-                if (Long)
+                if (wide)
                     bw.FillInt64($"StringOffset{i}", text == null ? 0 : bw.Position);
                 else
-                    bw.FillInt64($"StringOffset{i}", text == null ? 0 : (int)bw.Position);
+                    bw.FillInt32($"StringOffset{i}", text == null ? 0 : (int)bw.Position);
 
                 if (text != null)
                     bw.WriteUTF16(Entries[i].Text, true);
@@ -157,14 +192,14 @@ namespace SoulsFormats
         /// </summary>
         public string this[int id]
         {
-            get
+            get => Entries.Find(entry => entry.ID == id)?.Text;
+
+            set
             {
-                foreach (Entry entry in Entries)
-                {
-                    if (entry.ID == id)
-                        return entry.Text;
-                }
-                return null;
+                if (Entries.Any(entry => entry.ID == id))
+                    Entries.Find(entry => entry.ID == id).Text = value;
+                else
+                    Entries.Add(new Entry(id, value));
             }
         }
 
@@ -199,6 +234,27 @@ namespace SoulsFormats
             {
                 return $"{ID}: {Text ?? "<null>"}";
             }
+        }
+
+        /// <summary>
+        /// Indicates the game this FMG is for, and thus the format it will be written in.
+        /// </summary>
+        public enum FMGVersion : byte
+        {
+            /// <summary>
+            /// Demon's Souls
+            /// </summary>
+            DemonsSouls = 0,
+
+            /// <summary>
+            /// Dark Souls 1 and Dark Souls 2
+            /// </summary>
+            DarkSouls1 = 1,
+
+            /// <summary>
+            /// Bloodborne and Dark Souls 3
+            /// </summary>
+            DarkSouls3 = 2,
         }
     }
 }

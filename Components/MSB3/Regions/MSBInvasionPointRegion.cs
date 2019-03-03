@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
 
+[AddComponentMenu("Dark Souls 3/Regions/Invasion Point")]
 public class MSB3InvasionPointRegion : MSB3Region
 {
     /// <summary>

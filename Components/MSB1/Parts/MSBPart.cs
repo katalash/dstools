@@ -7,8 +7,13 @@ using MeowDSIO.DataTypes.MSB;
 using MeowDSIO.DataTypes.MSB.PARTS_PARAM_ST;
 
 // Stores all the MSB specific fields for a part
-public class MSB1Part : MonoBehaviour
+public abstract class MSB1Part : MonoBehaviour
 {
+    /// <summary>
+    /// Workaround field until I figure out how DS3 rotations actually work :trashcat:
+    /// </summary>
+    public UnityEngine.Vector3 Rotation;
+
     /// <summary>
     /// The placeholder model for this part.
     /// </summary>
@@ -80,6 +85,8 @@ public class MSB1Part : MonoBehaviour
         DispGroup3 = part.DispGroup3;
         DispGroup4 = part.DispGroup4;
 
+        Rotation = new UnityEngine.Vector3(part.RotX, part.RotY, part.RotZ);
+
         EventEntityID = part.EntityID;
         LightID = part.LightID;
         FogID = part.FogID;
@@ -105,9 +112,12 @@ public class MSB1Part : MonoBehaviour
         part.PosX = parent.transform.position.x;
         part.PosY = parent.transform.position.y;
         part.PosZ = parent.transform.position.z;
-        part.RotX = parent.transform.eulerAngles.x;
-        part.RotY = parent.transform.eulerAngles.y;
-        part.RotZ = parent.transform.eulerAngles.z;
+        //part.RotX = parent.transform.eulerAngles.x;
+        //part.RotY = parent.transform.eulerAngles.y;
+        //part.RotZ = parent.transform.eulerAngles.z;
+        part.RotX = Rotation.x;
+        part.RotY = Rotation.y;
+        part.RotZ = Rotation.z;
         part.ScaleX = parent.transform.localScale.x;
         part.ScaleY = parent.transform.localScale.y;
         part.ScaleZ = parent.transform.localScale.z;

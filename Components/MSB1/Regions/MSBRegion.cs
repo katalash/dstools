@@ -5,13 +5,22 @@ using SoulsFormats;
 using System.Numerics;
 using System;
 using MeowDSIO.DataTypes.MSB;
+using MeowDSIO.DataTypes.MSB.POINT_PARAM_ST;
 
+[AddComponentMenu("Dark Souls 1/Region")]
 public class MSB1Region : MonoBehaviour
 {
+    public UnityEngine.Vector3 Rotation;
+
     /// <summary>
     /// The ID of this region.
     /// </summary>
     public int ID;
+
+    /// <summary>
+    /// An ID used to identify this region in event scripts.
+    /// </summary>
+    public int EventEntityID;
 
     /// <summary>
     /// Used to disambiguate a point from a sphere
@@ -21,6 +30,24 @@ public class MSB1Region : MonoBehaviour
     public void setBaseRegion(MsbRegionBase region)
     {
         ID = region.Index;
+        if (region is MsbRegionBox)
+        {
+            EventEntityID = ((MsbRegionBox)region).EntityID;
+        }
+        if (region is MsbRegionCylinder)
+        {
+            EventEntityID = ((MsbRegionCylinder)region).EntityID;
+        }
+        if (region is MsbRegionPoint)
+        {
+            EventEntityID = ((MsbRegionPoint)region).EntityID;
+            IsPoint = true;
+        }
+        if (region is MsbRegionSphere)
+        {
+            EventEntityID = ((MsbRegionSphere)region).EntityID;
+        }
+        Rotation = new UnityEngine.Vector3(region.RotX, region.RotY, region.RotZ);
     }
 
     static System.Numerics.Vector3 ConvertEuler(UnityEngine.Vector3 r)
@@ -60,7 +87,7 @@ public class MSB1Region : MonoBehaviour
         return new System.Numerics.Vector3(Mathf.Rad2Deg * x, Mathf.Rad2Deg * y, Mathf.Rad2Deg * z);
     }
 
-    internal void _Serialize(MsbRegionBase region, GameObject parent)
+    public MsbRegionBase Serialize(MsbRegionBase region, GameObject parent)
     {
         region.Name = parent.name;
         region.Index = ID;
@@ -69,8 +96,42 @@ public class MSB1Region : MonoBehaviour
         region.PosY = parent.transform.position.y;
         region.PosZ = parent.transform.position.z;
         var rot = ConvertEuler(parent.transform.rotation.eulerAngles);
-        region.RotX = rot.X;
-        region.RotY = rot.Y;
-        region.RotZ = rot.Z;
+        //region.RotX = rot.X;
+        //region.RotY = rot.Y;
+        //region.RotZ = rot.Z;
+        region.RotX = Rotation.x;
+        region.RotY = Rotation.y;
+        region.RotZ = Rotation.z;
+
+        if (region is MsbRegionBox)
+        {
+            var shape = (MsbRegionBox)region;
+            var col = parent.GetComponent<BoxCollider>();
+            shape.WidthX = col.size.x;
+            shape.HeightY = col.size.y;
+            shape.DepthZ = col.size.z;
+            shape.EntityID = EventEntityID;
+        }
+        else if (region is MsbRegionCylinder)
+        {
+            var shape = (MsbRegionCylinder)region;
+            var col = parent.GetComponent<CapsuleCollider>();
+            shape.Radius = col.radius;
+            shape.Height = col.height;
+            shape.EntityID = EventEntityID;
+        }
+        else if (region is MsbRegionSphere)
+        {
+            var shape = (MsbRegionSphere)region;
+            var col = parent.GetComponent<SphereCollider>();
+            shape.Radius = col.radius;
+            shape.EntityID = EventEntityID;
+        }
+        else if (region is MsbRegionPoint)
+        {
+            var shape = (MsbRegionPoint)region;
+            shape.EntityID = EventEntityID;
+        }
+        return region;
     }
 }

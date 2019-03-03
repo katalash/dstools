@@ -4,7 +4,7 @@ using UnityEngine;
 using SoulsFormats;
 
 // Stores all the MSB specific fields for an event
-public class MSB3Event : MonoBehaviour
+public abstract class MSB3Event : MonoBehaviour
 {
     /// <summary>
     /// Unknown.

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
 
+[AddComponentMenu("Dark Souls 3/Regions/Environment Map Point")]
 public class MSB3EnvironmentMapPointRegion : MSB3Region
 {
     /// <summary>

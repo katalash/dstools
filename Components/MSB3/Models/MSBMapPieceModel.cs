@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
 
+[AddComponentMenu("Dark Souls 3/Model Declarations/Map Piece")]
 public class MSB3MapPieceModel : MSB3Model
 {
     /// <summary>

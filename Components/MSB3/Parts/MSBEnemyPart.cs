@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
 
+[AddComponentMenu("Dark Souls 3/Parts/Enemy")]
 public class MSB3EnemyPart : MSB3Part
 {
     /// <summary>
@@ -31,19 +32,24 @@ public class MSB3EnemyPart : MSB3Part
     public int CharaInitID;
 
     /// <summary>
-    /// Unknown, probably more paramIDs.
+    /// Unknown.
     /// </summary>
-    public int UnkT04, UnkT07, UnkT08, UnkT09;
+    public short UnkT04, ChrManipulatorAllocationParameter;
 
     /// <summary>
     /// Unknown.
     /// </summary>
-    public float UnkT10;
+    public int UnkT20, BackupEventAnimID, UnkT78;
 
     /// <summary>
     /// Unknown.
     /// </summary>
-    public int UnkT11, UnkT12, UnkT13, UnkT14, UnkT15, UnkT16, UnkT17, UnkT18, UnkT19;
+    public float UnkT84;
+
+    /// <summary>
+    /// Unknown.
+    /// </summary>
+    public int UnkT8C, UnkT94, UnkT9C, UnkTA4, UnkTAC, UnkTC0, UnkTC4, UnkTC8, UnkTCC;
 
     public void SetPart(MSB3.Part.Enemy part)
     {
@@ -54,19 +60,20 @@ public class MSB3EnemyPart : MSB3Part
         TalkID = part.TalkID;
         CharaInitID = part.CharaInitID;
         UnkT04 = part.UnkT04;
-        UnkT07 = part.UnkT07;
-        UnkT08 = part.UnkT08;
-        UnkT09 = part.UnkT09;
-        UnkT10 = part.UnkT10;
-        UnkT11 = part.UnkT11;
-        UnkT12 = part.UnkT12;
-        UnkT13 = part.UnkT13;
-        UnkT14 = part.UnkT14;
-        UnkT15 = part.UnkT15;
-        UnkT16 = part.UnkT16;
-        UnkT17 = part.UnkT17;
-        UnkT18 = part.UnkT18;
-        UnkT19 = part.UnkT19;
+        ChrManipulatorAllocationParameter = part.ChrManipulatorAllocationParameter;
+        UnkT20 = part.UnkT20;
+        BackupEventAnimID = part.BackupEventAnimID;
+        UnkT78 = part.UnkT78;
+        UnkT84 = part.UnkT84;
+        UnkT8C = part.UnkT8C;
+        UnkT94 = part.UnkT94;
+        UnkT9C = part.UnkT9C;
+        UnkTA4 = part.UnkTA4;
+        UnkTAC = part.UnkTAC;
+        UnkTC0 = part.UnkTC0;
+        UnkTC4 = part.UnkTC4;
+        UnkTC8 = part.UnkTC8;
+        UnkTCC = part.UnkTCC;
     }
 
     public MSB3.Part.Enemy Serialize(GameObject parent)
@@ -80,19 +87,20 @@ public class MSB3EnemyPart : MSB3Part
         part.TalkID = TalkID;
         part.CharaInitID = CharaInitID;
         part.UnkT04 = UnkT04;
-        part.UnkT07 = UnkT07;
-        part.UnkT08 = UnkT08;
-        part.UnkT09 = UnkT09;
-        part.UnkT10 = UnkT10;
-        part.UnkT11 = UnkT11;
-        part.UnkT12 = UnkT12;
-        part.UnkT13 = UnkT13;
-        part.UnkT14 = UnkT14;
-        part.UnkT15 = UnkT15;
-        part.UnkT16 = UnkT16;
-        part.UnkT17 = UnkT17;
-        part.UnkT18 = UnkT18;
-        part.UnkT19 = UnkT19;
+        part.ChrManipulatorAllocationParameter = ChrManipulatorAllocationParameter;
+        part.UnkT20 = UnkT20;
+        part.BackupEventAnimID = BackupEventAnimID;
+        part.UnkT78 = UnkT78;
+        part.UnkT84 = UnkT84;
+        part.UnkT8C = UnkT8C;
+        part.UnkT94 = UnkT94;
+        part.UnkT9C = UnkT9C;
+        part.UnkTA4 = UnkTA4;
+        part.UnkTAC = UnkTAC;
+        part.UnkTC0 = UnkTC0;
+        part.UnkTC4 = UnkTC4;
+        part.UnkTC8 = UnkTC8;
+        part.UnkTCC = UnkTCC;
         return part;
     }
 }

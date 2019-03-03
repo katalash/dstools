@@ -4,7 +4,7 @@ using UnityEngine;
 using SoulsFormats;
 
 // Stores all the MSB specific fields for a part
-public class MSBBBModel : MonoBehaviour
+public abstract class MSBBBModel : MonoBehaviour
 {
     /// <summary>
     /// The placeholder used for this model in MapStudio.

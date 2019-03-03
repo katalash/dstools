@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
 
+[AddComponentMenu("Dark Souls 3/Events/Other")]
 public class MSB3OtherEvent : MSB3Event
 {
     /// <summary>

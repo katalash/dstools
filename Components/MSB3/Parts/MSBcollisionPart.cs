@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
 
+[AddComponentMenu("Dark Souls 3/Parts/Collision")]
 public class MSB3CollisionPart : MSB3Part
 {
     /// <summary>
@@ -58,12 +59,16 @@ public class MSB3CollisionPart : MSB3Part
     /// <summary>
     /// Unknown.
     /// </summary>
-    public int UnkT2C, UnkT34, UnkT50, UnkT54, UnkT58, UnkT5C, UnkT74;
+    public int UnkT2C;
+
+    public byte UnkT34, UnkT35, UnkT36, EnableDarksight;
+
+    public int UnkT50, UnkT54, UnkT58, UnkT5C, UnkTC0;
 
     /// <summary>
     /// Unknown.
     /// </summary>
-    public float UnkT78;
+    public float UnkTC4;
 
     public void SetPart(MSB3.Part.Collision part)
     {
@@ -81,12 +86,15 @@ public class MSB3CollisionPart : MSB3Part
         UnkHitName = part.UnkHitName;
         UnkT2C = part.UnkT2C;
         UnkT34 = part.UnkT34;
+        UnkT35 = part.UnkT35;
+        UnkT36 = part.UnkT36;
+        EnableDarksight = part.EnableDarksight;
         UnkT50 = part.UnkT50;
         UnkT54 = part.UnkT54;
         UnkT58 = part.UnkT58;
         UnkT5C = part.UnkT5C;
-        UnkT74 = part.UnkT74;
-        UnkT78 = part.UnkT78;
+        UnkTC0 = part.UnkTC0;
+        UnkTC4 = part.UnkTC4;
     }
 
     public MSB3.Part.Collision Serialize(GameObject parent)
@@ -113,8 +121,8 @@ public class MSB3CollisionPart : MSB3Part
         part.UnkT54 = UnkT54;
         part.UnkT58 = UnkT58;
         part.UnkT5C = UnkT5C;
-        part.UnkT74 = UnkT74;
-        part.UnkT78 = UnkT78;
+        part.UnkTC0 = UnkTC0;
+        part.UnkTC4 = UnkTC4;
         return part;
     }
 }

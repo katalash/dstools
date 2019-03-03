@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
 
+[AddComponentMenu("Dark Souls 3/Events/Treasure")]
 public class MSB3TreasureEvent : MSB3Event
 {
     /// <summary>

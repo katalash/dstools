@@ -64,9 +64,9 @@ namespace SoulsFormats
             public List<Event.Environment> Environments;
 
             /// <summary>
-            /// Mysteries in the MSB.
+            /// Winds in the MSB.
             /// </summary>
-            public List<Event.Wind> Mysteries;
+            public List<Event.Wind> Winds;
 
             /// <summary>
             /// Invasions in the MSB.
@@ -109,7 +109,7 @@ namespace SoulsFormats
                 Navimeshes = new List<Event.Navimesh>();
                 Environments = new List<Event.Environment>();
                 Invasions = new List<Event.Invasion>();
-                Mysteries = new List<Event.Wind>();
+                Winds = new List<Event.Wind>();
                 WalkRoutes = new List<Event.WalkRoute>();
                 Unknowns = new List<Event.Unknown>();
                 GroupTours = new List<Event.GroupTour>();
@@ -122,7 +122,7 @@ namespace SoulsFormats
             public override List<Event> GetEntries()
             {
                 return SFUtil.ConcatAll<Event>(
-                    Sounds, SFXs, Treasures, Generators, Messages, ObjActs, SpawnPoints, MapOffsets, Navimeshes, Environments, Invasions, Mysteries, WalkRoutes, Unknowns, GroupTours, Others);
+                    Sounds, SFXs, Treasures, Generators, Messages, ObjActs, SpawnPoints, MapOffsets, Navimeshes, Environments, Invasions, Winds, WalkRoutes, Unknowns, GroupTours, Others);
             }
 
             internal override Event ReadEntry(BinaryReaderEx br)
@@ -188,7 +188,7 @@ namespace SoulsFormats
 
                     case EventType.Wind:
                         var Wind = new Event.Wind(br);
-                        Mysteries.Add(Wind);
+                        Winds.Add(Wind);
                         return Wind;
 
                     case EventType.WalkRoute:
@@ -612,8 +612,8 @@ namespace SoulsFormats
                     br.AssertInt32(-1);
                     br.AssertInt32(-1);
                     br.AssertInt32(-1);
-                    Unk3 = br.ReadInt32();
                     PickupAnimID = br.ReadInt32();
+                    Unk3 = br.ReadInt32();
 
                     InChest = br.ReadBoolean();
                     StartDisabled = br.ReadBoolean();
@@ -641,8 +641,8 @@ namespace SoulsFormats
                     bw.WriteInt32(-1);
                     bw.WriteInt32(-1);
                     bw.WriteInt32(-1);
-                    bw.WriteInt32(Unk3);
                     bw.WriteInt32(PickupAnimID);
+                    bw.WriteInt32(Unk3);
 
                     bw.WriteBoolean(InChest);
                     bw.WriteBoolean(StartDisabled);
@@ -716,6 +716,7 @@ namespace SoulsFormats
                 /// </summary>
                 public string[] SpawnPartNames { get; private set; }
 
+
                 /// <summary>
                 /// Unknown.
                 /// </summary>
@@ -726,7 +727,7 @@ namespace SoulsFormats
                 /// </summary>
                 public float UnkT14, UnkT18;
 
-                public int Unk4, Unk5, Unk6, Unk7;
+                //public int Unk4, Unk5, Unk6, Unk7;
 
                 /// <summary>
                 /// Creates a new Generator with the given ID and name.
@@ -742,12 +743,8 @@ namespace SoulsFormats
                     UnkT10 = 0;
                     UnkT14 = 0;
                     UnkT18 = 0;
-                    Unk4 = 0;
-                    Unk5 = 0;
-                    Unk6 = 0;
-                    Unk7 = 0;
-                    SpawnPointNames = new string[8];
                     SpawnPartNames = new string[32];
+                    SpawnPointNames = new string[8];
                 }
 
                 /// <summary>
@@ -764,10 +761,6 @@ namespace SoulsFormats
                     UnkT10 = clone.UnkT10;
                     UnkT14 = clone.UnkT14;
                     UnkT18 = clone.UnkT18;
-                    Unk4 = clone.Unk4;
-                    Unk5 = clone.Unk5;
-                    Unk6 = clone.Unk6;
-                    Unk7 = clone.Unk7;
                     SpawnPointNames = (string[])clone.SpawnPointNames.Clone();
                     SpawnPartNames = (string[])clone.SpawnPartNames.Clone();
                 }
@@ -791,11 +784,11 @@ namespace SoulsFormats
                     br.AssertInt32(0);
                     br.AssertInt32(0);
                     spawnPointIndices = br.ReadInt32s(8);
-                    Unk4 = br.ReadInt32();
-                    Unk5 = br.ReadInt32();
-                    Unk6 = br.ReadInt32();
-                    Unk7 = br.ReadInt32();
                     spawnPartIndices = br.ReadInt32s(32);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
+                    br.AssertInt32(0);
                     br.AssertInt32(0);
                     br.AssertInt32(0);
                     br.AssertInt32(0);
@@ -823,11 +816,11 @@ namespace SoulsFormats
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
                     bw.WriteInt32s(spawnPointIndices);
-                    bw.WriteInt32(Unk4);
-                    bw.WriteInt32(Unk5);
-                    bw.WriteInt32(Unk6);
-                    bw.WriteInt32(Unk7);
                     bw.WriteInt32s(spawnPartIndices);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
+                    bw.WriteInt32(0);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
@@ -1003,7 +996,15 @@ namespace SoulsFormats
                 internal override void GetNames(MSBBB msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
-                    PartName2 = GetName(entries.Parts, partIndex2);
+                    if (partIndex2 >= entries.Parts.Count)
+                    {
+                        // Nightmare of mensis has a case where a part that doesn't exist is referenced
+                        PartName2 = null;
+                    }
+                    else
+                    {
+                        PartName2 = GetName(entries.Parts, partIndex2);
+                    }
                 }
 
                 internal override void GetIndices(MSBBB msb, Entries entries)
@@ -1617,22 +1618,10 @@ namespace SoulsFormats
                 internal override EventType Type => EventType.Other;
 
                 /// <summary>
-                /// Unknown.
-                /// </summary>
-                public int SoundTypeMaybe;
-
-                /// <summary>
-                /// Unknown.
-                /// </summary>
-                public int SoundIDMaybe;
-
-                /// <summary>
                 /// Creates a new Other with the given ID and name.
                 /// </summary>
                 public Other(int id, string name) : base(id, name)
                 {
-                    SoundTypeMaybe = 0;
-                    SoundIDMaybe = 0;
                 }
 
                 /// <summary>
@@ -1640,28 +1629,16 @@ namespace SoulsFormats
                 /// </summary>
                 public Other(Other clone) : base(clone)
                 {
-                    SoundTypeMaybe = clone.SoundTypeMaybe;
-                    SoundIDMaybe = clone.SoundIDMaybe;
                 }
 
                 internal Other(BinaryReaderEx br) : base(br) { }
 
                 internal override void Read(BinaryReaderEx br)
                 {
-                    /*SoundTypeMaybe = br.ReadInt32();
-                    SoundIDMaybe = br.ReadInt32();
-
-                    for (int i = 0; i < 16; i++)
-                        br.AssertInt32(-1);*/
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
-                    /*bw.WriteInt32(SoundTypeMaybe);
-                    bw.WriteInt32(SoundIDMaybe);
-
-                    for (int i = 0; i < 16; i++)
-                        bw.WriteInt32(-1);*/
                 }
             }
         }

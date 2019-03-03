@@ -7,6 +7,7 @@ using MeowDSIO.DataTypes.MSB.PARTS_PARAM_ST;
 
 public class MSB1MapPiecePart : MSB1Part
 {
+    [AddComponentMenu("Dark Souls 1/Parts/Map Piece")]
     public void SetPart(MsbPartsMapPiece part)
     {
         setBasePart(part);

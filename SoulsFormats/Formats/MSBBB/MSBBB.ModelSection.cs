@@ -28,6 +28,11 @@ namespace SoulsFormats
             public List<Model.Enemy> Enemies;
 
             /// <summary>
+            /// Item models in this section.
+            /// </summary>
+            public List<Model.Item> Items;
+
+            /// <summary>
             /// Player models in this section.
             /// </summary>
             public List<Model.Player> Players;
@@ -55,6 +60,7 @@ namespace SoulsFormats
                 MapPieces = new List<Model.MapPiece>();
                 Objects = new List<Model.Object>();
                 Enemies = new List<Model.Enemy>();
+                Items = new List<Model.Item>();
                 Players = new List<Model.Player>();
                 Collisions = new List<Model.Collision>();
                 Navmeshes = new List<Model.Navmesh>();
@@ -67,7 +73,7 @@ namespace SoulsFormats
             public override List<Model> GetEntries()
             {
                 return SFUtil.ConcatAll<Model>(
-                    MapPieces, Objects, Enemies, Players, Collisions, Navmeshes, Others);
+                    MapPieces, Objects, Enemies, Items, Players, Collisions, Navmeshes, Others);
             }
 
             internal override Model ReadEntry(BinaryReaderEx br)
@@ -90,6 +96,12 @@ namespace SoulsFormats
                         var enemy = new Model.Enemy(br);
                         Enemies.Add(enemy);
                         return enemy;
+
+                    // Potential from mistake in m36 :trashcat:
+                    case ModelType.Item:
+                        var item = new Model.Item(br);
+                        Items.Add(item);
+                        return item;
 
                     case ModelType.Player:
                         var player = new Model.Player(br);
@@ -408,6 +420,36 @@ namespace SoulsFormats
                 public Enemy(Enemy clone) : base(clone) { }
 
                 internal Enemy(BinaryReaderEx br) : base(br) { }
+
+                internal override void ReadSpecific(BinaryReaderEx br, long start)
+                {
+                    br.AssertInt64(0);
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw, long start)
+                {
+                    bw.FillInt64("UnkOffset", 0);
+                }
+            }
+
+            /// <summary>
+            /// This only exists because one BB map seems to use this by accident :trashcat:
+            /// </summary>
+            public class Item : Model
+            {
+                internal override ModelType Type => ModelType.Item;
+
+                /// <summary>
+                /// Creates a new Item with the given ID and name.
+                /// </summary>
+                public Item(int id, string name) : base(id, name) { }
+
+                /// <summary>
+                /// Creates a new Item with values copied from another.
+                /// </summary>
+                public Item(Item clone) : base(clone) { }
+
+                internal Item(BinaryReaderEx br) : base(br) { }
 
                 internal override void ReadSpecific(BinaryReaderEx br, long start)
                 {

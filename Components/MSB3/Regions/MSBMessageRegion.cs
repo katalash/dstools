@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
 
+[AddComponentMenu("Dark Souls 3/Regions/Message")]
 public class MSB3MessageRegion : MSB3Region
 {
     /// <summary>

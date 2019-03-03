@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
 
+[AddComponentMenu("Dark Souls 3/Regions/Muffling Box")]
 public class MSB3MufflingBoxRegion : MSB3Region
 {
     /// <summary>
