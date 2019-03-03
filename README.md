@@ -54,11 +54,23 @@ You will also encounter parts, which make up the bulk of the map and is the most
 There is a LOT I didn't cover here, so feel free to suggest things to add or ask more questions in our modding discord.
 
 ## FAQ
-### **Q** Why did you use Unity for this?
-**A** My ambition for this tool is to eventually turn this into a complete solution for creating new levels from scratch. For a modern game like Dark Souls, this requires an end to end pipeline for importing meshes from a 3D program, placing them and enemies in the map, baking light maps, generating navimeshes, making collision, and baking and exporting all of them. Unity provides an extensible, scriptable editor and a lot of features that can help with baking light maps and doing navimeshes. It isn't perfect and it's pretty awkward to make support another game with an engine super different from Unity, but using it has allowed me to do everything I've done much faster than a from scratch solution.
-### **Q** Why isn't Dark Souls II supported?
-**A** While Dark Souls II's engine is derived from DS1, they made significant changes that makes it quite different from the other games. DS3 in comparision still is similar to DS1 in many ways DS2 is not. The simple answer is that many modders (including me) don't care about DS2 enough to figure out all the new stuff. Also supporting a game in this editor is a LOT of work, and I can't justify the effort to support DS2 enough when I have other things I'm working on (like enabling completely new custom DS1/DS3 maps).
-### **Q** Where are the tutorials?
-**A** I haven't had time to make any, as it's a lot of work and the editor is still undergoing rapid development. The editor is also not super user friendly right now, as so much work has gone into basic functionality. If you are looking for a user friendly, fully featured editor ready to make new maps, check back later. If you are ambitious and ready to push DS modding to its limits, then join the discord, ask lots of questions, and help us make the DS modding community take off.
-### **Q** Can I contribute?
-**A** Absolutely. There's lots of things that can be done to help such as reverse engineering file formats, learning more about the MSB file format by experimenting with unknown fields, making mods to find pain points or bugs, or even writing more tools with C#. If you are proficient in C# and potentially have some Unity experience and want to contribute, ping me on Discord for some ideas of things to do and send me pull requests. I'm open for people with the right skillset to join the project as a core dev as well.
+### **Q**: Why did you use Unity for this?
+**A**: My ambition for this tool is to eventually turn this into a complete solution for creating new levels from scratch. For a modern game like Dark Souls, this requires an end to end pipeline for importing meshes from a 3D program, placing them and enemies in the map, baking light maps, generating navimeshes, making collision, and baking and exporting all of them. Unity provides an extensible, scriptable editor and a lot of features that can help with baking light maps and doing navimeshes. It isn't perfect and it's pretty awkward to make support another game with an engine super different from Unity, but using it has allowed me to do everything I've done much faster than a from scratch solution.
+### **Q**: Why isn't Dark Souls II supported?
+**A**: While Dark Souls II's engine is derived from DS1, they made significant changes that makes it quite different from the other games. DS3 in comparision still is similar to DS1 in many ways DS2 is not. The simple answer is that many modders (including me) don't care about DS2 enough to figure out all the new stuff. Also supporting a game in this editor is a LOT of work, and I can't justify the effort to support DS2 enough when I have other things I'm working on (like enabling completely new custom DS1/DS3 maps).
+### **Q**: Where are the tutorials?
+**A**: I haven't had time to make any, as it's a lot of work and the editor is still undergoing rapid development. The editor is also not super user friendly right now, as so much work has gone into basic functionality. If you are looking for a user friendly, fully featured editor ready to make new maps, check back later. If you are ambitious and ready to push DS modding to its limits, then join the discord, ask lots of questions, and help us make the DS modding community take off.
+### **Q**: Can I contribute?
+**A**: Absolutely. There's lots of things that can be done to help such as reverse engineering file formats, learning more about the MSB file format by experimenting with unknown fields, making mods to find pain points or bugs, or even writing more tools with C#. If you are proficient in C# and potentially have some Unity experience and want to contribute, ping me on Discord for some ideas of things to do and send me pull requests. I'm open for people with the right skillset to join the project as a core dev as well.
+
+## Copyright:
+All editor source code, except for the following exceptions, is Copyright (C) 2019 Katalash. All rights reserved.
+DSTools uses Soulsformats by TKGP. Soulsformats is Copyright (C) 2019 TKGP.
+DSTools uses MeowDSIO by Meowmaritus. MeowDSIO (and only MeowDSIO under the MeowDSIO directory) is released under the MIT Lisence.
+
+## Shoutouts and Credits:
+DSTools was made possible by the dedicated members of the Dark Souls modding community including:
+* TKGP for making Soulsformats, UXM, general reverse engineering, and for answering many questions for me.
+* Meowmaritus for making MeowDSIO, reverse engineering, also answering questions.
+* Pav for beta testing and helping me with lots of reverse engineering of various aspects of DS3.
+* Rivernyxx for early Dark Souls research and 010 templates which were very useful.
