@@ -53,19 +53,34 @@ You will also encounter parts, which make up the bulk of the map and is the most
 
 There is a LOT I didn't cover here, so feel free to suggest things to add or ask more questions in our modding discord.
 
+## Tools and Resources
+Here is a list of resources that may be helpful while modding:
+* [Meowmaritus's gists](https://gist.github.com/Meowmaritus): Tons of documents and references for map IDs, object IDs, and character IDs for all the games. Very useful references when editing maps.
+* [Yapped](https://www.nexusmods.com/darksouls3/mods/306?tab=files): Param editor for DS3. Many entities in maps reference params for things, and this allows you to lookup and edit the params for DS3.
+* [Yabber](https://www.nexusmods.com/darksouls3/mods/305?tab=files): Soulsborne archive unpacker/repacker. Allows you to unpack and repack all the BND files in the games. Also allows you to extract and repack textures, and convert the game's text fmgs (located in msg/) to xml and back for easy editing.
+* [ParamVessel](https://github.com/Meowmaritus/ParamVessel/releases): Param editor for DS1. Does similar things that Yapped does for DS3.
+* [DarkScripts2](https://github.com/C-Weinstein/DarkScript-2/releases): GUI based tool for editing event scripts in all the games made by Aintunez and HotPocketRemix. Use this to add scripting to your modded maps. Watch HotPocketRemix's [tutorial series](https://www.youtube.com/watch?v=QXpqNNZBKoU) to learn more about event scripting.
+
+
 ## FAQ
 ### **Q**: Why did you use Unity for this?
 **A**: My ambition for this tool is to eventually turn this into a complete solution for creating new levels from scratch. For a modern game like Dark Souls, this requires an end to end pipeline for importing meshes from a 3D program, placing them and enemies in the map, baking light maps, generating navimeshes, making collision, and baking and exporting all of them. Unity provides an extensible, scriptable editor and a lot of features that can help with baking light maps and doing navimeshes. It isn't perfect and it's pretty awkward to make support another game with an engine super different from Unity, but using it has allowed me to do everything I've done much faster than a from scratch solution.
 ### **Q**: Why isn't Dark Souls II supported?
-**A**: While Dark Souls II's engine is derived from DS1, they made significant changes that makes it quite different from the other games. DS3 in comparision still is similar to DS1 in many ways DS2 is not. The simple answer is that many modders (including me) don't care about DS2 enough to figure out all the new stuff. Also supporting a game in this editor is a LOT of work, and I can't justify the effort to support DS2 enough when I have other things I'm working on (like enabling completely new custom DS1/DS3 maps).
+**A**: While Dark Souls II's engine is derived from DS1, they made significant changes that makes it quite different from the other games. DS3 in comparision still is similar to DS1 in many ways DS2 is not. DS2 also lacks documentation in the game files that other games had, making figuring out stuff much harder. Also supporting a game in this editor is a LOT of work, and I can't justify the effort to support DS2 enough when I have other things I'm working on (like enabling completely new custom DS1/DS3 maps).
+### **Q**: Why is Bloodborne supported then?
+**A**: Bloodborne actually has a lot of documentation left in the game files and its engine is based off of Dark Souls 1. I also have a personal interest in Bloodborne modding, and it's similar to Dark Souls 3 that supporting it is much easier than supporting Dark Souls 2.
 ### **Q**: Where are the tutorials?
-**A**: I haven't had time to make any, as it's a lot of work and the editor is still undergoing rapid development. The editor is also not super user friendly right now, as so much work has gone into basic functionality. If you are looking for a user friendly, fully featured editor ready to make new maps, check back later. If you are ambitious and ready to push DS modding to its limits, then join the discord, ask lots of questions, and help us make the DS modding community take off.
+**A**: I haven't had time to make any, as it's a lot of work and the editor is still undergoing rapid development. The editor is also not super user friendly right now, as so much work has gone into basic functionality. Tutorials are something I would like to do later, but I am busy with development and the editor is rapidly changing as I iterate through things. If you need help (and you probably will), don't be afraid to ask me or other experienced modders in the discord. If you have a good handle on the editor and would like to make tutorials (video or otherwise), it would be greatly appreciated and I will give a shoutout here.
 ### **Q**: Can I contribute?
 **A**: Absolutely. There's lots of things that can be done to help such as reverse engineering file formats, learning more about the MSB file format by experimenting with unknown fields, making mods to find pain points or bugs, or even writing more tools with C#. If you are proficient in C# and potentially have some Unity experience and want to contribute, ping me on Discord for some ideas of things to do and send me pull requests. I'm open for people with the right skillset to join the project as a core dev as well.
+### **Q**: How do I move a bonfire?
+**A**: Bonfires have many hidden points that need to be moved in addition to the bonfire "character". There's a player entity and a spawn point region that needs to be moved as well. Use the inspector to search for these objects and move them to new locations as well.
 
 ## Copyright:
 All editor source code, except for the following exceptions, is Copyright (C) 2019 Katalash. All rights reserved.
+
 DSTools uses Soulsformats by TKGP. Soulsformats is Copyright (C) 2019 TKGP.
+
 DSTools uses MeowDSIO by Meowmaritus. MeowDSIO (and only MeowDSIO under the MeowDSIO directory) is released under the MIT Lisence.
 
 ## Shoutouts and Credits:
