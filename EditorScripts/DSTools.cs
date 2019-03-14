@@ -15,6 +15,8 @@ public class DarkSoulsTools : EditorWindow
     bool LoadMapFlvers = false;
     bool LoadHighResCol = false;
 
+    bool PreservePartsPose = true;
+
     public enum GameType
     {
         Undefined,
@@ -67,7 +69,7 @@ public class DarkSoulsTools : EditorWindow
     {
         var pathBase = Path.GetDirectoryName(path) + @"\" + Path.GetFileNameWithoutExtension(path);
         var name = Path.GetFileNameWithoutExtension(path);
-        BXF4 bxf = BXF4.Read(pathBase + ".hkxbhd", pathBase + ".hkxbdt");
+        BXF4 bxf = BXF4.Read(GetOverridenPath(pathBase + ".hkxbhd"), GetOverridenPath(pathBase + ".hkxbdt"));
         foreach (var file in bxf.Files)
         {
             try
@@ -112,11 +114,11 @@ public class DarkSoulsTools : EditorWindow
 
         if (type == GameType.DarkSoulsIII || type == GameType.Bloodborne)
         {
-            objbnd = BND4.Read(path);
+            objbnd = BND4.Read(GetOverridenPath(path));
         }
         else
         {
-            objbnd = BND3.Read(path);
+            objbnd = BND3.Read(GetOverridenPath(path));
         }
         var texentries = objbnd.Files.Where(x => x.Name.ToUpper().EndsWith(".TPF"));
         foreach (var entry in texentries)
@@ -208,11 +210,11 @@ public class DarkSoulsTools : EditorWindow
 
         if (type == GameType.DarkSoulsIII || type == GameType.Bloodborne)
         {
-            chrbnd = BND4.Read(path);
+            chrbnd = BND4.Read(GetOverridenPath(path));
         }
         else
         {
-            chrbnd = BND3.Read(path);
+            chrbnd = BND3.Read(GetOverridenPath(path));
         }
         var texentries = chrbnd.Files.Where(x => x.Name.ToUpper().EndsWith(".TPF"));
         foreach (var entry in texentries)
@@ -471,8 +473,43 @@ public class DarkSoulsTools : EditorWindow
         AssetDatabase.StopAssetEditing();
     }
 
-    private string Interroot = "";
+    private static string Interroot = "";
+    private static string ModProjectDirectory = null;
     private List<string> Maps = new List<string>();
+
+    /// <summary>
+    /// Translates an interroot file path into a mod project path
+    /// </summary>
+    /// <param name="FilePath">File path</param>
+    /// <returns></returns>
+    public static string GetModProjectPathForFile(string FilePath)
+    {
+        if (ModProjectDirectory == null || Interroot == null)
+        {
+            return null;
+        }
+
+        return ModProjectDirectory + FilePath.Substring(Interroot.Length);
+    }
+
+    /// <summary>
+    /// Searches for an overriden mod project file and returns the path to that
+    /// if it exists. Otherwise returns the current path.
+    /// </summary>
+    /// <param name="path">The path to search for an override</param>
+    /// <returns></returns>
+    public static string GetOverridenPath(string path)
+    {
+        string newPath = GetModProjectPathForFile(path);
+        if (newPath != null)
+        {
+            if (File.Exists(newPath))
+            {
+                return GetModProjectPathForFile(path);
+            }
+        }
+        return path;
+    }
 
     private void UpdateMapList()
     {
@@ -690,7 +727,7 @@ public class DarkSoulsTools : EditorWindow
         try
         {
             string mapname = (string)o;
-            var msb = MSB3.Read(Interroot + $@"\map\MapStudio\{mapname}.msb.dcx");
+            var msb = MSB3.Read(GetOverridenPath(Interroot + $@"\map\MapStudio\{mapname}.msb.dcx"));
             string gameFolder = GameFolder(GameType.DarkSoulsIII);
 
             if (!AssetDatabase.IsValidFolder("Assets/DS3/" + mapname))
@@ -1248,7 +1285,7 @@ public class DarkSoulsTools : EditorWindow
         try
         {
             string mapname = (string)o;
-            var msb = MSBBB.Read(Interroot + $@"\map\MapStudio\{mapname}.msb.dcx");
+            var msb = MSBBB.Read(GetOverridenPath(Interroot + $@"\map\MapStudio\{mapname}.msb.dcx"));
             GameFolder(GameType.Bloodborne);
 
             // Make adjusted mapname because bloodborne is a :fatcat:
@@ -1769,7 +1806,7 @@ public class DarkSoulsTools : EditorWindow
         try
         {
             string mapname = (string)o;
-            var msb = DataFile.LoadFromFile<MSB>(Interroot + $@"\map\MapStudio\{mapname}.msb");
+            var msb = DataFile.LoadFromFile<MSB>(GetOverridenPath(Interroot + $@"\map\MapStudio\{mapname}.msb"));
             int area = int.Parse(mapname.Substring(1, 2));
             GameFolder(GameType.DarkSoulsPTDE);
             // Make adjusted mapname so darkroot garden meme works
@@ -2335,11 +2372,11 @@ public class DarkSoulsTools : EditorWindow
         IBinder bnd;
         if (isDS3)
         {
-            bnd = BND4.Read(path);
+            bnd = BND4.Read(GetOverridenPath(path));
         }
         else
         {
-            bnd = BND3.Read(path);
+            bnd = BND3.Read(GetOverridenPath(path));
         }
 
         if (!AssetDatabase.IsValidFolder("Assets/MTD"))
@@ -2409,7 +2446,7 @@ public class DarkSoulsTools : EditorWindow
                 }
             }
 
-            // Export others
+            // Export navimeshes
             var modelNavimeshes = GetChild(Models, "Navimeshes");
             if (modelNavimeshes != null)
             {
@@ -2683,27 +2720,42 @@ public class DarkSoulsTools : EditorWindow
             throw new Exception("MSB exporter requires an events section");
         }
 
-        // Save a backup if one doesn't exist
-        if (!File.Exists(AssetLink.GetComponent<MSBAssetLink>().MapPath + ".backup"))
+        // Directory setup for overrides
+        if (ModProjectDirectory != null)
+        {
+            if (!Directory.Exists($@"{ModProjectDirectory}\map\mapstudio"))
+            {
+                Directory.CreateDirectory($@"{ModProjectDirectory}\map\mapstudio");
+            }
+        }
+
+        // Save a backup if one doesn't exist and not using a mod project directory
+        if (ModProjectDirectory == null && !File.Exists(AssetLink.GetComponent<MSBAssetLink>().MapPath + ".backup"))
         {
             File.Copy(AssetLink.GetComponent<MSBAssetLink>().MapPath, AssetLink.GetComponent<MSBAssetLink>().MapPath + ".backup");
         }
 
         // Write as a temporary file to make sure there are no errors before overwriting current file 
-        if (File.Exists(AssetLink.GetComponent<MSBAssetLink>().MapPath + ".temp"))
+        string mapPath = AssetLink.GetComponent<MSBAssetLink>().MapPath;
+        if (GetModProjectPathForFile(mapPath) != null)
         {
-            File.Delete(AssetLink.GetComponent<MSBAssetLink>().MapPath + ".temp");
+            mapPath = GetModProjectPathForFile(mapPath);
+        }
+
+        if (File.Exists(mapPath + ".temp"))
+        {
+            File.Delete(mapPath + ".temp");
         }
         //export.Write(AssetLink.GetComponent<MSBAssetLink>().MapPath + ".temp", SoulsFormats.DCX.Type.DarkSouls3);
         export.IsDcxCompressed = false;
-        DataFile.SaveToFile<MSB>(export, AssetLink.GetComponent<MSBAssetLink>().MapPath + ".temp");
+        DataFile.SaveToFile<MSB>(export, mapPath + ".temp");
 
         // Make a copy of the previous map
-        File.Copy(AssetLink.GetComponent<MSBAssetLink>().MapPath, AssetLink.GetComponent<MSBAssetLink>().MapPath + ".prev", true);
+        File.Copy(mapPath, mapPath + ".prev", true);
 
         // Move temp file as new map file
-        File.Delete(AssetLink.GetComponent<MSBAssetLink>().MapPath);
-        File.Move(AssetLink.GetComponent<MSBAssetLink>().MapPath + ".temp", AssetLink.GetComponent<MSBAssetLink>().MapPath);
+        File.Delete(mapPath);
+        File.Move(mapPath + ".temp", mapPath);
     }
 
     void ExportMapDS3()
@@ -3121,25 +3173,65 @@ public class DarkSoulsTools : EditorWindow
             throw new Exception("MSB exporter requires an events section");
         }
 
+        // Attempt to restore parts pose section from backup map if needed
+        if (PreservePartsPose)
+        {
+            string backupMap = AssetLink.GetComponent<MSBAssetLink>().MapPath + ".backup";
+            if (!File.Exists(backupMap))
+            {
+                backupMap = AssetLink.GetComponent<MSBAssetLink>().MapPath;
+                if (!File.Exists(backupMap))
+                {
+                    backupMap = null;
+                }
+            }
+            if (backupMap != null)
+            {
+                var back = MSB3.Read(backupMap);
+                export.BoneNames = back.BoneNames;
+                export.Layers = back.Layers;
+                export.PartsPoses = back.PartsPoses;
+                export.Routes = back.Routes;
+            }
+        }
+
+        // Directory setup for overrides
+        if (ModProjectDirectory != null)
+        {
+            if (!Directory.Exists($@"{ModProjectDirectory}\map\mapstudio"))
+            {
+                Directory.CreateDirectory($@"{ModProjectDirectory}\map\mapstudio");
+            }
+        }
+
         // Save a backup if one doesn't exist
-        if (!File.Exists(AssetLink.GetComponent<MSBAssetLink>().MapPath + ".backup"))
+        if (ModProjectDirectory == null && !File.Exists(AssetLink.GetComponent<MSBAssetLink>().MapPath + ".backup"))
         {
             File.Copy(AssetLink.GetComponent<MSBAssetLink>().MapPath, AssetLink.GetComponent<MSBAssetLink>().MapPath + ".backup");
         }
 
         // Write as a temporary file to make sure there are no errors before overwriting current file 
-        if (File.Exists(AssetLink.GetComponent<MSBAssetLink>().MapPath + ".temp"))
+        string mapPath = AssetLink.GetComponent<MSBAssetLink>().MapPath;
+        if (GetModProjectPathForFile(mapPath) != null)
         {
-            File.Delete(AssetLink.GetComponent<MSBAssetLink>().MapPath + ".temp");
+            mapPath = GetModProjectPathForFile(mapPath);
         }
-        export.Write(AssetLink.GetComponent<MSBAssetLink>().MapPath + ".temp", SoulsFormats.DCX.Type.DarkSouls3);
+
+        if (File.Exists(mapPath + ".temp"))
+        {
+            File.Delete(mapPath + ".temp");
+        }
+        export.Write(mapPath + ".temp", SoulsFormats.DCX.Type.DarkSouls3);
 
         // Make a copy of the previous map
-        File.Copy(AssetLink.GetComponent<MSBAssetLink>().MapPath, AssetLink.GetComponent<MSBAssetLink>().MapPath + ".prev", true);
+        if (File.Exists(mapPath))
+        {
+            File.Copy(mapPath, mapPath + ".prev", true);
+        }
 
         // Move temp file as new map file
-        File.Delete(AssetLink.GetComponent<MSBAssetLink>().MapPath);
-        File.Move(AssetLink.GetComponent<MSBAssetLink>().MapPath + ".temp", AssetLink.GetComponent<MSBAssetLink>().MapPath);
+        File.Delete(mapPath);
+        File.Move(mapPath + ".temp", mapPath);
     }
 
     // Serializes the open unity map to an MSB file. Requires an MSBAssetLink object in the scene
@@ -3192,7 +3284,17 @@ public class DarkSoulsTools : EditorWindow
             UpdateMapList();
         }
 
+        if (GUILayout.Button("Set Mod Project Directory (optional)"))
+        {
+            string directory = EditorUtility.OpenFolderPanel("Select directory for mod project", Interroot, "");
+            if (directory != "")
+            {
+                ModProjectDirectory = Path.GetFullPath(directory);
+            }
+        }
+
         GUILayout.Label("Interroot: " + Interroot);
+        GUILayout.Label("Mod Project: " + ModProjectDirectory);
 
         GUILayout.Label("Development Test Tools (don't use)", EditorStyles.boldLabel);
         if (GUILayout.Button("Import FLVER"))
@@ -3349,6 +3451,11 @@ public class DarkSoulsTools : EditorWindow
                 menu.AddItem(new GUIContent(map), false, onImportMap, map);
             }
             menu.ShowAsContext();
+        }
+
+        if (type == GameType.DarkSoulsIII)
+        {
+            PreservePartsPose = GUILayout.Toggle(PreservePartsPose, "Preserve parts pose (will restore from backup if needed)");
         }
 
         if (GUILayout.Button("Export Map"))

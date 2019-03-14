@@ -61,7 +61,9 @@ public class MSB3CollisionPart : MSB3Part
     /// </summary>
     public int UnkT2C;
 
-    public byte UnkT34, UnkT35, UnkT36, EnableDarksight;
+    public byte UnkT34, UnkT35, UnkT36;
+
+    public MSB3.Part.Collision.MapVisiblity MapVisType;
 
     public int UnkT50, UnkT54, UnkT58, UnkT5C, UnkTC0;
 
@@ -88,7 +90,7 @@ public class MSB3CollisionPart : MSB3Part
         UnkT34 = part.UnkT34;
         UnkT35 = part.UnkT35;
         UnkT36 = part.UnkT36;
-        EnableDarksight = part.EnableDarksight;
+        MapVisType = part.MapVisType;
         UnkT50 = part.UnkT50;
         UnkT54 = part.UnkT54;
         UnkT58 = part.UnkT58;
@@ -117,6 +119,9 @@ public class MSB3CollisionPart : MSB3Part
             part.UnkHitName = UnkHitName;
         part.UnkT2C = UnkT2C;
         part.UnkT34 = UnkT34;
+        part.UnkT35 = UnkT35;
+        part.UnkT36 = UnkT36;
+        part.MapVisType = MapVisType;
         part.UnkT50 = UnkT50;
         part.UnkT54 = UnkT54;
         part.UnkT58 = UnkT58;

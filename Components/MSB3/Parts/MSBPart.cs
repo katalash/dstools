@@ -64,22 +64,8 @@ public abstract class MSB3Part : MonoBehaviour
     /// <summary>
     /// Unknown.
     /// </summary>
-    public bool IsShadowDest;
-
-    /// <summary>
-    /// Unknown.
-    /// </summary>
-    public bool IsShadowOnly, DrawByReflectCam, DrawOnlyReflectCam, UseDepthBiasFloat;
-
-    /// <summary>
-    /// Unknown.
-    /// </summary>
-    public bool DisablePointLightEffect;
-
-    /// <summary>
-    /// Unknown.
-    /// </summary>
-    public byte UnkB15, UnkB16, UnkB17;
+    public bool PointLightShadowSource, ShadowSource, ShadowDest, IsShadowOnly, DrawByReflectCam,
+        DrawOnlyReflectCam, UseDepthBiasFloat, DisablePointLightEffect, UnkB17;
 
     /// <summary>
     /// Unknown.
@@ -135,14 +121,14 @@ public abstract class MSB3Part : MonoBehaviour
         LanternID = part.LanternID;
         LodParamID = part.LodParamID;
         UnkB0E = part.UnkB0E;
-        IsShadowDest = part.IsShadowDest;
+        PointLightShadowSource = part.PointLightShadowSource;
+        ShadowSource = part.ShadowSource;
+        ShadowDest = part.ShadowDest;
         IsShadowOnly = part.IsShadowOnly;
         DrawByReflectCam = part.DrawByReflectCam;
         DrawOnlyReflectCam = part.DrawOnlyReflectCam;
         UseDepthBiasFloat = part.UseDepthBiasFloat;
         DisablePointLightEffect = part.DisablePointLightEffect;
-        UnkB15 = part.UnkB15;
-        UnkB16 = part.UnkB16;
         UnkB17 = part.UnkB17;
         UnkB18 = part.UnkB18;
 
@@ -244,14 +230,14 @@ public abstract class MSB3Part : MonoBehaviour
         part.LanternID = LanternID;
         part.LodParamID = LodParamID;
         part.UnkB0E = UnkB0E;
-        part.IsShadowDest = IsShadowDest;
+        part.PointLightShadowSource = PointLightShadowSource;
+        part.ShadowSource = ShadowSource;
+        part.ShadowDest = ShadowDest;
         part.IsShadowOnly = IsShadowOnly;
         part.DrawByReflectCam = DrawByReflectCam;
         part.DrawOnlyReflectCam = DrawOnlyReflectCam;
         part.UseDepthBiasFloat = UseDepthBiasFloat;
         part.DisablePointLightEffect = DisablePointLightEffect;
-        part.UnkB15 = UnkB15;
-        part.UnkB16 = UnkB16;
         part.UnkB17 = UnkB17;
         part.UnkB18 = UnkB18;
 

@@ -49,6 +49,8 @@ public abstract class MSB1Part : MonoBehaviour
     /// </summary>
     public sbyte LightID, FogID, ScatterID, LensFlareID;
 
+    public sbyte ShadowID, DepthOfFieldID, ToneMapID, ToneCorrectID;
+
     /// <summary>
     /// Unknown.
     /// </summary>
@@ -92,6 +94,10 @@ public abstract class MSB1Part : MonoBehaviour
         FogID = part.FogID;
         ScatterID = part.ScatterID;
         LensFlareID = part.LensFlareID;
+        ShadowID = part.ShadowID;
+        DepthOfFieldID = part.DofID;
+        ToneMapID = part.ToneMapID;
+        ToneCorrectID = part.ToneCorrectID;
         LanternID = part.LanternID;
         LodParamID = part.LodParamID;
         IsShadowSrc = part.IsShadowSrc;
@@ -137,6 +143,10 @@ public abstract class MSB1Part : MonoBehaviour
         part.FogID = FogID;
         part.ScatterID = ScatterID;
         part.LensFlareID = LensFlareID;
+        part.ShadowID = ShadowID;
+        part.DofID = DepthOfFieldID;
+        part.ToneMapID = ToneMapID;
+        part.ToneCorrectID = ToneCorrectID;
         part.LanternID = LanternID;
         part.LodParamID = LodParamID;
         part.IsShadowSrc = IsShadowSrc;

@@ -100,7 +100,7 @@ class ItemLotParamUtils
 
     public static void ReloadParams()
     {
-        BND4 paramBnd = SFUtil.DecryptDS3Regulation(ParamPath);
+        BND4 paramBnd = SFUtil.DecryptDS3Regulation(DarkSoulsTools.GetOverridenPath(ParamPath));
         DS3Param = PARAM64.Read(paramBnd.Files.Find(x => Path.GetFileName(x.Name) == "ItemLotParam.param").Bytes);
         PARAM64.Layout layout = PARAM64.Layout.ReadXMLFile($@"{Application.dataPath.Replace('/', '\\')}\dstools\ParamLayouts\DS3\{DS3Param.ID}.xml");
         DS3Param.SetLayout(layout);
@@ -142,7 +142,7 @@ class ItemLotParamUtils
             return;
         }
 
-        BND4 paramBnd = SFUtil.DecryptDS3Regulation(ParamPath);
+        BND4 paramBnd = SFUtil.DecryptDS3Regulation(DarkSoulsTools.GetOverridenPath(ParamPath));
         var param = paramBnd.Files.Find(x => Path.GetFileName(x.Name) == "ItemLotParam.param");
         param.Bytes = DS3Param.Write();
 
@@ -152,19 +152,25 @@ class ItemLotParamUtils
             File.Copy(ParamPath, ParamPath + ".backup");
         }
 
-        // Write as a temporary file to make sure there are no errors before overwriting current file 
-        if (File.Exists(ParamPath + ".temp"))
+        string paramPath = ParamPath;
+        if (DarkSoulsTools.GetModProjectPathForFile(ParamPath) != null)
         {
-            File.Delete(ParamPath + ".temp");
+            paramPath = DarkSoulsTools.GetModProjectPathForFile(ParamPath);
         }
-        SFUtil.EncryptDS3Regulation(ParamPath + ".temp", paramBnd);
+
+        // Write as a temporary file to make sure there are no errors before overwriting current file 
+        if (File.Exists(paramPath + ".temp"))
+        {
+            File.Delete(paramPath + ".temp");
+        }
+        SFUtil.EncryptDS3Regulation(paramPath + ".temp", paramBnd);
 
         // Make a copy of the previous map
-        File.Copy(ParamPath, ParamPath + ".prev", true);
+        File.Copy(paramPath, paramPath + ".prev", true);
 
         // Move temp file as new map file
-        File.Delete(ParamPath);
-        File.Move(ParamPath + ".temp", ParamPath);
+        File.Delete(paramPath);
+        File.Move(paramPath + ".temp", paramPath);
     }
 
     public static ItemLotParam LookupItemLot(int ID)
