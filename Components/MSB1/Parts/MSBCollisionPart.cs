@@ -9,6 +9,7 @@ using MeowDSIO.DataTypes.MSB.PARTS_PARAM_ST;
 public class MSB1CollisionPart : MSB1Part
 {
     public byte HitFilterID;
+    public PartsCollisionSoundSpaceType SoundSpace;
     public string EnvLightMapSpot;
     public float ReflectPlaneHeight;
 
@@ -33,6 +34,7 @@ public class MSB1CollisionPart : MSB1Part
     {
         setBasePart(part);
         HitFilterID = part.HitFilterID;
+        SoundSpace = part.SoundSpaceType;
         EnvLightMapSpot = part.EnvLightMapSpot;
         ReflectPlaneHeight = part.ReflectPlaneHeight;
 
@@ -59,6 +61,7 @@ public class MSB1CollisionPart : MSB1Part
     {
         var part = new MsbPartsHit();
         part.HitFilterID = HitFilterID;
+        part.SoundSpaceType = SoundSpace;
         part.EnvLightMapSpot = (EnvLightMapSpot == "") ? null : EnvLightMapSpot;
         part.ReflectPlaneHeight = ReflectPlaneHeight;
 

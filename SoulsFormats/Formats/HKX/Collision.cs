@@ -9,6 +9,75 @@ namespace SoulsFormats
 {
     public partial class HKX
     {
+        public class HKNPBodyCInfo : IHKXSerializable
+        {
+            public HKXGlobalReference ShapeReference = new HKXGlobalReference();
+            public HKVector4 Position = new HKVector4();
+            public HKVector4 Orientation = new HKVector4();
+
+            public override void Read(HKX hkx, HKXSection section, HKXObject source, BinaryReaderEx br, HKXVariation variation)
+            {
+                // Just get what we are interested in
+                //AssertPointer(hkx, br);
+                ShapeReference = source.ResolveGlobalReference(hkx, section, br);
+                br.ReadUInt32();
+                br.ReadUInt32();
+                br.ReadUInt16();
+                br.ReadUInt16();
+                br.ReadUInt32();
+                br.ReadUInt32();
+                br.ReadUInt32();
+                AssertPointer(hkx, br);
+                br.ReadUInt64();
+                Position.Read(hkx, section, source, br, variation);
+                Orientation.Read(hkx, section, source, br, variation);
+                br.ReadUInt64();
+                AssertPointer(hkx, br);
+            }
+
+            public override void Write(HKX hkx, HKXSection section, BinaryWriterEx bw, uint sectionBaseOffset, HKXVariation variation)
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        /// <summary>
+        /// Super hacky implementation just to get transform data out of it
+        /// </summary>
+        public class HKNPPhysicsSystemData : HKXObject
+        {
+            public HKArray<HKNPBodyCInfo> Bodies;
+            public override void Read(HKX hkx, HKXSection section, BinaryReaderEx br, HKXVariation variation)
+            {
+                SectionOffset = (uint)br.Position;
+
+                br.ReadUInt64();
+                br.ReadUInt64();
+                br.ReadUInt64();
+                br.ReadUInt64();
+                br.ReadUInt64();
+                br.ReadUInt64();
+                br.ReadUInt64();
+                br.ReadUInt64();
+                Bodies = new HKArray<HKNPBodyCInfo>(hkx, section, this, br, variation);
+                br.ReadUInt64();
+                br.ReadUInt64();
+                br.ReadUInt64();
+                br.ReadUInt64();
+                br.ReadUInt64();
+
+                DataSize = (uint)br.Position - SectionOffset;
+                ResolveDestinations(hkx, section);
+            }
+
+            public override void Write(HKX hkx, HKXSection section, BinaryWriterEx bw, uint sectionBaseOffset, HKXVariation variation)
+            {
+                SectionOffset = (uint)bw.Position - sectionBaseOffset;
+
+                DataSize = (uint)bw.Position - sectionBaseOffset - SectionOffset;
+            }
+        }
+
         // Represents a tree node for a mesh's BVH tree when it's expanded from its packed format
         public class BVHNode
         {

@@ -14,6 +14,19 @@ using Object = UnityEngine.Object;
 /// </summary>
 class CollisionUtilities
 {
+    internal static Vector3 TransformVert(System.Numerics.Vector3 vert, HKX.HKNPBodyCInfo body)
+    {
+        var newVert = new Vector3(vert.X, vert.Y, vert.Z);
+        if (body == null)
+        {
+            return newVert;
+        }
+
+        Vector3 trans = new Vector3(body.Position.Vector.X, body.Position.Vector.Y, body.Position.Vector.Z);
+        Quaternion quat = new Quaternion(body.Orientation.Vector.X, body.Orientation.Vector.Y, body.Orientation.Vector.Z, body.Orientation.Vector.W);
+        return (quat * newVert) + trans;
+    }
+
     public static void ImportDS3CollisionHKX(HKX hkx, string assetName)
     {
         var verts = new List<Vector3>();
@@ -24,6 +37,25 @@ class CollisionUtilities
         {
             if (col is HKX.FSNPCustomParamCompressedMeshShape)
             {
+                // Find a body data for this
+                HKX.HKNPBodyCInfo bodyInfo = null;
+                foreach (var scene in hkx.DataSection.Objects)
+                {
+                    if (scene is HKX.HKNPPhysicsSystemData)
+                    {
+                        var sys = (HKX.HKNPPhysicsSystemData)scene;
+                        foreach (HKX.HKNPBodyCInfo info in sys.Bodies.GetArrayData().Elements)
+                        {
+                            if (info.ShapeReference.DestObject == col)
+                            {
+                                bodyInfo = info;
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                }
+
                 var meshdata = (HKX.FSNPCustomParamCompressedMeshShape)col;
                 var coldata = meshdata.GetMeshShapeData();
 
@@ -32,59 +64,83 @@ class CollisionUtilities
                     for (int i = 0; i < chunk.ByteIndicesLength; i++)
                     {
                         var tri = coldata.MeshIndices.GetArrayData().Elements[i + chunk.ByteIndicesIndex];
-                        if (tri.Idx2 == tri.Idx3 && tri.Idx1 != tri.Idx2)
+                        //if (tri.Idx2 == tri.Idx3 && tri.Idx1 != tri.Idx2)
+                        //{
+                        if (tri.Idx0 < chunk.VertexIndicesLength)
                         {
-                            if (tri.Idx0 < chunk.VertexIndicesLength)
+                            ushort index = (ushort)((uint)tri.Idx0 + chunk.SmallVerticesBase);
+                            indices.Add(verts.Count);
+
+                            var vert = coldata.SmallVertices.GetArrayData().Elements[index].Decompress(chunk.SmallVertexScale, chunk.SmallVertexOffset);
+                            verts.Add(TransformVert(vert, bodyInfo));
+                        }
+                        else
+                        {
+                            ushort index = (ushort)(coldata.VertexIndices.GetArrayData().Elements[tri.Idx0 + chunk.VertexIndicesIndex - chunk.VertexIndicesLength].data);
+                            indices.Add(verts.Count);
+
+                            var vert = coldata.LargeVertices.GetArrayData().Elements[index].Decompress(coldata.BoundingBoxMin, coldata.BoundingBoxMax);
+                            verts.Add(TransformVert(vert, bodyInfo));
+                        }
+
+                        if (tri.Idx1 < chunk.VertexIndicesLength)
+                        {
+                            ushort index = (ushort)((uint)tri.Idx1 + chunk.SmallVerticesBase);
+                            indices.Add(verts.Count);
+
+                            var vert = coldata.SmallVertices.GetArrayData().Elements[index].Decompress(chunk.SmallVertexScale, chunk.SmallVertexOffset);
+                            verts.Add(TransformVert(vert, bodyInfo));
+                        }
+                        else
+                        {
+                            ushort index = (ushort)(coldata.VertexIndices.GetArrayData().Elements[tri.Idx1 + chunk.VertexIndicesIndex - chunk.VertexIndicesLength].data);
+                            indices.Add(verts.Count);
+
+                            var vert = coldata.LargeVertices.GetArrayData().Elements[index].Decompress(coldata.BoundingBoxMin, coldata.BoundingBoxMax);
+                            verts.Add(TransformVert(vert, bodyInfo));
+                        }
+
+                        if (tri.Idx2 < chunk.VertexIndicesLength)
+                        {
+                            ushort index = (ushort)((uint)tri.Idx2 + chunk.SmallVerticesBase);
+                            indices.Add(verts.Count);
+
+                            var vert = coldata.SmallVertices.GetArrayData().Elements[index].Decompress(chunk.SmallVertexScale, chunk.SmallVertexOffset);
+                            verts.Add(TransformVert(vert, bodyInfo));
+                        }
+                        else
+                        {
+                            ushort index = (ushort)(coldata.VertexIndices.GetArrayData().Elements[tri.Idx2 + chunk.VertexIndicesIndex - chunk.VertexIndicesLength].data);
+                            indices.Add(verts.Count);
+
+                            var vert = coldata.LargeVertices.GetArrayData().Elements[index].Decompress(coldata.BoundingBoxMin, coldata.BoundingBoxMax);
+                            verts.Add(TransformVert(vert, bodyInfo));
+                        }
+
+                        if (tri.Idx2 != tri.Idx3)
+                        {
+                            verts.Add(verts[verts.Count - 2]);
+                            verts.Add(verts[verts.Count - 1]);
+                            indices.Add(indices[indices.Count - 2]);
+                            indices.Add(indices[indices.Count - 1]);
+                            if (tri.Idx3 < chunk.VertexIndicesLength)
                             {
-                                ushort index = (ushort)((uint)tri.Idx0 + chunk.SmallVerticesBase);
+                                ushort index = (ushort)((uint)tri.Idx3 + chunk.SmallVerticesBase);
                                 indices.Add(verts.Count);
 
                                 var vert = coldata.SmallVertices.GetArrayData().Elements[index].Decompress(chunk.SmallVertexScale, chunk.SmallVertexOffset);
-                                verts.Add(new Vector3(vert.X, vert.Y, vert.Z));
+                                verts.Add(TransformVert(vert, bodyInfo));
                             }
                             else
                             {
-                                ushort index = (ushort)(coldata.VertexIndices.GetArrayData().Elements[tri.Idx0 + chunk.VertexIndicesIndex - chunk.VertexIndicesLength].data);
+                                ushort index = (ushort)(coldata.VertexIndices.GetArrayData().Elements[tri.Idx3 + chunk.VertexIndicesIndex - chunk.VertexIndicesLength].data);
                                 indices.Add(verts.Count);
 
                                 var vert = coldata.LargeVertices.GetArrayData().Elements[index].Decompress(coldata.BoundingBoxMin, coldata.BoundingBoxMax);
-                                verts.Add(new Vector3(vert.X, vert.Y, vert.Z));
-                            }
-
-                            if (tri.Idx1 < chunk.VertexIndicesLength)
-                            {
-                                ushort index = (ushort)((uint)tri.Idx1 + chunk.SmallVerticesBase);
-                                indices.Add(verts.Count);
-
-                                var vert = coldata.SmallVertices.GetArrayData().Elements[index].Decompress(chunk.SmallVertexScale, chunk.SmallVertexOffset);
-                                verts.Add(new Vector3(vert.X, vert.Y, vert.Z));
-                            }
-                            else
-                            {
-                                ushort index = (ushort)(coldata.VertexIndices.GetArrayData().Elements[tri.Idx1 + chunk.VertexIndicesIndex - chunk.VertexIndicesLength].data);
-                                indices.Add(verts.Count);
-
-                                var vert = coldata.LargeVertices.GetArrayData().Elements[index].Decompress(coldata.BoundingBoxMin, coldata.BoundingBoxMax);
-                                verts.Add(new Vector3(vert.X, vert.Y, vert.Z));
-                            }
-
-                            if (tri.Idx2 < chunk.VertexIndicesLength)
-                            {
-                                ushort index = (ushort)((uint)tri.Idx2 + chunk.SmallVerticesBase);
-                                indices.Add(verts.Count);
-
-                                var vert = coldata.SmallVertices.GetArrayData().Elements[index].Decompress(chunk.SmallVertexScale, chunk.SmallVertexOffset);
-                                verts.Add(new Vector3(vert.X, vert.Y, vert.Z));
-                            }
-                            else
-                            {
-                                ushort index = (ushort)(coldata.VertexIndices.GetArrayData().Elements[tri.Idx2 + chunk.VertexIndicesIndex - chunk.VertexIndicesLength].data);
-                                indices.Add(verts.Count);
-
-                                var vert = coldata.LargeVertices.GetArrayData().Elements[index].Decompress(coldata.BoundingBoxMin, coldata.BoundingBoxMax);
-                                verts.Add(new Vector3(vert.X, vert.Y, vert.Z));
+                                verts.Add(TransformVert(vert, bodyInfo));
                             }
                         }
+                        //}
                     }
                 }
             }

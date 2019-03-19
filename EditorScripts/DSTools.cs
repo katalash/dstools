@@ -3191,7 +3191,7 @@ public class DarkSoulsTools : EditorWindow
                 export.BoneNames = back.BoneNames;
                 export.Layers = back.Layers;
                 export.PartsPoses = back.PartsPoses;
-                export.Routes = back.Routes;
+                export.Routes = back.Routes; 
             }
         }
 

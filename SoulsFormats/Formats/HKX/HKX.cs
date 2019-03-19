@@ -483,6 +483,11 @@ namespace SoulsFormats
                             hkobject = new HKPStorageExtendedMeshShapeMeshSubpartStorage();
                             hkobject.Read(hkx, this, br, variation);
                         }
+                        else if (reference.ClassName.ClassName == "hknpPhysicsSystemData")
+                        {
+                            hkobject = new HKNPPhysicsSystemData();
+                            hkobject.Read(hkx, this, br, variation);
+                        }
                         else
                         {
                             hkobject = new HKXGenericObject();
