@@ -166,8 +166,8 @@ class FlverUtilities
             }
             foreach (var v in m.Vertices)
             {
-                verts.Add(new Vector3(v.Position.X, v.Position.Y, v.Position.Z));
-                normals.Add(new Vector3(v.Normal.X, v.Normal.Y, v.Normal.Z));
+                verts.Add(new Vector3(v.Positions[0].X, v.Positions[0].Y, v.Positions[0].Z));
+                normals.Add(new Vector3(v.Normals[0].X, v.Normals[0].Y, v.Normals[0].Z));
                 if (v.Tangents.Count > 0)
                 {
                     tangents.Add(new Vector4(v.Tangents[0].X, v.Tangents[0].Y, v.Tangents[0].Z, v.Tangents[0].W));

@@ -24,6 +24,7 @@ public class DarkSoulsTools : EditorWindow
         DarkSoulsRemastered,
         DarkSoulsIII,
         Bloodborne,
+        Sekiro,
     }
 
     GameType type = GameType.Undefined;
@@ -61,6 +62,14 @@ public class DarkSoulsTools : EditorWindow
                 AssetDatabase.CreateFolder("Assets", "Bloodborne");
             }
             return "Bloodborne";
+        }
+        else if (game == GameType.Sekiro)
+        {
+            if (!AssetDatabase.IsValidFolder("Assets/Sekiro"))
+            {
+                AssetDatabase.CreateFolder("Assets", "Sekiro");
+            }
+            return "Sekiro";
         }
         throw new Exception("No directory for game type");
     }
@@ -112,7 +121,7 @@ public class DarkSoulsTools : EditorWindow
             throw new FileNotFoundException("Could not find bnd for object " + objid);
         }
 
-        if (type == GameType.DarkSoulsIII || type == GameType.Bloodborne)
+        if (type == GameType.DarkSoulsIII || type == GameType.Bloodborne || type == GameType.Sekiro)
         {
             objbnd = BND4.Read(GetOverridenPath(path));
         }
@@ -208,7 +217,7 @@ public class DarkSoulsTools : EditorWindow
             throw new FileNotFoundException("Could not find bnd for character " + chrid);
         }
 
-        if (type == GameType.DarkSoulsIII || type == GameType.Bloodborne)
+        if (type == GameType.DarkSoulsIII || type == GameType.Bloodborne || type == GameType.Sekiro)
         {
             chrbnd = BND4.Read(GetOverridenPath(path));
         }
@@ -597,6 +606,65 @@ public class DarkSoulsTools : EditorWindow
             col.isTrigger = true;
             col.radius = shape.Radius;
             col.height = shape.Height;
+        }
+        obj.layer = 13;
+        obj.transform.parent = parent.transform;
+        return obj;
+    }
+
+    GameObject InstantiateRegion(MSBS.Region region, string type, GameObject parent)
+    {
+        GameObject obj = new GameObject(region.Name);
+        obj.transform.position = new Vector3(region.Position.X, region.Position.Y, region.Position.Z);
+        //obj.transform.rotation = Quaternion.Euler(region.Rotation.X, region.Rotation.Y, region.Rotation.Z);
+        EulerToTransform(new Vector3(region.Rotation.X, region.Rotation.Y, region.Rotation.Z), obj.transform);
+        if (region.Shape is MSBS.Shape.Box)
+        {
+            var shape = (MSBS.Shape.Box)region.Shape;
+            obj.AddComponent<BoxCollider>();
+            var col = obj.GetComponent<BoxCollider>();
+            col.isTrigger = true;
+            col.size = new Vector3(shape.Width, shape.Height, shape.Depth);
+        }
+        else if (region.Shape is MSBS.Shape.Sphere || region.Shape is MSBS.Shape.Circle)
+        {
+            var shape = (MSBS.Shape.Sphere)region.Shape;
+            obj.AddComponent<SphereCollider>();
+            var col = obj.GetComponent<SphereCollider>();
+            col.isTrigger = true;
+            col.radius = shape.Radius;
+        }
+        else if (region.Shape is MSBS.Shape.Point)
+        {
+            var shape = (MSBS.Shape.Point)region.Shape;
+            obj.AddComponent<SphereCollider>();
+            var col = obj.GetComponent<SphereCollider>();
+            col.isTrigger = true;
+            col.radius = 1.0f;
+        }
+        else if (region.Shape is MSBS.Shape.Cylinder)
+        {
+            var shape = (MSBS.Shape.Cylinder)region.Shape;
+            obj.AddComponent<CapsuleCollider>();
+            var col = obj.GetComponent<CapsuleCollider>();
+            col.isTrigger = true;
+            col.radius = shape.Radius;
+            col.height = shape.Height;
+        }
+        if (region.Shape is MSBS.Shape.Rect)
+        {
+            var shape = (MSBS.Shape.Rect)region.Shape;
+            obj.AddComponent<BoxCollider>();
+            var col = obj.GetComponent<BoxCollider>();
+            col.isTrigger = true;
+            col.size = new Vector3(shape.Width, 1, shape.Depth);
+        }
+        else if (region.Shape is MSBS.Shape.Composite)
+        {
+            var shape = (MSBS.Shape.Composite)region.Shape;
+            obj.AddComponent<MSBSCompositeShape>();
+            var col = obj.GetComponent<MSBSCompositeShape>();
+            col.setShape(shape);
         }
         obj.layer = 13;
         obj.transform.parent = parent.transform;
@@ -1272,6 +1340,688 @@ public class DarkSoulsTools : EditorWindow
                 evt.AddComponent<MSB3OtherEvent>();
                 evt.GetComponent<MSB3OtherEvent>().SetEvent(ev);
                 evt.transform.parent = Others.transform;
+            }
+        }
+        catch (Exception e)
+        {
+            EditorUtility.DisplayDialog("Import failed", e.Message + "\n" + e.StackTrace, "Ok");
+        }
+    }
+
+    void onImportSekiroMap(object o)
+    {
+        try
+        {
+            string mapname = (string)o;
+            var msb = MSBS.Read(GetOverridenPath(Interroot + $@"\map\MapStudio\{mapname}.msb.dcx"));
+            string gameFolder = GameFolder(GameType.Sekiro);
+
+            if (!AssetDatabase.IsValidFolder("Assets/Sekiro/" + mapname))
+            {
+                AssetDatabase.CreateFolder("Assets/Sekiro", mapname);
+            }
+            
+            // Create an MSB asset link to the Sekiro asset
+            GameObject AssetLink = new GameObject("MSBAssetLink");
+            AssetLink.AddComponent<MSBAssetLink>();
+            AssetLink.GetComponent<MSBAssetLink>().Interroot = Interroot;
+            AssetLink.GetComponent<MSBAssetLink>().MapID = mapname;
+            AssetLink.GetComponent<MSBAssetLink>().MapPath = $@"{Interroot}\map\MapStudio\{mapname}.msb.dcx";
+            
+            //
+            // Models section
+            //
+            GameObject ModelsSection = new GameObject("MSBModelDeclarations");
+
+            GameObject MapPieceModels = new GameObject("MapPieces");
+            MapPieceModels.transform.parent = ModelsSection.transform;
+
+            // Do a preload of all the flvers
+            try
+            {
+                AssetDatabase.StartAssetEditing();
+                foreach (var mappiece in msb.Models.MapPieces)
+                {
+                    var assetname = mappiece.Name;
+                    if (AssetDatabase.FindAssets($@"Assets/Sekiro/{mapname}/{assetname}.prefab").Length == 0 && LoadMapFlvers)
+                    {
+                        if (File.Exists(Interroot + $@"\map\{mapname}\{mapname}_{assetname.Substring(1)}.mapbnd.dcx")) {
+                            try
+                            {
+                                FlverUtilities.ImportFlver(Interroot + $@"\map\{mapname}\{mapname}_{assetname.Substring(1)}.mapbnd.dcx", $@"Assets/Sekiro/{mapname}/{assetname}", $@"Assets/Sekiro/{mapname.Substring(0, 3)}");
+                            }
+                            catch
+                            {
+                                Debug.LogError(assetname + " failed model import");
+                            }
+                        }     
+                    }
+                }
+            }
+            finally
+            {
+                AssetDatabase.StopAssetEditing();
+            }
+            
+            foreach (var mappiece in msb.Models.MapPieces)
+            {
+                var assetname = mappiece.Name;
+                GameObject model = new GameObject(mappiece.Name);
+                model.AddComponent<MSBSMapPieceModel>();
+                model.GetComponent<MSBSMapPieceModel>().SetModel(mappiece);
+                model.transform.parent = MapPieceModels.transform;
+            }
+            /*
+            // Load low res hkx assets
+            if (LoadHighResCol)
+            {
+                if (File.Exists(Interroot + $@"\map\{mapname}\h{mapname.Substring(1)}.hkxbhd"))
+                {
+                    ImportCollisionHKXBDT(Interroot + $@"\map\{mapname}\h{mapname.Substring(1)}.hkxbhd", $@"Assets/DS3/{mapname}", type);
+                }
+            }
+            else
+            {
+                if (File.Exists(Interroot + $@"\map\{mapname}\l{mapname.Substring(1)}.hkxbhd"))
+                {
+                    ImportCollisionHKXBDT(Interroot + $@"\map\{mapname}\l{mapname.Substring(1)}.hkxbhd", $@"Assets/DS3/{mapname}", type);
+                }
+            }
+            */
+
+            GameObject ObjectModels = new GameObject("Objects");
+            ObjectModels.transform.parent = ModelsSection.transform;
+            foreach (var mod in msb.Models.Objects)
+            {
+                GameObject model = new GameObject(mod.Name);
+                model.AddComponent<MSBSObjectModel>();
+                model.GetComponent<MSBSObjectModel>().SetModel(mod);
+                model.transform.parent = ObjectModels.transform;
+            }
+            
+            GameObject PlayerModels = new GameObject("Players");
+            PlayerModels.transform.parent = ModelsSection.transform;
+            foreach (var mod in msb.Models.Players)
+            {
+                GameObject model = new GameObject(mod.Name);
+                model.AddComponent<MSBSPlayerModel>();
+                model.GetComponent<MSBSPlayerModel>().SetModel(mod);
+                model.transform.parent = PlayerModels.transform;
+            }
+
+            GameObject EnemyModels = new GameObject("Enemies");
+            EnemyModels.transform.parent = ModelsSection.transform;
+            foreach (var mod in msb.Models.Enemies)
+            {
+                GameObject model = new GameObject(mod.Name);
+                model.AddComponent<MSBSEnemyModel>();
+                model.GetComponent<MSBSEnemyModel>().SetModel(mod);
+                model.transform.parent = EnemyModels.transform;
+            }
+
+            GameObject CollisionModels = new GameObject("Collisions");
+            CollisionModels.transform.parent = ModelsSection.transform;
+            foreach (var mod in msb.Models.Collisions)
+            {
+                GameObject model = new GameObject(mod.Name);
+                model.AddComponent<MSBSCollisionModel>();
+                model.GetComponent<MSBSCollisionModel>().SetModel(mod);
+                model.transform.parent = CollisionModels.transform;
+            }
+
+            //
+            // Parts Section
+            //
+            
+            GameObject PartsSection = new GameObject("MSBParts");
+
+            GameObject MapPieces = new GameObject("MapPieces");
+            MapPieces.transform.parent = PartsSection.transform;
+            foreach (var part in msb.Parts.MapPieces)
+            {
+                GameObject src = LoadMapFlvers ? AssetDatabase.LoadAssetAtPath<GameObject>($@"Assets/Sekiro/{mapname}/{part.ModelName}.prefab") : null;
+                if (src != null)
+                {
+                    GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
+                    obj.name = part.Name;
+                    obj.AddComponent<MSBSMapPiecePart>();
+                    obj.GetComponent<MSBSMapPiecePart>().SetPart(part);
+                    obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
+                    //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
+                    EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
+                    obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
+                    obj.layer = 9;
+                    obj.transform.parent = MapPieces.transform;
+                }
+                else
+                {
+                    GameObject obj = new GameObject(part.Name);
+                    obj.AddComponent<MSBSMapPiecePart>();
+                    obj.GetComponent<MSBSMapPiecePart>().SetPart(part);
+                    obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
+                    //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
+                    EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
+                    obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
+                    obj.layer = 9;
+                    obj.transform.parent = MapPieces.transform;
+                }
+            }
+            
+            GameObject Objects = new GameObject("Objects");
+            Objects.transform.parent = PartsSection.transform;
+            foreach (var part in msb.Parts.Objects)
+            {
+                GameObject src = AssetDatabase.LoadAssetAtPath<GameObject>($@"Assets/Sekiro/Obj/{part.ModelName}.prefab");
+                if (src != null)
+                {
+                    GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
+                    obj.name = part.Name;
+                    obj.AddComponent<MSBSObjectPart>();
+                    obj.GetComponent<MSBSObjectPart>().SetPart(part);
+                    obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
+                    //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
+                    EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
+                    obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
+                    obj.layer = 10;
+                    obj.transform.parent = Objects.transform;
+                }
+                else
+                {
+                    GameObject obj = new GameObject(part.Name);
+                    obj.AddComponent<MSBSObjectPart>();
+                    obj.GetComponent<MSBSObjectPart>().SetPart(part);
+                    obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
+                    //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
+                    EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
+                    obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
+                    obj.layer = 10;
+                    obj.transform.parent = Objects.transform;
+                }
+            }
+            
+
+            GameObject Collisions = new GameObject("Collisions");
+            Collisions.transform.parent = PartsSection.transform;
+            foreach (var part in msb.Parts.Collisions)
+            {
+                GameObject obj = new GameObject(part.Name);
+                obj.name = part.Name;
+                obj.AddComponent<MSBSCollisionPart>();
+                obj.GetComponent<MSBSCollisionPart>().SetPart(part);
+                obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
+                //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
+                EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
+                obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
+                obj.layer = 12;
+                obj.transform.parent = Collisions.transform;
+            }
+
+            /* GameObject Collisions = new GameObject("Collisions");
+            Collisions.transform.parent = PartsSection.transform;
+            foreach (var part in msb.Parts.Collisions)
+            {
+                string lowHigh = LoadHighResCol ? "h" : "l";
+                GameObject src = AssetDatabase.LoadAssetAtPath<GameObject>($@"Assets/Sekiro/{mapname}/{lowHigh}{mapname.Substring(1)}_{part.ModelName.Substring(1)}.prefab");
+                if (src != null)
+                {
+                    GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
+                    obj.name = part.Name;
+                    obj.AddComponent<MSBSCollisionPart>();
+                    obj.GetComponent<MSBSCollisionPart>().SetPart(part);
+                    obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
+                    //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
+                    EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
+                    obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
+                    obj.layer = 12;
+                    obj.transform.parent = Collisions.transform;
+                }
+            }
+            */
+
+            GameObject ConnectCollisions = new GameObject("ConnectCollisions");
+            ConnectCollisions.transform.parent = PartsSection.transform;
+            foreach (var part in msb.Parts.ConnectCollisions)
+            {
+                GameObject obj = new GameObject(part.Name);
+                obj.AddComponent<MSBSConnectCollisionPart>();
+                obj.GetComponent<MSBSConnectCollisionPart>().SetPart(part);
+                obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
+                //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
+                EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
+                obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
+                obj.transform.parent = ConnectCollisions.transform;
+            }
+            
+            GameObject Enemies = new GameObject("Enemies");
+            Enemies.transform.parent = PartsSection.transform;
+            foreach (var part in msb.Parts.Enemies)
+            {
+                GameObject src = AssetDatabase.LoadAssetAtPath<GameObject>($@"Assets/Sekiro/Chr/{part.ModelName}.prefab");
+                if (src != null)
+                {
+                    GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
+                    obj.name = part.Name;
+                    obj.AddComponent<MSBSEnemyPart>();
+                    obj.GetComponent<MSBSEnemyPart>().SetPart(part);
+                    obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
+                    //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
+                    EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
+                    obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
+                    obj.layer = 11;
+                    obj.transform.parent = Enemies.transform;
+                }
+                else
+                {
+                    GameObject obj = new GameObject(part.Name);
+                    obj.AddComponent<MSBSEnemyPart>();
+                    obj.GetComponent<MSBSEnemyPart>().SetPart(part);
+                    obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
+                    //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
+                    EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
+                    obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
+                    obj.layer = 11;
+                    obj.transform.parent = Enemies.transform;
+                }
+            }
+            
+            GameObject Players = new GameObject("Players");
+            Players.transform.parent = PartsSection.transform;
+            foreach (var part in msb.Parts.Players)
+            {
+                GameObject obj = new GameObject(part.Name);
+                obj.AddComponent<MSBSPlayerPart>();
+                obj.GetComponent<MSBSPlayerPart>().SetPart(part);
+                obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
+                //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
+                EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
+                obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
+                obj.transform.parent = Players.transform;
+            }
+            
+            GameObject DummyObjects = new GameObject("DummyObjects");
+            DummyObjects.transform.parent = PartsSection.transform;
+            foreach (var part in msb.Parts.DummyObjects)
+            {
+                GameObject obj = new GameObject(part.Name);
+                obj.AddComponent<MSBSDummyObjectPart>();
+                obj.GetComponent<MSBSDummyObjectPart>().SetPart(part);
+                obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
+                //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
+                EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
+                obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
+                obj.transform.parent = DummyObjects.transform;
+            }
+
+            GameObject DummyEnemies = new GameObject("DummyEnemies");
+            DummyEnemies.transform.parent = PartsSection.transform;
+            foreach (var part in msb.Parts.DummyEnemies)
+            {
+                GameObject obj = new GameObject(part.Name);
+                obj.AddComponent<MSBSDummyEnemyPart>();
+                obj.GetComponent<MSBSDummyEnemyPart>().SetPart(part);
+                obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
+                //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
+                EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
+                obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
+                obj.transform.parent = DummyEnemies.transform;
+            }
+
+            
+            //
+            // Regions section
+            //
+            GameObject Regions = new GameObject("MSBRegions");
+
+            GameObject ActivationAreas = new GameObject("ActivationAreas");
+            ActivationAreas.transform.parent = Regions.transform;
+            foreach (var region in msb.Regions.ActivationAreas)
+            {
+                var reg = InstantiateRegion(region, "Activation Area", ActivationAreas);
+                reg.AddComponent<MSBSActivationAreaRegion>();
+                reg.GetComponent<MSBSActivationAreaRegion>().SetRegion(region);
+            }
+
+            GameObject EnvEffBoxes = new GameObject("EnvMapEffectBoxes");
+            EnvEffBoxes.transform.parent = Regions.transform;
+            foreach (var region in msb.Regions.EnvironmentMapEffectBoxes)
+            {
+                var reg = InstantiateRegion(region, "Env Map Effect Box", EnvEffBoxes);
+                reg.AddComponent<MSBSEnvironmentEffectBoxRegion>();
+                reg.GetComponent<MSBSEnvironmentEffectBoxRegion>().SetRegion(region);
+            }
+
+            GameObject EnvMapPoints = new GameObject("EnvMapPoints");
+            EnvMapPoints.transform.parent = Regions.transform;
+            foreach (var region in msb.Regions.EnvironmentMapPoints)
+            {
+                var reg = InstantiateRegion(region, "Env Map Point", EnvMapPoints);
+                reg.AddComponent<MSBSEnvironmentMapPointRegion>();
+                reg.GetComponent<MSBSEnvironmentMapPointRegion>().SetRegion(region);
+            }
+
+            GameObject EventRegions = new GameObject("Events");
+            EventRegions.transform.parent = Regions.transform;
+            foreach (var region in msb.Regions.Events)
+            {
+                var reg = InstantiateRegion(region, "Event", EventRegions);
+                reg.AddComponent<MSBSEventRegion>();
+                reg.GetComponent<MSBSEventRegion>().SetRegion(region);
+            }
+
+            GameObject InvasionPoints = new GameObject("InvasionPoints");
+            InvasionPoints.transform.parent = Regions.transform;
+            foreach (var region in msb.Regions.InvasionPoints)
+            {
+                var reg = InstantiateRegion(region, "Invasion Point", InvasionPoints);
+                reg.AddComponent<MSBSInvasionPointRegion>();
+                reg.GetComponent<MSBSInvasionPointRegion>().SetRegion(region);
+            }
+
+            GameObject MuffBoxes = new GameObject("MufflingBox");
+            MuffBoxes.transform.parent = Regions.transform;
+            foreach (var region in msb.Regions.MufflingBoxes)
+            {
+                var reg = InstantiateRegion(region, "Muffling Box", MuffBoxes);
+                reg.AddComponent<MSBSMufflingBoxRegion>();
+                reg.GetComponent<MSBSMufflingBoxRegion>().SetRegion(region);
+            }
+
+            GameObject MuffPortals = new GameObject("MufflingPortals");
+            MuffPortals.transform.parent = Regions.transform;
+            foreach (var region in msb.Regions.MufflingPortals)
+            {
+                var reg = InstantiateRegion(region, "Muffling Portal", MuffPortals);
+                reg.AddComponent<MSBSMufflingPortal>();
+                reg.GetComponent<MSBSMufflingPortal>().SetRegion(region);
+            }
+
+            GameObject SFXRegions = new GameObject("SFX");
+            SFXRegions.transform.parent = Regions.transform;
+            foreach (var region in msb.Regions.SFXs)
+            {
+                var reg = InstantiateRegion(region, "SFX", SFXRegions);
+                reg.AddComponent<MSBSSFXRegion>();
+                reg.GetComponent<MSBSSFXRegion>().SetRegion(region);
+            }
+
+            GameObject SoundRegions = new GameObject("Sounds");
+            SoundRegions.transform.parent = Regions.transform;
+            foreach (var region in msb.Regions.Sounds)
+            {
+                var reg = InstantiateRegion(region, "Sound", SoundRegions);
+                reg.AddComponent<MSBSSoundRegion>();
+                reg.GetComponent<MSBSSoundRegion>().SetRegion(region);
+            }
+
+            GameObject SpawnPoints = new GameObject("SpawnPoints");
+            SpawnPoints.transform.parent = Regions.transform;
+            foreach (var region in msb.Regions.SpawnPoints)
+            {
+                var reg = InstantiateRegion(region, "Spawn Point", SpawnPoints);
+                reg.AddComponent<MSBSSpawnPointRegion>();
+                reg.GetComponent<MSBSSpawnPointRegion>().SetRegion(region);
+            }
+
+            GameObject WalkRoutes = new GameObject("WalkRoutes");
+            WalkRoutes.transform.parent = Regions.transform;
+            foreach (var region in msb.Regions.WalkRoutes)
+            {
+                var reg = InstantiateRegion(region, "Walk Route", WalkRoutes);
+                reg.AddComponent<MSBSWalkRouteRegion>();
+                reg.GetComponent<MSBSWalkRouteRegion>().SetRegion(region);
+            }
+
+            GameObject WarpPoints = new GameObject("WarpPoints");
+            WarpPoints.transform.parent = Regions.transform;
+            foreach (var region in msb.Regions.WarpPoints)
+            {
+                var reg = InstantiateRegion(region, "Warp Point", WarpPoints);
+                reg.AddComponent<MSBSWarpPointRegion>();
+                reg.GetComponent<MSBSWarpPointRegion>().SetRegion(region);
+            }
+
+            GameObject WindAreas = new GameObject("WindAreas");
+            WindAreas.transform.parent = Regions.transform;
+            foreach (var region in msb.Regions.WindAreas)
+            {
+                var reg = InstantiateRegion(region, "Wind Area", WindAreas);
+                reg.AddComponent<MSBSWindAreaRegion>();
+                reg.GetComponent<MSBSWindAreaRegion>().SetRegion(region);
+            }
+
+            GameObject WindSFXs = new GameObject("WindSFXRegions");
+            WindSFXs.transform.parent = Regions.transform;
+            foreach (var region in msb.Regions.WindSFXs)
+            {
+                var reg = InstantiateRegion(region, "Wind SFX", WindSFXs);
+                reg.AddComponent<MSBSWindSFXRegion>();
+                reg.GetComponent<MSBSWindSFXRegion>().SetRegion(region);
+            }
+
+            GameObject Region0s = new GameObject("Region0Regions");
+            Region0s.transform.parent = Regions.transform;
+            foreach (var region in msb.Regions.Region0s)
+            {
+                var reg = InstantiateRegion(region, "Region0", Region0s);
+                reg.AddComponent<MSBSRegion0Region>();
+                reg.GetComponent<MSBSRegion0Region>().SetRegion(region);
+            }
+
+            GameObject Region23s = new GameObject("Region23Regions");
+            Region23s.transform.parent = Regions.transform;
+            foreach (var region in msb.Regions.Region23s)
+            {
+                var reg = InstantiateRegion(region, "Region23", Region23s);
+                reg.AddComponent<MSBSRegion23Region>();
+                reg.GetComponent<MSBSRegion23Region>().SetRegion(region);
+            }
+
+
+            GameObject Region24s = new GameObject("Region24Regions");
+            Region24s.transform.parent = Regions.transform;
+            foreach (var region in msb.Regions.Region24s)
+            {
+                var reg = InstantiateRegion(region, "Region24", Region24s);
+                reg.AddComponent<MSBSRegion24Region>();
+                reg.GetComponent<MSBSRegion24Region>().SetRegion(region);
+            }
+
+            GameObject PartsGroups = new GameObject("PartsGroups");
+            PartsGroups.transform.parent = Regions.transform;
+            foreach (var region in msb.Regions.PartsGroups)
+            {
+                var reg = InstantiateRegion(region, "Parts Group", PartsGroups);
+                reg.AddComponent<MSBSPartsGroupRegion>();
+                reg.GetComponent<MSBSPartsGroupRegion>().SetRegion(region);
+            }
+
+            GameObject AutoDrawGroups = new GameObject("AutoDrawGroups");
+            AutoDrawGroups.transform.parent = Regions.transform;
+            foreach (var region in msb.Regions.AutoDrawGroups)
+            {
+                var reg = InstantiateRegion(region, "Auto Draw Group", PartsGroups);
+                reg.AddComponent<MSBSAutoDrawGroupRegion>();
+                reg.GetComponent<MSBSAutoDrawGroupRegion>().SetRegion(region);
+            }
+
+            GameObject OtherRegions = new GameObject("OtherRegions");
+            OtherRegions.transform.parent = Regions.transform;
+            foreach (var region in msb.Regions.Others)
+            {
+                var reg = InstantiateRegion(region, "Other Region", OtherRegions);
+                reg.AddComponent<MSBSOtherRegion>();
+                reg.GetComponent<MSBSOtherRegion>().SetRegion(region);
+            }
+
+            //
+            // Events Section
+            //
+            
+            GameObject Events = new GameObject("MSBEvents");
+
+            GameObject Treasures = new GameObject("Treasures");
+            Treasures.transform.parent = Events.transform;
+            foreach (var ev in msb.Events.Treasures)
+            {
+                GameObject evt = new GameObject(ev.Name);
+                evt.AddComponent<MSBSTreasureEvent>();
+                evt.GetComponent<MSBSTreasureEvent>().SetEvent(ev);
+                evt.transform.parent = Treasures.transform;
+            }
+
+            GameObject Generators = new GameObject("Generators");
+            Generators.transform.parent = Events.transform;
+            foreach (var ev in msb.Events.Generators)
+            {
+                GameObject evt = new GameObject(ev.Name);
+                evt.AddComponent<MSBSGeneratorEvent>();
+                evt.GetComponent<MSBSGeneratorEvent>().SetEvent(ev);
+                evt.transform.parent = Generators.transform;
+            }
+
+            GameObject ObjActs = new GameObject("ObjActs");
+            ObjActs.transform.parent = Events.transform;
+            foreach (var ev in msb.Events.ObjActs)
+            {
+                GameObject evt = new GameObject(ev.Name);
+                evt.AddComponent<MSBSObjActEvent>();
+                evt.GetComponent<MSBSObjActEvent>().SetEvent(ev);
+                evt.transform.parent = ObjActs.transform;
+            }
+
+            GameObject MapOffsets = new GameObject("MapOffsets");
+            MapOffsets.transform.parent = Events.transform;
+            foreach (var ev in msb.Events.MapOffsets)
+            {
+                GameObject evt = new GameObject(ev.Name);
+                evt.AddComponent<MSBSMapOffsetEvent>();
+                evt.GetComponent<MSBSMapOffsetEvent>().SetEvent(ev);
+                evt.transform.parent = MapOffsets.transform;
+            }
+
+            GameObject WalkRouteEvents = new GameObject("WalkRoutes");
+            WalkRouteEvents.transform.parent = Events.transform;
+            foreach (var ev in msb.Events.WalkRoutes)
+            {
+                GameObject evt = new GameObject(ev.Name);
+                evt.AddComponent<MSBSWalkRouteEvent>();
+                evt.GetComponent<MSBSWalkRouteEvent>().SetEvent(ev);
+                evt.transform.parent = WalkRouteEvents.transform;
+            }
+
+            GameObject GroupTours = new GameObject("GroupTours");
+            GroupTours.transform.parent = Events.transform;
+            foreach (var ev in msb.Events.GroupTours)
+            {
+                GameObject evt = new GameObject(ev.Name);
+                evt.AddComponent<MSBSGroupTourEvent>();
+                evt.GetComponent<MSBSGroupTourEvent>().SetEvent(ev);
+                evt.transform.parent = GroupTours.transform;
+            }
+
+            GameObject Event17s = new GameObject("Event17Events");
+            Event17s.transform.parent = Events.transform;
+            foreach (var ev in msb.Events.Event17s)
+            {
+                GameObject evt = new GameObject(ev.Name);
+                evt.AddComponent<MSBSEvent17Event>();
+                evt.GetComponent<MSBSEvent17Event>().SetEvent(ev);
+                evt.transform.parent = Event17s.transform;
+            }
+
+            GameObject Event18s = new GameObject("Event18Events");
+            Event18s.transform.parent = Events.transform;
+            foreach (var ev in msb.Events.Event18s)
+            {
+                GameObject evt = new GameObject(ev.Name);
+                evt.AddComponent<MSBSEvent18Event>();
+                evt.GetComponent<MSBSEvent18Event>().SetEvent(ev);
+                evt.transform.parent = Event18s.transform;
+            }
+
+            GameObject Event20s = new GameObject("Event20Events");
+            Event20s.transform.parent = Events.transform;
+            foreach (var ev in msb.Events.Event20s)
+            {
+                GameObject evt = new GameObject(ev.Name);
+                evt.AddComponent<MSBSEvent20Event>();
+                evt.GetComponent<MSBSEvent20Event>().SetEvent(ev);
+                evt.transform.parent = Event20s.transform;
+            }
+
+            GameObject Event21s = new GameObject("Event21Events");
+            Event21s.transform.parent = Events.transform;
+            foreach (var ev in msb.Events.Event21s)
+            {
+                GameObject evt = new GameObject(ev.Name);
+                evt.AddComponent<MSBSEvent21Event>();
+                evt.GetComponent<MSBSEvent21Event>().SetEvent(ev);
+                evt.transform.parent = Event21s.transform;
+            }
+
+            GameObject Event23s = new GameObject("Event23Events");
+            Event23s.transform.parent = Events.transform;
+            foreach (var ev in msb.Events.Event23s)
+            {
+                GameObject evt = new GameObject(ev.Name);
+                evt.AddComponent<MSBSEvent23Event>();
+                evt.GetComponent<MSBSEvent23Event>().SetEvent(ev);
+                evt.transform.parent = Event23s.transform;
+            }
+
+            GameObject PartsGroupEvents = new GameObject("PartsGroups");
+            PartsGroupEvents.transform.parent = Events.transform;
+            foreach (var ev in msb.Events.PartsGroups)
+            {
+                GameObject evt = new GameObject(ev.Name);
+                evt.AddComponent<MSBSPartsGroupEvent>();
+                evt.GetComponent<MSBSPartsGroupEvent>().SetEvent(ev);
+                evt.transform.parent = PartsGroupEvents.transform;
+            }
+
+            GameObject AutoDrawGroupEvents = new GameObject("AutoDrawGroups");
+            AutoDrawGroupEvents.transform.parent = Events.transform;
+            foreach (var ev in msb.Events.AutoDrawGroups)
+            {
+                GameObject evt = new GameObject(ev.Name);
+                evt.AddComponent<MSBSAutoDrawGroupEvent>();
+                evt.GetComponent<MSBSAutoDrawGroupEvent>().SetEvent(ev);
+                evt.transform.parent = AutoDrawGroupEvents.transform;
+            }
+
+            GameObject Others = new GameObject("Others");
+            Others.transform.parent = Events.transform;
+            foreach (var ev in msb.Events.Others)
+            {
+                GameObject evt = new GameObject(ev.Name);
+                evt.AddComponent<MSBSOtherEvent>();
+                evt.GetComponent<MSBSOtherEvent>().SetEvent(ev);
+                evt.transform.parent = Others.transform;
+            }
+
+            //
+            // Routes section
+            //
+            GameObject Routes = new GameObject("MSBRoutes");
+
+            GameObject MufflingBoxLinks = new GameObject("MufflingBoxLinks");
+            MufflingBoxLinks.transform.parent = Routes.transform;
+            foreach (var route in msb.Routes.MufflingBoxLinks)
+            {
+                GameObject rou = new GameObject(route.Name);
+                rou.AddComponent<MSBSMufflingBoxLinkRoute>();
+                rou.GetComponent<MSBSMufflingBoxLinkRoute>().SetRoute(route);
+                rou.transform.parent = MufflingBoxLinks.transform;
+            }
+
+            GameObject MufflingPortalLinks = new GameObject("MufflingPortalLinks");
+            MufflingPortalLinks.transform.parent = Routes.transform;
+            foreach (var route in msb.Routes.MufflingPortalLinks)
+            {
+                GameObject rou = new GameObject(route.Name);
+                rou.AddComponent<MSBSMufflingPortalLinkRoute>();
+                rou.GetComponent<MSBSMufflingPortalLinkRoute>().SetRoute(route);
+                rou.transform.parent = MufflingPortalLinks.transform;
             }
         }
         catch (Exception e)
@@ -2322,6 +3072,10 @@ public class DarkSoulsTools : EditorWindow
         {
             onImportBBMap(o);
         }
+        else if (type == GameType.Sekiro)
+        {
+            onImportSekiroMap(o);
+        }
     }
 
     // Helper to get a child from a game object by name
@@ -3234,6 +3988,549 @@ public class DarkSoulsTools : EditorWindow
         File.Move(mapPath + ".temp", mapPath);
     }
 
+    void ExportMapSekiro()
+    {
+        var AssetLink = GameObject.Find("MSBAssetLink");
+        if (AssetLink == null || AssetLink.GetComponent<MSBAssetLink>() == null)
+        {
+            throw new Exception("Could not find a valid MSB asset link to a Sekiro asset.");
+        }
+
+        MSBS export = new MSBS();
+        // Export the models
+        var Models = GameObject.Find("/MSBModelDeclarations");
+        if (Models != null)
+        {
+            // Export map pieces
+            var modelMapPieces = GetChild(Models, "MapPieces");
+            if (modelMapPieces != null)
+            {
+                foreach (var obj in GetChildrenOfType<MSBSMapPieceModel>(modelMapPieces))
+                {
+                    export.Models.MapPieces.Add(obj.GetComponent<MSBSMapPieceModel>().Serialize(obj));
+                }
+            }
+
+            // Export collision
+            var modelCollision = GetChild(Models, "Collisions");
+            if (modelCollision != null)
+            {
+                foreach (var obj in GetChildrenOfType<MSBSCollisionModel>(modelCollision))
+                {
+                    export.Models.Collisions.Add(obj.GetComponent<MSBSCollisionModel>().Serialize(obj));
+                }
+            }
+
+            // Export enemies
+            var modelEnemy = GetChild(Models, "Enemies");
+            if (modelEnemy != null)
+            {
+                foreach (var obj in GetChildrenOfType<MSBSEnemyModel>(modelEnemy))
+                {
+                    export.Models.Enemies.Add(obj.GetComponent<MSBSEnemyModel>().Serialize(obj));
+                }
+            }
+
+            // Export objects
+            var modelObject = GetChild(Models, "Objects");
+            if (modelObject != null)
+            {
+                foreach (var obj in GetChildrenOfType<MSBSObjectModel>(modelObject))
+                {
+                    export.Models.Objects.Add(obj.GetComponent<MSBSObjectModel>().Serialize(obj));
+                }
+            }
+
+            // Export players
+            var modelPlayer = GetChild(Models, "Players");
+            if (modelPlayer != null)
+            {
+                foreach (var obj in GetChildrenOfType<MSBSPlayerModel>(modelPlayer))
+                {
+                    export.Models.Players.Add(obj.GetComponent<MSBSPlayerModel>().Serialize(obj));
+                }
+            }
+        }
+        else
+        {
+            throw new Exception("MSB exporter requires a model declaration section");
+        }
+        
+        // Export the models
+        var Parts = GameObject.Find("/MSBParts");
+        if (Parts != null)
+        {
+            // Export map pieces
+            var partMapPieces = GetChild(Parts, "MapPieces");
+            if (partMapPieces != null)
+            {
+                foreach (var obj in GetChildrenOfType<MSBSMapPiecePart>(partMapPieces))
+                {
+                    export.Parts.MapPieces.Add(obj.GetComponent<MSBSMapPiecePart>().Serialize(obj));
+                }
+            }
+
+            // Export collisions
+            var partCollisions = GetChild(Parts, "Collisions");
+            if (partCollisions != null)
+            {
+                foreach (var obj in GetChildrenOfType<MSBSCollisionPart>(partCollisions))
+                {
+                    export.Parts.Collisions.Add(obj.GetComponent<MSBSCollisionPart>().Serialize(obj));
+                }
+            }
+            
+            // Export connect collisions
+            var partConnectCollisions = GetChild(Parts, "ConnectCollisions");
+            if (partConnectCollisions != null)
+            {
+                foreach (var obj in GetChildrenOfType<MSBSConnectCollisionPart>(partConnectCollisions))
+                {
+                    export.Parts.ConnectCollisions.Add(obj.GetComponent<MSBSConnectCollisionPart>().Serialize(obj));
+                }
+            }
+            
+            // Export dummy enemies
+            var partDummyEnemies = GetChild(Parts, "DummyEnemies");
+            if (partDummyEnemies != null)
+            {
+                foreach (var obj in GetChildrenOfType<MSBSDummyEnemyPart>(partDummyEnemies))
+                {
+                    export.Parts.DummyEnemies.Add(obj.GetComponent<MSBSDummyEnemyPart>().Serialize(obj));
+                }
+            }
+
+            var partDummyObjects = GetChild(Parts, "DummyObjects");
+            if (partDummyObjects != null)
+            {
+                foreach (var obj in GetChildrenOfType<MSBSDummyObjectPart>(partDummyObjects))
+                {
+                    export.Parts.DummyObjects.Add(obj.GetComponent<MSBSDummyObjectPart>().Serialize(obj));
+                }
+            }
+            
+            var partEnemies = GetChild(Parts, "Enemies");
+            if (partEnemies != null)
+            {
+                foreach (var obj in GetChildrenOfType<MSBSEnemyPart>(partEnemies))
+                {
+                    export.Parts.Enemies.Add(obj.GetComponent<MSBSEnemyPart>().Serialize(obj));
+                }
+            }
+           
+            var partObjects = GetChild(Parts, "Objects");
+            if (partObjects != null)
+            {
+                foreach (var obj in GetChildrenOfType<MSBSObjectPart>(partObjects))
+                {
+                    export.Parts.Objects.Add(obj.GetComponent<MSBSObjectPart>().Serialize(obj));
+                }
+            }
+            
+            var partPlayers = GetChild(Parts, "Players");
+            if (partPlayers != null)
+            {
+                foreach (var obj in GetChildrenOfType<MSBSPlayerPart>(partPlayers))
+                {
+                    export.Parts.Players.Add(obj.GetComponent<MSBSPlayerPart>().Serialize(obj));
+                }
+            }
+        }
+        else
+        {
+            throw new Exception("MSB exporter requires a parts section");
+        }
+        
+        // Export the points/regions
+        var Regions = GameObject.Find("/MSBRegions");
+        if (Regions != null)
+        {
+            var regionActAreas = GetChild(Regions, "ActivationAreas");
+            if (regionActAreas != null)
+            {
+                foreach (var obj in GetChildrenOfType<MSBSActivationAreaRegion>(regionActAreas))
+                {
+                    export.Regions.ActivationAreas.Add(obj.GetComponent<MSBSActivationAreaRegion>().Serialize(obj));
+                }
+            }
+
+            var regionEnvMapEffectBoxes = GetChild(Regions, "EnvMapEffectBoxes");
+            if (regionEnvMapEffectBoxes != null)
+            {
+                foreach (var obj in GetChildrenOfType<MSBSEnvironmentEffectBoxRegion>(regionEnvMapEffectBoxes))
+                {
+                    export.Regions.EnvironmentMapEffectBoxes.Add(obj.GetComponent<MSBSEnvironmentEffectBoxRegion>().Serialize(obj));
+                }
+            }
+
+            var regionEnvMapPoints = GetChild(Regions, "EnvMapPoints");
+            if (regionEnvMapPoints != null)
+            {
+                foreach (var obj in GetChildrenOfType<MSBSEnvironmentMapPointRegion>(regionEnvMapPoints))
+                {
+                    export.Regions.EnvironmentMapPoints.Add(obj.GetComponent<MSBSEnvironmentMapPointRegion>().Serialize(obj));
+                }
+            }
+
+            var regionEvents = GetChild(Regions, "Events");
+            if (regionEvents != null)
+            {
+                foreach (var obj in GetChildrenOfType<MSBSEventRegion>(regionEvents))
+                {
+                    export.Regions.Events.Add(obj.GetComponent<MSBSEventRegion>().Serialize(obj));
+                }
+            }
+
+            var regionInvasionPoints = GetChild(Regions, "InvasionPoints");
+            if (regionInvasionPoints != null)
+            {
+                foreach (var obj in GetChildrenOfType<MSBSInvasionPointRegion>(regionInvasionPoints))
+                {
+                    export.Regions.InvasionPoints.Add(obj.GetComponent<MSBSInvasionPointRegion>().Serialize(obj));
+                }
+            }
+
+            var regionMufflingBox = GetChild(Regions, "MufflingBox");
+            if (regionMufflingBox != null)
+            {
+                foreach (var obj in GetChildrenOfType<MSBSMufflingBoxRegion>(regionMufflingBox))
+                {
+                    export.Regions.MufflingBoxes.Add(obj.GetComponent<MSBSMufflingBoxRegion>().Serialize(obj));
+                }
+            }
+
+            var regionMufflingPortals = GetChild(Regions, "MufflingPortals");
+            if (regionMufflingPortals != null)
+            {
+                foreach (var obj in GetChildrenOfType<MSBSMufflingPortal>(regionMufflingPortals))
+                {
+                    export.Regions.MufflingPortals.Add(obj.GetComponent<MSBSMufflingPortal>().Serialize(obj));
+                }
+            }
+
+            var regionSFX = GetChild(Regions, "SFX");
+            if (regionSFX != null)
+            {
+                foreach (var obj in GetChildrenOfType<MSBSSFXRegion>(regionSFX))
+                {
+                    export.Regions.SFXs.Add(obj.GetComponent<MSBSSFXRegion>().Serialize(obj));
+                }
+            }
+
+            var regionSounds = GetChild(Regions, "Sounds");
+            if (regionSounds != null)
+            {
+                foreach (var obj in GetChildrenOfType<MSBSSoundRegion>(regionSounds))
+                {
+                    export.Regions.Sounds.Add(obj.GetComponent<MSBSSoundRegion>().Serialize(obj));
+                }
+            }
+
+            var regionSpawnPoints = GetChild(Regions, "SpawnPoints");
+            if (regionSpawnPoints != null)
+            {
+                foreach (var obj in GetChildrenOfType<MSBSSpawnPointRegion>(regionSpawnPoints))
+                {
+                    export.Regions.SpawnPoints.Add(obj.GetComponent<MSBSSpawnPointRegion>().Serialize(obj));
+                }
+            }
+
+            var regionWalkRoutes = GetChild(Regions, "WalkRoutes");
+            if (regionWalkRoutes != null)
+            {
+                foreach (var obj in GetChildrenOfType<MSBSWalkRouteRegion>(regionWalkRoutes))
+                {
+                    export.Regions.WalkRoutes.Add(obj.GetComponent<MSBSWalkRouteRegion>().Serialize(obj));
+                }
+            }
+
+            var regionWarpPoints = GetChild(Regions, "WarpPoints");
+            if (regionWarpPoints != null)
+            {
+                foreach (var obj in GetChildrenOfType<MSBSWarpPointRegion>(regionWarpPoints))
+                {
+                    export.Regions.WarpPoints.Add(obj.GetComponent<MSBSWarpPointRegion>().Serialize(obj));
+                }
+            }
+
+            var regionWindAreas = GetChild(Regions, "WindAreas");
+            if (regionWindAreas != null)
+            {
+                foreach (var obj in GetChildrenOfType<MSBSWindAreaRegion>(regionWindAreas))
+                {
+                    export.Regions.WindAreas.Add(obj.GetComponent<MSBSWindAreaRegion>().Serialize(obj));
+                }
+            }
+
+            var regionWindSFX = GetChild(Regions, "WindSFXRegions");
+            if (regionWindSFX != null)
+            {
+                foreach (var obj in GetChildrenOfType<MSBSWindSFXRegion>(regionWindSFX))
+                {
+                    export.Regions.WindSFXs.Add(obj.GetComponent<MSBSWindSFXRegion>().Serialize(obj));
+                }
+            }
+
+            var region0Regions = GetChild(Regions, "Region0Regions");
+            if (region0Regions != null)
+            {
+                foreach (var obj in GetChildrenOfType<MSBSRegion0Region>(region0Regions))
+                {
+                    export.Regions.Region0s.Add(obj.GetComponent<MSBSRegion0Region>().Serialize(obj));
+                }
+            }
+
+            var region23Regions = GetChild(Regions, "Region23Regions");
+            if (region23Regions != null)
+            {
+                foreach (var obj in GetChildrenOfType<MSBSRegion23Region>(region23Regions))
+                {
+                    export.Regions.Region23s.Add(obj.GetComponent<MSBSRegion23Region>().Serialize(obj));
+                }
+            }
+
+            var region24Regions = GetChild(Regions, "Region24Regions");
+            if (region24Regions != null)
+            {
+                foreach (var obj in GetChildrenOfType<MSBSRegion24Region>(region24Regions))
+                {
+                    export.Regions.Region24s.Add(obj.GetComponent<MSBSRegion24Region>().Serialize(obj));
+                }
+            }
+
+            var partsGroups = GetChild(Regions, "PartsGroups");
+            if (partsGroups != null)
+            {
+                foreach (var obj in GetChildrenOfType<MSBSPartsGroupRegion>(partsGroups))
+                {
+                    export.Regions.PartsGroups.Add(obj.GetComponent<MSBSPartsGroupRegion>().Serialize(obj));
+                }
+            }
+
+            var autoDrawGroups = GetChild(Regions, "AutoDrawGroups");
+            if (autoDrawGroups != null)
+            {
+                foreach (var obj in GetChildrenOfType<MSBSAutoDrawGroupRegion>(autoDrawGroups))
+                {
+                    export.Regions.AutoDrawGroups.Add(obj.GetComponent<MSBSAutoDrawGroupRegion>().Serialize(obj));
+                }
+            }
+
+            var otherRegions = GetChild(Regions, "OtherRegions");
+            if (otherRegions != null)
+            {
+                foreach (var obj in GetChildrenOfType<MSBSOtherRegion>(otherRegions))
+                {
+                    export.Regions.Others.Add(obj.GetComponent<MSBSOtherRegion>().Serialize(obj));
+                }
+            }
+
+        }
+        else
+        {
+            throw new Exception("MSB exporter requires a regions section");
+        }
+        
+        // Export the events
+        var Events = GameObject.Find("/MSBEvents");
+        if (Events != null)
+        {
+            var eventTreasures = GetChild(Events, "Treasures");
+            if (eventTreasures != null)
+            {
+                foreach (var obj in GetChildrenOfType<MSBSTreasureEvent>(eventTreasures))
+                {
+                    export.Events.Treasures.Add(obj.GetComponent<MSBSTreasureEvent>().Serialize(obj));
+                }
+            }
+
+            var eventGenerators = GetChild(Events, "Generators");
+            if (eventGenerators != null)
+            {
+                foreach (var obj in GetChildrenOfType<MSBSGeneratorEvent>(eventGenerators))
+                {
+                    export.Events.Generators.Add(obj.GetComponent<MSBSGeneratorEvent>().Serialize(obj));
+                }
+            }
+
+            var eventObjActs = GetChild(Events, "ObjActs");
+            if (eventObjActs != null)
+            {
+                foreach (var obj in GetChildrenOfType<MSBSObjActEvent>(eventObjActs))
+                {
+                    export.Events.ObjActs.Add(obj.GetComponent<MSBSObjActEvent>().Serialize(obj));
+                }
+            }
+
+            var eventMapOffsets = GetChild(Events, "MapOffsets");
+            if (eventMapOffsets != null)
+            {
+                foreach (var obj in GetChildrenOfType<MSBSMapOffsetEvent>(eventMapOffsets))
+                {
+                    export.Events.MapOffsets.Add(obj.GetComponent<MSBSMapOffsetEvent>().Serialize(obj));
+                }
+            }
+
+            var eventWalkRoutes = GetChild(Events, "WalkRoutes");
+            if (eventWalkRoutes != null)
+            {
+                foreach (var obj in GetChildrenOfType<MSBSWalkRouteEvent>(eventWalkRoutes))
+                {
+                    export.Events.WalkRoutes.Add(obj.GetComponent<MSBSWalkRouteEvent>().Serialize(obj));
+                }
+            }
+
+            var eventGroupTours = GetChild(Events, "GroupTours");
+            if (eventGroupTours != null)
+            {
+                foreach (var obj in GetChildrenOfType<MSBSGroupTourEvent>(eventGroupTours))
+                {
+                    export.Events.GroupTours.Add(obj.GetComponent<MSBSGroupTourEvent>().Serialize(obj));
+                }
+            }
+
+            var event17s = GetChild(Events, "Event17Events");
+            if (event17s != null)
+            {
+                foreach (var obj in GetChildrenOfType<MSBSEvent17Event>(event17s))
+                {
+                    export.Events.Event17s.Add(obj.GetComponent<MSBSEvent17Event>().Serialize(obj));
+                }
+            }
+
+            var event18s = GetChild(Events, "Event18Events");
+            if (event18s != null)
+            {
+                foreach (var obj in GetChildrenOfType<MSBSEvent18Event>(event18s))
+                {
+                    export.Events.Event18s.Add(obj.GetComponent<MSBSEvent18Event>().Serialize(obj));
+                }
+            }
+
+            var event20s = GetChild(Events, "Event20Events");
+            if (event20s != null)
+            {
+                foreach (var obj in GetChildrenOfType<MSBSEvent20Event>(event20s))
+                {
+                    export.Events.Event20s.Add(obj.GetComponent<MSBSEvent20Event>().Serialize(obj));
+                }
+            }
+
+            var event21s = GetChild(Events, "Event21Events");
+            if (event21s != null)
+            {
+                foreach (var obj in GetChildrenOfType<MSBSEvent21Event>(event21s))
+                {
+                    export.Events.Event21s.Add(obj.GetComponent<MSBSEvent21Event>().Serialize(obj));
+                }
+            }
+
+            var partsGroupEvents = GetChild(Events, "PartsGroups");
+            if (partsGroupEvents != null)
+            {
+                foreach (var obj in GetChildrenOfType<MSBSPartsGroupEvent>(partsGroupEvents))
+                {
+                    export.Events.PartsGroups.Add(obj.GetComponent<MSBSPartsGroupEvent>().Serialize(obj));
+                }
+            }
+
+            var event23s = GetChild(Events, "Event23Events");
+            if (event23s != null)
+            {
+                foreach (var obj in GetChildrenOfType<MSBSEvent23Event>(event23s))
+                {
+                    export.Events.Event23s.Add(obj.GetComponent<MSBSEvent23Event>().Serialize(obj));
+                }
+            }
+
+            var autoDrawGroupEvents = GetChild(Events, "AutoDrawGroups");
+            if (autoDrawGroupEvents != null)
+            {
+                foreach (var obj in GetChildrenOfType<MSBSAutoDrawGroupEvent>(autoDrawGroupEvents))
+                {
+                    export.Events.AutoDrawGroups.Add(obj.GetComponent<MSBSAutoDrawGroupEvent>().Serialize(obj));
+                }
+            }
+
+            var eventOthers = GetChild(Events, "Others");
+            if (eventOthers != null)
+            {
+                foreach (var obj in GetChildrenOfType<MSBSOtherEvent>(eventOthers))
+                {
+                    export.Events.Others.Add(obj.GetComponent<MSBSOtherEvent>().Serialize(obj));
+                }
+            }
+        }
+        else
+        {
+            throw new Exception("MSB exporter requires an events section");
+        }
+
+        // Export the routes
+        var Routes = GameObject.Find("/MSBRoutes");
+        if (Routes != null)
+        {
+            var mufflingBoxLinks = GetChild(Routes, "MufflingBoxLinks");
+            if (mufflingBoxLinks != null)
+            {
+                foreach (var obj in GetChildrenOfType<MSBSMufflingBoxLinkRoute>(mufflingBoxLinks))
+                {
+                    export.Routes.MufflingBoxLinks.Add(obj.GetComponent<MSBSMufflingBoxLinkRoute>().Serialize(obj));
+                }
+            }
+
+            var mufflingPortalLinks = GetChild(Routes, "MufflingPortalLinks");
+            if (mufflingPortalLinks != null)
+            {
+                foreach (var obj in GetChildrenOfType<MSBSMufflingPortalLinkRoute>(mufflingPortalLinks))
+                {
+                    export.Routes.MufflingPortalLinks.Add(obj.GetComponent<MSBSMufflingPortalLinkRoute>().Serialize(obj));
+                }
+            }
+        }
+        else
+        {
+            throw new Exception("MSB exporter requires a routes section");
+        }
+
+        // Directory setup for overrides
+        if (ModProjectDirectory != null)
+        {
+            if (!Directory.Exists($@"{ModProjectDirectory}\map\mapstudio"))
+            {
+                Directory.CreateDirectory($@"{ModProjectDirectory}\map\mapstudio");
+            }
+        }
+        // Save a backup if one doesn't exist
+        if (ModProjectDirectory == null && !File.Exists(AssetLink.GetComponent<MSBAssetLink>().MapPath + ".backup"))
+        {
+            File.Copy(AssetLink.GetComponent<MSBAssetLink>().MapPath, AssetLink.GetComponent<MSBAssetLink>().MapPath + ".backup");
+        }
+
+        // Write as a temporary file to make sure there are no errors before overwriting current file 
+        string mapPath = AssetLink.GetComponent<MSBAssetLink>().MapPath;
+        if (GetModProjectPathForFile(mapPath) != null)
+        {
+            mapPath = GetModProjectPathForFile(mapPath);
+        }
+
+        if (File.Exists(mapPath + ".temp"))
+        {
+            File.Delete(mapPath + ".temp");
+        }
+        export.Write(mapPath + ".temp", SoulsFormats.DCX.Type.SekiroKRAK);
+
+        // Make a copy of the previous map
+        if (File.Exists(mapPath))
+        {
+            File.Copy(mapPath, mapPath + ".prev", true);
+        }
+
+        // Move temp file as new map file
+        File.Delete(mapPath);
+        File.Move(mapPath + ".temp", mapPath);
+    }
+
     // Serializes the open unity map to an MSB file. Requires an MSBAssetLink object in the scene
     void ExportMap()
     {
@@ -3248,6 +4545,10 @@ public class DarkSoulsTools : EditorWindow
         else if (type == GameType.DarkSoulsIII)
         {
             ExportMapDS3();
+        }
+        else if (type == GameType.Sekiro)
+        {
+            ExportMapSekiro();
         }
     }
 
@@ -3276,6 +4577,10 @@ public class DarkSoulsTools : EditorWindow
             {
                 type = GameType.Bloodborne;
                 Interroot = Interroot + $@"\dvdroot_ps4";
+            }
+            else if (file.ToLower().Contains("sekiro.exe"))
+            {
+                type = GameType.Sekiro;
             }
             else
             {
