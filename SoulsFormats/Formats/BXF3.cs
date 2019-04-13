@@ -7,7 +7,7 @@ namespace SoulsFormats
     /// <summary>
     /// A general-purpose headered file container used in DS1 and DSR. Extensions: .*bhd (header) and .*bdt (data)
     /// </summary>
-    public class BXF3
+    public class BXF3 : IBinder
     {
         #region Public Is
         /// <summary>
@@ -16,7 +16,7 @@ namespace SoulsFormats
         public static bool IsBHD(byte[] bytes)
         {
             BinaryReaderEx br = new BinaryReaderEx(false, bytes);
-            return IsBHD(Util.GetDecompressedBR(br, out _));
+            return IsBHD(SFUtil.GetDecompressedBR(br, out _));
         }
 
         /// <summary>
@@ -27,7 +27,7 @@ namespace SoulsFormats
             using (FileStream fs = System.IO.File.OpenRead(path))
             {
                 BinaryReaderEx br = new BinaryReaderEx(false, fs);
-                return IsBHD(Util.GetDecompressedBR(br, out _));
+                return IsBHD(SFUtil.GetDecompressedBR(br, out _));
             }
         }
 
@@ -37,7 +37,7 @@ namespace SoulsFormats
         public static bool IsBDT(byte[] bytes)
         {
             BinaryReaderEx br = new BinaryReaderEx(false, bytes);
-            return IsBDT(Util.GetDecompressedBR(br, out _));
+            return IsBDT(SFUtil.GetDecompressedBR(br, out _));
         }
 
         /// <summary>
@@ -48,7 +48,7 @@ namespace SoulsFormats
             using (FileStream fs = System.IO.File.OpenRead(path))
             {
                 BinaryReaderEx br = new BinaryReaderEx(false, fs);
-                return IsBDT(Util.GetDecompressedBR(br, out _));
+                return IsBDT(SFUtil.GetDecompressedBR(br, out _));
             }
         }
         #endregion
@@ -168,52 +168,32 @@ namespace SoulsFormats
         /// <summary>
         /// The files contained within this BXF3.
         /// </summary>
-        public List<File> Files;
+        public List<BinderFile> Files { get; set; }
 
-        private string bhdTimestamp;
         /// <summary>
-        /// A timestamp of unknown purpose.
+        ///A timestamp or version number, 8 characters maximum.
         /// </summary>
-        public string BHDTimestamp
-        {
-            get { return bhdTimestamp; }
-            set
-            {
-                if (value.Length > 8)
-                    throw new ArgumentException("Timestamp may not be longer than 8 characters.");
-                bhdTimestamp = value;
-            }
-        }
+        public string BHDTimestamp;
 
-        private string bdtTimestamp;
         /// <summary>
-        /// A timestamp of unknown purpose.
+        /// A timestamp or version number, 8 characters maximum.
         /// </summary>
-        public string BDTTimestamp
-        {
-            get { return bdtTimestamp; }
-            set
-            {
-                if (value.Length > 8)
-                    throw new ArgumentException("Timestamp may not be longer than 8 characters.");
-                bdtTimestamp = value;
-            }
-        }
+        public string BDTTimestamp;
 
         /// <summary>
         /// Indicates the format of this BXF3.
         /// </summary>
-        public byte Format;
+        public Binder.Format Format { get; set; }
 
         /// <summary>
         /// Creates an empty BXF3 formatted for DS1.
         /// </summary>
         public BXF3()
         {
-            Files = new List<File>();
-            BHDTimestamp = Util.UnparseBNDTimestamp(DateTime.Now);
-            BDTTimestamp = Util.UnparseBNDTimestamp(DateTime.Now);
-            Format = 0x74;
+            Files = new List<BinderFile>();
+            BHDTimestamp = SFUtil.DateToBinderTimestamp(DateTime.Now);
+            BDTTimestamp = SFUtil.DateToBinderTimestamp(DateTime.Now);
+            Format = Binder.Format.x74;
         }
 
         private static bool IsBHD(BinaryReaderEx br)
@@ -235,28 +215,28 @@ namespace SoulsFormats
             Format = bhd.Format;
 
             bdtReader.AssertASCII("BDF3");
-            BDTTimestamp = bdtReader.ReadASCII(8).TrimEnd('\0');
+            BDTTimestamp = bdtReader.ReadFixStr(8);
             bdtReader.AssertInt32(0);
 
-            Files = new List<File>();
+            Files = new List<BinderFile>(bhd.FileHeaders.Count);
             for (int i = 0; i < bhd.FileHeaders.Count; i++)
             {
                 BHD3.FileHeader fileHeader = bhd.FileHeaders[i];
                 byte[] data = bdtReader.GetBytes(fileHeader.Offset, fileHeader.Size);
 
-                Files.Add(new File(fileHeader.ID, fileHeader.Name, data));
+                Files.Add(new BinderFile(Binder.FileFlags.x40, fileHeader.ID, fileHeader.Name, data));
             }
         }
 
         private void Write(BinaryWriterEx bhdWriter, BinaryWriterEx bdtWriter)
         {
             bhdWriter.WriteASCII("BHF3");
-            bhdWriter.WriteASCII(BHDTimestamp.PadRight(8, '\0'));
-            bhdWriter.WriteByte(Format);
+            bhdWriter.WriteFixStr(BHDTimestamp, 8);
+            bhdWriter.WriteByte((byte)Format);
             bhdWriter.WriteByte(0);
             bhdWriter.WriteByte(0);
             bhdWriter.WriteByte(0);
-            bhdWriter.BigEndian = Format == 0xE0;
+            bhdWriter.BigEndian = Binder.ForceBigEndian(Format);
 
             bhdWriter.WriteInt32(Files.Count);
             bhdWriter.WriteInt32(0);
@@ -264,23 +244,23 @@ namespace SoulsFormats
             bhdWriter.WriteInt32(0);
 
             bdtWriter.WriteASCII("BDF3");
-            bdtWriter.WriteASCII(BDTTimestamp.PadRight(8, '\0'));
+            bdtWriter.WriteFixStr(BDTTimestamp, 8);
             bdtWriter.WriteInt32(0);
 
             for (int i = 0; i < Files.Count; i++)
             {
-                File file = Files[i];
+                BinderFile file = Files[i];
                 bhdWriter.WriteByte(0x40);
                 bhdWriter.WriteByte(0);
                 bhdWriter.WriteByte(0);
                 bhdWriter.WriteByte(0);
 
                 bhdWriter.WriteInt32(file.Bytes.Length);
-                bhdWriter.WriteInt32((int)bdtWriter.Position);
+                bhdWriter.WriteUInt32((uint)bdtWriter.Position);
                 bhdWriter.WriteInt32(i);
-                bhdWriter.ReserveInt32($"FileName{i}");
+                bhdWriter.ReserveUInt32($"FileName{i}");
 
-                if (Format == 0x54 || Format == 0x74)
+                if (Binder.HasUncompressedSize(Format))
                     bhdWriter.WriteInt32(file.Bytes.Length);
 
                 bdtWriter.WriteBytes(file.Bytes);
@@ -289,8 +269,8 @@ namespace SoulsFormats
 
             for (int i = 0; i < Files.Count; i++)
             {
-                File file = Files[i];
-                bhdWriter.FillInt32($"FileName{i}", (int)bhdWriter.Position);
+                BinderFile file = Files[i];
+                bhdWriter.FillUInt32($"FileName{i}", (uint)bhdWriter.Position);
                 bhdWriter.WriteShiftJIS(file.Name, true);
             }
         }
@@ -299,24 +279,24 @@ namespace SoulsFormats
         {
             public string Timestamp;
             public List<FileHeader> FileHeaders;
-            public byte Format;
+            public Binder.Format Format;
 
             public BHD3(BinaryReaderEx br)
             {
                 br.AssertASCII("BHF3");
-                Timestamp = br.ReadASCII(8).TrimEnd('\0');
-                Format = br.AssertByte(0x54, 0x74, 0xE0);
+                Timestamp = br.ReadFixStr(8);
+                Format = br.ReadEnum8<Binder.Format>();
                 br.AssertByte(0);
                 br.AssertByte(0);
                 br.AssertByte(0);
-                br.BigEndian = Format == 0xE0;
+                br.BigEndian = Binder.ForceBigEndian(Format);
 
                 int fileCount = br.ReadInt32();
                 br.AssertInt32(0);
                 br.AssertInt32(0);
                 br.AssertInt32(0);
 
-                FileHeaders = new List<FileHeader>();
+                FileHeaders = new List<FileHeader>(fileCount);
                 for (int i = 0; i < fileCount; i++)
                 {
                     FileHeaders.Add(new FileHeader(br, Format));
@@ -327,10 +307,10 @@ namespace SoulsFormats
             {
                 public int ID;
                 public string Name;
-                public int Offset;
+                public uint Offset;
                 public int Size;
 
-                public FileHeader(BinaryReaderEx br, byte format)
+                public FileHeader(BinaryReaderEx br, Binder.Format format)
                 {
                     br.AssertByte(0x40);
                     br.AssertByte(0);
@@ -338,47 +318,17 @@ namespace SoulsFormats
                     br.AssertByte(0);
 
                     Size = br.ReadInt32();
-                    Offset = br.ReadInt32();
+                    Offset = br.ReadUInt32();
                     ID = br.ReadInt32();
-                    int fileNameOffset = br.ReadInt32();
+                    uint fileNameOffset = br.ReadUInt32();
 
-                    // Change this if BND internal compression ever shows up in a BXF.
-                    if (format == 0x54 || format == 0x74)
-                        br.ReadInt32();
+                    if (Binder.HasUncompressedSize(format))
+                    {
+                        int uncompressedSize = br.ReadInt32();
+                    }
 
                     Name = br.GetShiftJIS(fileNameOffset);
                 }
-            }
-        }
-
-        /// <summary>
-        /// A generic file in a BXF3 container.
-        /// </summary>
-        public class File
-        {
-            /// <summary>
-            /// The ID of this file, typically just its index in the file collection.
-            /// </summary>
-            public int ID;
-
-            /// <summary>
-            /// The name of the file, typically a virtual path.
-            /// </summary>
-            public string Name;
-
-            /// <summary>
-            /// The raw data of the file.
-            /// </summary>
-            public byte[] Bytes;
-
-            /// <summary>
-            /// Create a new File with the specified information.
-            /// </summary>
-            public File(int id, string name, byte[] bytes)
-            {
-                ID = id;
-                Name = name;
-                Bytes = bytes;
             }
         }
     }

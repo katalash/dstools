@@ -21,6 +21,7 @@ class FLVERAssetLink : ScriptableObject
         Mapbnd,
         Objbnd,
         Chrbnd,
+        Partsbnd
     }
 
     public ContainerType Type = ContainerType.None;

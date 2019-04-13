@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
@@ -29,7 +29,7 @@ public class DarkSoulsTools : EditorWindow
 
     GameType type = GameType.Undefined;
 
-    static string GameFolder(GameType game)
+    static public string GameFolder(GameType game)
     {
         if (game == GameType.DarkSoulsPTDE)
         {
@@ -139,11 +139,12 @@ public class DarkSoulsTools : EditorWindow
             }
             foreach (var tex in tpf.Textures)
             {
-                var t2d = CreateTextureFromTPF(tex);
-                if (t2d != null)
-                {
-                    AssetDatabase.CreateAsset(t2d, $@"Assets/{gameFolder}/Obj/{objid}/{tex.Name}.texture2d");
-                }
+                //var t2d = CreateTextureFromTPF(tex);
+                //if (t2d != null)
+                //{
+                //    AssetDatabase.CreateAsset(t2d, $@"Assets/{gameFolder}/Obj/{objid}/{tex.Name}.texture2d");
+                //}
+                CreateTextureFromTPF($@"{gameFolder}/Obj/{objid}/{tex.Name}.dds", tex);
             }
         }
 
@@ -153,7 +154,7 @@ public class DarkSoulsTools : EditorWindow
         link.Type = FLVERAssetLink.ContainerType.Objbnd;
         link.ArchivePath = objpath;
         link.FlverPath = objbnd.Files.Where(x => x.Name.ToUpper().EndsWith(".FLVER")).First().Name;
-        FlverUtilities.ImportFlver(flver, link, $@"Assets/{gameFolder}/Obj/{objid}", $@"Assets/{gameFolder}/Obj/{objid}");
+        FlverUtilities.ImportFlver(flver, link, type, $@"Assets/{gameFolder}/Obj/{objid}", $@"Assets/{gameFolder}/Obj/{objid}");
     }
 
     static void ImportObjs(string objpath, GameType type)
@@ -189,7 +190,57 @@ public class DarkSoulsTools : EditorWindow
         }
     }
 
-    static void ImportChr(string chrpath, string chrid, GameType type)
+    static void ImportChrTexbnd(string chrpath, string chrid, GameType type)
+    {
+        string gameFolder = GameFolder(type);
+        if (!AssetDatabase.IsValidFolder($@"Assets/{gameFolder}/Chr"))
+        {
+            AssetDatabase.CreateFolder($@"Assets/{gameFolder}", "Chr");
+        }
+
+        if (!AssetDatabase.IsValidFolder($@"Assets/{gameFolder}/Chr/{chrid}"))
+        {
+            AssetDatabase.CreateFolder($@"Assets/{gameFolder}/Chr", chrid);
+        }
+
+        // Load a separate texbnd if needed
+        IBinder texbnd;
+        string tpath = null;
+        if (File.Exists($@"{chrpath}\{chrid}.texbnd.dcx"))
+        {
+            tpath = $@"{chrpath}\{chrid}.texbnd.dcx";
+        }
+        else if (File.Exists($@"{chrpath}\{chrid}.texbnd"))
+        {
+            tpath = $@"{chrpath}\{chrid}.texbnd";
+        }
+
+        if (tpath != null)
+        {
+            texbnd = BND4.Read(GetOverridenPath(tpath));
+
+            var tentries = texbnd.Files.Where(x => x.Name.ToUpper().EndsWith(".TPF"));
+            foreach (var entry in tentries)
+            {
+                TPF tpf = TPF.Read(entry.Bytes);
+                if (type == GameType.Bloodborne)
+                {
+                    tpf.ConvertPS4ToPC();
+                }
+                foreach (var tex in tpf.Textures)
+                {
+                    //var t2d = CreateTextureFromTPF(tex);
+                    //if (t2d != null)
+                    //{
+                    //    AssetDatabase.CreateAsset(t2d, $@"Assets/{gameFolder}/Chr/{chrid}/{tex.Name}.texture2d");
+                    //}
+                    CreateTextureFromTPF($@"{gameFolder}/Chr/{chrid}/{tex.Name}.dds", tex);
+                }
+            }
+        }
+    }
+
+    static void ImportChrTextures(string chrpath, string chrid, GameType type)
     {
         string gameFolder = GameFolder(type);
         if (!AssetDatabase.IsValidFolder($@"Assets/{gameFolder}/Chr"))
@@ -235,13 +286,49 @@ public class DarkSoulsTools : EditorWindow
             }
             foreach (var tex in tpf.Textures)
             {
-                var t2d = CreateTextureFromTPF(tex);
-                if (t2d != null)
-                {
-                    AssetDatabase.CreateAsset(t2d, $@"Assets/{gameFolder}/Chr/{chrid}/{tex.Name}.texture2d");
-                }
+                //var t2d = CreateTextureFromTPF(tex);
+                //if (t2d != null)
+                //{
+                //    AssetDatabase.CreateAsset(t2d, $@"Assets/{gameFolder}/Chr/{chrid}/{tex.Name}.texture2d");
+                //}
+                CreateTextureFromTPF($@"{gameFolder}/Chr/{chrid}/{tex.Name}.dds", tex);
             }
         }
+
+        // Load a separate texbnd if needed
+        /*IBinder texbnd;
+        string tpath = null;
+        if (File.Exists($@"{chrpath}\{chrid}.texbnd.dcx"))
+        {
+            tpath = $@"{chrpath}\{chrid}.texbnd.dcx";
+        }
+        else if (File.Exists($@"{chrpath}\{chrid}.texbnd"))
+        {
+            tpath = $@"{chrpath}\{chrid}.texbnd";
+        }
+
+        if (tpath != null)
+        {
+            texbnd = BND4.Read(GetOverridenPath(tpath));
+
+            var tentries = texbnd.Files.Where(x => x.Name.ToUpper().EndsWith(".TPF"));
+            foreach (var entry in tentries)
+            {
+                TPF tpf = TPF.Read(entry.Bytes);
+                if (type == GameType.Bloodborne)
+                {
+                    tpf.ConvertPS4ToPC();
+                }
+                foreach (var tex in tpf.Textures)
+                {
+                    var t2d = CreateTextureFromTPF(tex);
+                    if (t2d != null)
+                    {
+                        AssetDatabase.CreateAsset(t2d, $@"Assets/{gameFolder}/Chr/{chrid}/{tex.Name}.texture2d");
+                    }
+                }
+            }
+        }*/
 
         // Load external DS1 UDSFM textures
         if (type == GameType.DarkSoulsPTDE)
@@ -259,14 +346,53 @@ public class DarkSoulsTools : EditorWindow
                     TPF tpf = TPF.Read(file);
                     foreach (var tex in tpf.Textures)
                     {
-                        var t2d = CreateTextureFromTPF(tex);
-                        if (t2d != null)
-                        {
-                            AssetDatabase.CreateAsset(t2d, $@"Assets/{gameFolder}/Chr/sharedTextures/{tex.Name}.texture2d");
-                        }
+                        //var t2d = CreateTextureFromTPF(tex);
+                        //if (t2d != null)
+                        //{
+                        //    AssetDatabase.CreateAsset(t2d, $@"Assets/{gameFolder}/Chr/sharedTextures/{tex.Name}.texture2d");
+                        //}
+                        CreateTextureFromTPF($@"{gameFolder}/Chr/sharedTextures/{tex.Name}.dds", tex);
                     }
                 }
             }
+        }
+    }
+
+    static void ImportChr(string chrpath, string chrid, GameType type)
+    {
+        string gameFolder = GameFolder(type);
+        if (!AssetDatabase.IsValidFolder($@"Assets/{gameFolder}/Chr"))
+        {
+            AssetDatabase.CreateFolder($@"Assets/{gameFolder}", "Chr");
+        }
+
+        if (!AssetDatabase.IsValidFolder($@"Assets/{gameFolder}/Chr/{chrid}"))
+        {
+            AssetDatabase.CreateFolder($@"Assets/{gameFolder}/Chr", chrid);
+        }
+
+        IBinder chrbnd;
+        string path = "";
+        if (File.Exists($@"{chrpath}\{chrid}.chrbnd.dcx"))
+        {
+            path = $@"{chrpath}\{chrid}.chrbnd.dcx";
+        }
+        else if (File.Exists($@"{chrpath}\{chrid}.chrbnd"))
+        {
+            path = $@"{chrpath}\{chrid}.chrbnd";
+        }
+        else
+        {
+            throw new FileNotFoundException("Could not find bnd for character " + chrid);
+        }
+
+        if (type == GameType.DarkSoulsIII || type == GameType.Bloodborne || type == GameType.Sekiro)
+        {
+            chrbnd = BND4.Read(GetOverridenPath(path));
+        }
+        else
+        {
+            chrbnd = BND3.Read(GetOverridenPath(path));
         }
 
         // Should only be one flver in a bnd
@@ -275,7 +401,7 @@ public class DarkSoulsTools : EditorWindow
         link.Type = FLVERAssetLink.ContainerType.Chrbnd;
         link.ArchivePath = chrpath;
         link.FlverPath = chrbnd.Files.Where(x => x.Name.ToUpper().EndsWith(".FLVER")).First().Name;
-        FlverUtilities.ImportFlver(flver, link, $@"Assets/{gameFolder}/Chr/{chrid}", $@"Assets/{gameFolder}/Chr/{chrid}");
+        FlverUtilities.ImportFlver(flver, link, type, $@"Assets/{gameFolder}/Chr/{chrid}", $@"Assets/{gameFolder}/Chr/{chrid}");
     }
 
     static void ImportChrs(string chrpath, GameType type)
@@ -290,9 +416,46 @@ public class DarkSoulsTools : EditorWindow
                     .Select(Path.GetFileNameWithoutExtension)
                     .ToArray();
         }
-        AssetDatabase.StartAssetEditing();
+        var texFiles = Directory.GetFiles(chrpath, @"*.texbnd.dcx")
+            .Select(Path.GetFileNameWithoutExtension) //Remove .dcx
+            .Select(Path.GetFileNameWithoutExtension)
+            .ToArray();
+        if (texFiles.Count() == 0)
+        {
+            texFiles = Directory.GetFiles(chrpath, @"*.texbnd")
+                    .Select(Path.GetFileNameWithoutExtension)
+                    .ToArray();
+        }
         try
         {
+            // Import all textures before the models because they can reference each other
+            AssetDatabase.StartAssetEditing();
+            foreach (var chr in texFiles)
+            {
+                try
+                {
+                    ImportChrTexbnd(chrpath, chr, type);
+                }
+                catch (Exception e)
+                {
+                    Console.Error.WriteLine($"Error loading chr {chr}: {e.Message}");
+                }
+            }
+            AssetDatabase.StopAssetEditing();
+            AssetDatabase.StartAssetEditing();
+            foreach (var chr in chrFiles)
+            {
+                try
+                {
+                    ImportChrTextures(chrpath, chr, type);
+                }
+                catch (Exception e)
+                {
+                    Console.Error.WriteLine($"Error loading chr {chr}: {e.Message}");
+                }
+            }
+            AssetDatabase.StopAssetEditing();
+            AssetDatabase.StartAssetEditing();
             foreach (var chr in chrFiles)
             {
                 try
@@ -302,6 +465,189 @@ public class DarkSoulsTools : EditorWindow
                 catch (Exception e)
                 {
                     Console.Error.WriteLine($"Error loading chr {chr}: {e.Message}");
+                }
+            }
+        }
+        finally
+        {
+            AssetDatabase.StopAssetEditing();
+        }
+    }
+
+    static void ImportPartTextures(string partpath, string partname, GameType type)
+    {
+        string gameFolder = GameFolder(type);
+        if (!AssetDatabase.IsValidFolder($@"Assets/{gameFolder}/Parts"))
+        {
+            AssetDatabase.CreateFolder($@"Assets/{gameFolder}", "Parts");
+        }
+
+        if (!AssetDatabase.IsValidFolder($@"Assets/{gameFolder}/Parts/textures"))
+        {
+            AssetDatabase.CreateFolder($@"Assets/{gameFolder}/Parts", "textures");
+        }
+
+        if (!AssetDatabase.IsValidFolder($@"Assets/{gameFolder}/Parts/{partname}"))
+        {
+            AssetDatabase.CreateFolder($@"Assets/{gameFolder}/Parts", partname);
+        }
+
+        IBinder partsbnd;
+        string path = "";
+        if (File.Exists($@"{partpath}\{partname}.partsbnd.dcx"))
+        {
+            path = $@"{partpath}\{partname}.partsbnd.dcx";
+        }
+        else if (File.Exists($@"{partpath}\{partname}.partsbnd"))
+        {
+            path = $@"{partpath}\{partname}.partsbnd";
+        }
+        else
+        {
+            throw new FileNotFoundException("Could not find bnd for part " + partname);
+        }
+
+        if (type == GameType.DarkSoulsIII || type == GameType.Bloodborne || type == GameType.Sekiro)
+        {
+            partsbnd = BND4.Read(GetOverridenPath(path));
+        }
+        else
+        {
+            partsbnd = BND3.Read(GetOverridenPath(path));
+        }
+        var texentries = partsbnd.Files.Where(x => x.Name.ToUpper().EndsWith(".TPF"));
+        foreach (var entry in texentries)
+        {
+            TPF tpf = TPF.Read(entry.Bytes);
+            if (type == GameType.Bloodborne)
+            {
+                tpf.ConvertPS4ToPC();
+            }
+            foreach (var tex in tpf.Textures)
+            {
+                //var t2d = CreateTextureFromTPF(tex);
+                //if (t2d != null)
+                //{
+                //    AssetDatabase.CreateAsset(t2d, $@"Assets/{gameFolder}/Parts/textures/{tex.Name}.texture2d");
+                //}
+                CreateTextureFromTPF($@"{gameFolder}/Parts/textures/{tex.Name}.dds", tex);
+            }
+        }
+    }
+
+    static void ImportPart(string partpath, string partname, GameType type)
+    {
+        string gameFolder = GameFolder(type);
+        if (!AssetDatabase.IsValidFolder($@"Assets/{gameFolder}/Parts"))
+        {
+            AssetDatabase.CreateFolder($@"Assets/{gameFolder}", "Parts");
+        }
+
+        if (!AssetDatabase.IsValidFolder($@"Assets/{gameFolder}/Parts/{partname}"))
+        {
+            AssetDatabase.CreateFolder($@"Assets/{gameFolder}/Parts", partname);
+        }
+
+        IBinder partsbnd;
+        string path = "";
+        if (File.Exists($@"{partpath}\{partname}.partsbnd.dcx"))
+        {
+            path = $@"{partpath}\{partname}.partsbnd.dcx";
+        }
+        else if (File.Exists($@"{partpath}\{partname}.partsbnd"))
+        {
+            path = $@"{partpath}\{partname}.partsbnd";
+        }
+        else
+        {
+            throw new FileNotFoundException("Could not find bnd for part " + partname);
+        }
+
+        if (type == GameType.DarkSoulsIII || type == GameType.Bloodborne || type == GameType.Sekiro)
+        {
+            partsbnd = BND4.Read(GetOverridenPath(path));
+        }
+        else
+        {
+            partsbnd = BND3.Read(GetOverridenPath(path));
+        }
+
+        // Should only be one flver in a bnd
+        var flver = FLVER.Read(partsbnd.Files.Where(x => x.Name.ToUpper().EndsWith(".FLVER")).First().Bytes);
+        FLVERAssetLink link = ScriptableObject.CreateInstance<FLVERAssetLink>();
+        link.Type = FLVERAssetLink.ContainerType.Partsbnd;
+        link.ArchivePath = partpath;
+        link.FlverPath = partsbnd.Files.Where(x => x.Name.ToUpper().EndsWith(".FLVER")).First().Name;
+        FlverUtilities.ImportFlver(flver, link, type, $@"Assets/{gameFolder}/Parts/{partname}", $@"Assets/{gameFolder}/Parts/{partname}");
+    }
+
+    static void ImportParts(string partspath, GameType type)
+    {
+        string gameFolder = GameFolder(type);
+
+        var partsFiles = Directory.GetFiles(partspath, @"*.partsbnd.dcx")
+                    .Select(Path.GetFileNameWithoutExtension) //Remove .dcx
+                    .Select(Path.GetFileNameWithoutExtension)
+                    .ToArray();
+        if (partsFiles.Count() == 0)
+        {
+            partsFiles = Directory.GetFiles(partspath, @"*.partsbnd")
+                    .Select(Path.GetFileNameWithoutExtension)
+                    .ToArray();
+        }
+        try
+        {
+            // Import all textures before the models because they can reference each other
+            AssetDatabase.StartAssetEditing();
+            // Try and import common parts textures
+            if (!AssetDatabase.IsValidFolder($@"Assets/{gameFolder}/Parts"))
+            {
+                AssetDatabase.CreateFolder($@"Assets/{gameFolder}", "Parts");
+            }
+            if (!AssetDatabase.IsValidFolder($@"Assets/{gameFolder}/Parts/textures"))
+            {
+                AssetDatabase.CreateFolder($@"Assets/{gameFolder}/Parts", "textures");
+            }
+
+            if (File.Exists($@"{partspath}\common_body.tpf.dcx"))
+            {
+                TPF tpf = TPF.Read($@"{partspath}\common_body.tpf.dcx");
+                if (type == GameType.Bloodborne)
+                {
+                    tpf.ConvertPS4ToPC();
+                }
+                foreach (var tex in tpf.Textures)
+                {
+                    //var t2d = CreateTextureFromTPF(tex);
+                    //if (t2d != null)
+                    //{
+                    //    AssetDatabase.CreateAsset(t2d, $@"Assets/{gameFolder}/Parts/textures/{tex.Name}.texture2d");
+                    //}
+                    CreateTextureFromTPF($@"{gameFolder}/Parts/textures/{tex.Name}.dds", tex);
+                }
+            }
+            foreach (var part in partsFiles)
+            {
+                try
+                {
+                    ImportPartTextures(partspath, part, type);
+                }
+                catch (Exception e)
+                {
+                    Console.Error.WriteLine($"Error loading part {part}: {e.Message}");
+                }
+            }
+            AssetDatabase.StopAssetEditing();
+            AssetDatabase.StartAssetEditing();
+            foreach (var part in partsFiles)
+            {
+                try
+                {
+                    ImportPart(partspath, part, type);
+                }
+                catch (Exception e)
+                {
+                    Console.Error.WriteLine($"Error loading part {part}: {e.Message}");
                 }
             }
         }
@@ -351,7 +697,7 @@ public class DarkSoulsTools : EditorWindow
         }
     }
 
-    static Texture2D CreateTextureFromTPF(TPF.Texture tpf)
+    /*static Texture2D CreateTextureFromTPF(TPF.Texture tpf)
     {
         var textureBytes = tpf.Bytes;
         DDS header = new DDS(textureBytes);
@@ -421,6 +767,24 @@ public class DarkSoulsTools : EditorWindow
         tex.LoadRawTextureData(texels.ToArray());
 
         return tex;
+    }*/
+
+    // Serialize a TPF file as a DDS and import it into Unity
+    static void CreateTextureFromTPF(string texPath, TPF.Texture tpf)
+    {
+        var textureBytes = tpf.Bytes;
+        var assetsPath = Application.dataPath.Replace('/', '\\');
+        var adjTexPath = texPath.Replace('/', '\\');
+        if (!File.Exists($@"{assetsPath}\{adjTexPath}"))
+        {
+            using (FileStream stream = File.Create($@"{assetsPath}\{adjTexPath}"))
+            {
+                BinaryWriterEx bw = new BinaryWriterEx(false, stream);
+                bw.WriteBytes(textureBytes);
+                bw.Finish();
+            }
+            AssetDatabase.ImportAsset($@"Assets/{texPath}", ImportAssetOptions.ForceUncompressedImport);
+        }
     }
 
     static void ImportTpfbhd(string path, GameType type, bool isPS4 = false)
@@ -444,8 +808,9 @@ public class DarkSoulsTools : EditorWindow
                 {
                     t.ConvertPS4ToPC();
                 }
-                var tex = CreateTextureFromTPF(t.Textures[0]);
-                AssetDatabase.CreateAsset(tex, $@"Assets/{gameFolder}/" + name.Substring(0, 3) + "/" + Path.GetFileNameWithoutExtension((Path.GetFileNameWithoutExtension(tpf.Name))) + ".texture2d");
+                //var tex = CreateTextureFromTPF(t.Textures[0]);
+                //AssetDatabase.CreateAsset(tex, $@"Assets/{gameFolder}/" + name.Substring(0, 3) + "/" + Path.GetFileNameWithoutExtension((Path.GetFileNameWithoutExtension(tpf.Name))) + ".texture2d");
+                CreateTextureFromTPF($@"{gameFolder}/" + name.Substring(0, 3) + "/" + Path.GetFileNameWithoutExtension((Path.GetFileNameWithoutExtension(tpf.Name))) + ".dds", t.Textures[0]);
             }
             catch (Exception ex)
             {
@@ -471,8 +836,9 @@ public class DarkSoulsTools : EditorWindow
             try
             {
                 var tpf = TPF.Read(file);
-                var tex = CreateTextureFromTPF(tpf.Textures[0]);
-                AssetDatabase.CreateAsset(tex, $@"Assets/DS1/UDSFMMapTextures/{Path.GetFileNameWithoutExtension(file)}.texture2d");
+                //var tex = CreateTextureFromTPF(tpf.Textures[0]);
+                //AssetDatabase.CreateAsset(tex, $@"Assets/DS1/UDSFMMapTextures/{Path.GetFileNameWithoutExtension(file)}.texture2d");
+                CreateTextureFromTPF($@"DS1/UDSFMMapTextures/{Path.GetFileNameWithoutExtension(file)}.dds", tpf.Textures[0]);
             }
             catch (Exception ex)
             {
@@ -482,8 +848,8 @@ public class DarkSoulsTools : EditorWindow
         AssetDatabase.StopAssetEditing();
     }
 
-    private static string Interroot = "";
-    private static string ModProjectDirectory = null;
+    public static string Interroot = "";
+    public static string ModProjectDirectory = null;
     private List<string> Maps = new List<string>();
 
     /// <summary>
@@ -606,65 +972,6 @@ public class DarkSoulsTools : EditorWindow
             col.isTrigger = true;
             col.radius = shape.Radius;
             col.height = shape.Height;
-        }
-        obj.layer = 13;
-        obj.transform.parent = parent.transform;
-        return obj;
-    }
-
-    GameObject InstantiateRegion(MSBS.Region region, string type, GameObject parent)
-    {
-        GameObject obj = new GameObject(region.Name);
-        obj.transform.position = new Vector3(region.Position.X, region.Position.Y, region.Position.Z);
-        //obj.transform.rotation = Quaternion.Euler(region.Rotation.X, region.Rotation.Y, region.Rotation.Z);
-        EulerToTransform(new Vector3(region.Rotation.X, region.Rotation.Y, region.Rotation.Z), obj.transform);
-        if (region.Shape is MSBS.Shape.Box)
-        {
-            var shape = (MSBS.Shape.Box)region.Shape;
-            obj.AddComponent<BoxCollider>();
-            var col = obj.GetComponent<BoxCollider>();
-            col.isTrigger = true;
-            col.size = new Vector3(shape.Width, shape.Height, shape.Depth);
-        }
-        else if (region.Shape is MSBS.Shape.Sphere || region.Shape is MSBS.Shape.Circle)
-        {
-            var shape = (MSBS.Shape.Sphere)region.Shape;
-            obj.AddComponent<SphereCollider>();
-            var col = obj.GetComponent<SphereCollider>();
-            col.isTrigger = true;
-            col.radius = shape.Radius;
-        }
-        else if (region.Shape is MSBS.Shape.Point)
-        {
-            var shape = (MSBS.Shape.Point)region.Shape;
-            obj.AddComponent<SphereCollider>();
-            var col = obj.GetComponent<SphereCollider>();
-            col.isTrigger = true;
-            col.radius = 1.0f;
-        }
-        else if (region.Shape is MSBS.Shape.Cylinder)
-        {
-            var shape = (MSBS.Shape.Cylinder)region.Shape;
-            obj.AddComponent<CapsuleCollider>();
-            var col = obj.GetComponent<CapsuleCollider>();
-            col.isTrigger = true;
-            col.radius = shape.Radius;
-            col.height = shape.Height;
-        }
-        if (region.Shape is MSBS.Shape.Rect)
-        {
-            var shape = (MSBS.Shape.Rect)region.Shape;
-            obj.AddComponent<BoxCollider>();
-            var col = obj.GetComponent<BoxCollider>();
-            col.isTrigger = true;
-            col.size = new Vector3(shape.Width, 1, shape.Depth);
-        }
-        else if (region.Shape is MSBS.Shape.Composite)
-        {
-            var shape = (MSBS.Shape.Composite)region.Shape;
-            obj.AddComponent<MSBSCompositeShape>();
-            var col = obj.GetComponent<MSBSCompositeShape>();
-            col.setShape(shape);
         }
         obj.layer = 13;
         obj.transform.parent = parent.transform;
@@ -828,7 +1135,7 @@ public class DarkSoulsTools : EditorWindow
                     if (AssetDatabase.FindAssets($@"Assets/DS3/{mapname}/{assetname}.prefab").Length == 0 && LoadMapFlvers)
                     {
                         if (File.Exists(Interroot + $@"\map\{mapname}\{mapname}_{assetname.Substring(1)}.mapbnd.dcx"))
-                            FlverUtilities.ImportFlver(Interroot + $@"\map\{mapname}\{mapname}_{assetname.Substring(1)}.mapbnd.dcx", $@"Assets/DS3/{mapname}/{assetname}", $@"Assets/DS3/{mapname.Substring(0, 3)}");
+                            FlverUtilities.ImportFlver(type, Interroot + $@"\map\{mapname}\{mapname}_{assetname.Substring(1)}.mapbnd.dcx", $@"Assets/DS3/{mapname}/{assetname}", $@"Assets/DS3/{mapname.Substring(0, 3)}");
                     }
                 }
             }
@@ -1348,6 +1655,1030 @@ public class DarkSoulsTools : EditorWindow
         }
     }
 
+    void onImportBBMap(object o)
+    {
+        try
+        {
+            string mapname = (string)o;
+            var msb = MSBBB.Read(GetOverridenPath(Interroot + $@"\map\MapStudio\{mapname}.msb.dcx"));
+            GameFolder(GameType.Bloodborne);
+
+            // Make adjusted mapname because bloodborne is a :fatcat:
+            var mapnameAdj = mapname.Substring(0, 6) + "_00_00";
+
+            if (!AssetDatabase.IsValidFolder("Assets/Bloodborne/" + mapnameAdj))
+            {
+                AssetDatabase.CreateFolder("Assets/Bloodborne", mapnameAdj);
+            }
+
+            // Create an MSB asset link to the DS3 asset
+            GameObject AssetLink = new GameObject("MSBAssetLink");
+            AssetLink.AddComponent<MSBAssetLink>();
+            AssetLink.GetComponent<MSBAssetLink>().Interroot = Interroot;
+            AssetLink.GetComponent<MSBAssetLink>().MapID = mapname;
+            AssetLink.GetComponent<MSBAssetLink>().MapPath = $@"{Interroot}\map\MapStudio\{mapname}.msb.dcx";
+
+            //
+            // Models section
+            //
+            GameObject ModelsSection = new GameObject("MSBModelDeclarations");
+
+            GameObject MapPieceModels = new GameObject("MapPieces");
+            MapPieceModels.transform.parent = ModelsSection.transform;
+
+            // Do a preload of all the flvers
+            try
+            {
+                AssetDatabase.StartAssetEditing();
+                foreach (var mappiece in msb.Models.MapPieces)
+                {
+                    var assetname = mappiece.Name;
+                    if (AssetDatabase.FindAssets($@"Assets/Bloodborne/{mapnameAdj}/{assetname}.prefab").Length == 0 && LoadMapFlvers)
+                    {
+                        if (File.Exists(Interroot + $@"\map\{mapnameAdj}\{mapnameAdj}_{assetname.Substring(1)}.flver.dcx"))
+                            FlverUtilities.ImportFlver(type, Interroot + $@"\map\{mapnameAdj}\{mapnameAdj}_{assetname.Substring(1)}.flver.dcx", $@"Assets/Bloodborne/{mapnameAdj}/{assetname}", $@"Assets/Bloodborne/{mapnameAdj.Substring(0, 3)}");
+                    }
+                }
+            }
+            finally
+            {
+                AssetDatabase.StopAssetEditing();
+            }
+
+            foreach (var mappiece in msb.Models.MapPieces)
+            {
+                var assetname = mappiece.Name;
+                GameObject model = new GameObject(mappiece.Name);
+                model.AddComponent<MSBBBMapPieceModel>();
+                model.GetComponent<MSBBBMapPieceModel>().SetModel(mappiece);
+                model.transform.parent = MapPieceModels.transform;
+            }
+
+            // Load low res hkx assets
+            if (LoadHighResCol)
+            {
+                if (File.Exists(Interroot + $@"\map\{mapnameAdj}\h{mapnameAdj.Substring(1)}.hkxbhd"))
+                {
+                    ImportCollisionHKXBDT(Interroot + $@"\map\{mapnameAdj}\h{mapnameAdj.Substring(1)}.hkxbhd", $@"Assets/Bloodborne/{mapnameAdj}", type);
+                }
+            }
+            else
+            {
+                if (File.Exists(Interroot + $@"\map\{mapnameAdj}\l{mapnameAdj.Substring(1)}.hkxbhd"))
+                {
+                    ImportCollisionHKXBDT(Interroot + $@"\map\{mapnameAdj}\l{mapnameAdj.Substring(1)}.hkxbhd", $@"Assets/Bloodborne/{mapnameAdj}", type);
+                }
+            }
+
+            GameObject ObjectModels = new GameObject("Objects");
+            ObjectModels.transform.parent = ModelsSection.transform;
+            foreach (var mod in msb.Models.Objects)
+            {
+                GameObject model = new GameObject(mod.Name);
+                model.AddComponent<MSBBBObjectModel>();
+                model.GetComponent<MSBBBObjectModel>().SetModel(mod);
+                model.transform.parent = ObjectModels.transform;
+            }
+
+            GameObject PlayerModels = new GameObject("Players");
+            PlayerModels.transform.parent = ModelsSection.transform;
+            foreach (var mod in msb.Models.Players)
+            {
+                GameObject model = new GameObject(mod.Name);
+                model.AddComponent<MSBBBPlayerModel>();
+                model.GetComponent<MSBBBPlayerModel>().SetModel(mod);
+                model.transform.parent = PlayerModels.transform;
+            }
+
+            GameObject EnemyModels = new GameObject("Enemies");
+            EnemyModels.transform.parent = ModelsSection.transform;
+            foreach (var mod in msb.Models.Enemies)
+            {
+                GameObject model = new GameObject(mod.Name);
+                model.AddComponent<MSBBBEnemyModel>();
+                model.GetComponent<MSBBBEnemyModel>().SetModel(mod);
+                model.transform.parent = EnemyModels.transform;
+            }
+
+            GameObject CollisionModels = new GameObject("Collisions");
+            CollisionModels.transform.parent = ModelsSection.transform;
+            foreach (var mod in msb.Models.Collisions)
+            {
+                GameObject model = new GameObject(mod.Name);
+                model.AddComponent<MSBBBCollisionModel>();
+                model.GetComponent<MSBBBCollisionModel>().SetModel(mod);
+                model.transform.parent = CollisionModels.transform;
+            }
+
+            GameObject OtherModels = new GameObject("Others");
+            OtherModels.transform.parent = ModelsSection.transform;
+            foreach (var mod in msb.Models.Others)
+            {
+                GameObject model = new GameObject(mod.Name);
+                model.AddComponent<MSBBBOtherModel>();
+                model.GetComponent<MSBBBOtherModel>().SetModel(mod);
+                model.transform.parent = OtherModels.transform;
+            }
+
+            //
+            // Parts Section
+            //
+            GameObject PartsSection = new GameObject("MSBParts");
+
+            GameObject MapPieces = new GameObject("MapPieces");
+            MapPieces.transform.parent = PartsSection.transform;
+            foreach (var part in msb.Parts.MapPieces)
+            { 
+                GameObject src = AssetDatabase.LoadAssetAtPath<GameObject>($@"Assets/Bloodborne/{mapnameAdj}/{part.ModelName}.prefab");
+                if (src != null)
+                {
+                    GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
+                    obj.name = part.Name;
+                    obj.AddComponent<MSBBBMapPiecePart>(); 
+                    obj.GetComponent<MSBBBMapPiecePart>().SetPart(part);
+                    obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
+                    //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
+                    EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
+                    obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
+                    obj.layer = 9;
+                    obj.transform.parent = MapPieces.transform;
+                }
+                else
+                {
+                    GameObject obj = new GameObject(part.Name);
+                    obj.AddComponent<MSBBBMapPiecePart>();
+                    obj.GetComponent<MSBBBMapPiecePart>().SetPart(part);
+                    obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
+                    //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
+                    EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
+                    obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
+                    obj.layer = 9;
+                    obj.transform.parent = MapPieces.transform;
+                }
+            }
+
+            GameObject Objects = new GameObject("Objects");
+            Objects.transform.parent = PartsSection.transform;
+            foreach (var part in msb.Parts.Objects)
+            {
+                GameObject src = AssetDatabase.LoadAssetAtPath<GameObject>($@"Assets/Bloodborne/Obj/{part.ModelName}.prefab");
+                if (src != null)
+                {
+                    GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
+                    obj.name = part.Name;
+                    obj.AddComponent<MSBBBObjectPart>();
+                    obj.GetComponent<MSBBBObjectPart>().SetPart(part);
+                    obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
+                    //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
+                    EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
+                    obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
+                    obj.layer = 10;
+                    obj.transform.parent = Objects.transform;
+                }
+                else
+                {
+                    GameObject obj = new GameObject(part.Name);
+                    obj.AddComponent<MSBBBObjectPart>();
+                    obj.GetComponent<MSBBBObjectPart>().SetPart(part);
+                    obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
+                    //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
+                    EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
+                    obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
+                    obj.layer = 10;
+                    obj.transform.parent = Objects.transform;
+                }
+            }
+
+            GameObject Collisions = new GameObject("Collisions");
+            Collisions.transform.parent = PartsSection.transform;
+            foreach (var part in msb.Parts.Collisions)
+            {
+                string lowHigh = LoadHighResCol ? "h" : "l";
+                GameObject src = AssetDatabase.LoadAssetAtPath<GameObject>($@"Assets/Bloodborne/{mapnameAdj}/{lowHigh}{mapnameAdj.Substring(1)}_{part.ModelName.Substring(1)}.prefab");
+                if (src != null)
+                {
+                    GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
+                    obj.name = part.Name;
+                    obj.AddComponent<MSBBBCollisionPart>();
+                    obj.GetComponent<MSBBBCollisionPart>().SetPart(part);
+                    obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
+                    //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
+                    EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
+                    obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
+                    obj.layer = 12;
+                    obj.transform.parent = Collisions.transform;
+                }
+            }
+
+            GameObject ConnectCollisions = new GameObject("ConnectCollisions");
+            ConnectCollisions.transform.parent = PartsSection.transform;
+            foreach (var part in msb.Parts.ConnectCollisions)
+            {
+                GameObject obj = new GameObject(part.Name);
+                obj.AddComponent<MSBBBConnectCollisionPart>();
+                obj.GetComponent<MSBBBConnectCollisionPart>().SetPart(part);
+                obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
+                //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
+                EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
+                obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
+                obj.transform.parent = ConnectCollisions.transform;
+            }
+
+            GameObject Enemies = new GameObject("Enemies");
+            Enemies.transform.parent = PartsSection.transform;
+            foreach (var part in msb.Parts.Enemies)
+            {
+                GameObject src = AssetDatabase.LoadAssetAtPath<GameObject>($@"Assets/Bloodborne/Chr/{part.ModelName}.prefab");
+                if (src != null)
+                {
+                    GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
+                    obj.name = part.Name;
+                    obj.AddComponent<MSBBBEnemyPart>();
+                    obj.GetComponent<MSBBBEnemyPart>().SetPart(part);
+                    obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
+                    //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
+                    EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
+                    obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
+                    obj.layer = 11;
+                    obj.transform.parent = Enemies.transform;
+                }
+                else
+                {
+                    GameObject obj = new GameObject(part.Name);
+                    obj.AddComponent<MSBBBEnemyPart>();
+                    obj.GetComponent<MSBBBEnemyPart>().SetPart(part);
+                    obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
+                    //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
+                    EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
+                    obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
+                    obj.layer = 11;
+                    obj.transform.parent = Enemies.transform;
+                }
+            }
+
+            GameObject Players = new GameObject("Players");
+            Players.transform.parent = PartsSection.transform;
+            foreach (var part in msb.Parts.Players)
+            {
+                GameObject obj = new GameObject(part.Name);
+                obj.AddComponent<MSBBBPlayerPart>();
+                obj.GetComponent<MSBBBPlayerPart>().SetPart(part);
+                obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
+                //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
+                EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
+                obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
+                obj.transform.parent = Players.transform;
+            }
+
+            GameObject DummyObjects = new GameObject("DummyObjects");
+            DummyObjects.transform.parent = PartsSection.transform;
+            foreach (var part in msb.Parts.DummyObjects)
+            {
+                GameObject src = AssetDatabase.LoadAssetAtPath<GameObject>($@"Assets/Bloodborne/Obj/{part.ModelName}.prefab");
+                if (src != null)
+                {
+                    GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
+                    obj.name = part.Name;
+                    obj.AddComponent<MSBBBObjectPart>();
+                    obj.GetComponent<MSBBBObjectPart>().SetPart(part);
+                    obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
+                    //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
+                    EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
+                    obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
+                    obj.layer = 12;
+                    obj.transform.parent = DummyObjects.transform;
+                }
+                else
+                {
+                    GameObject obj = new GameObject(part.Name);
+                    obj.AddComponent<MSBBBObjectPart>();
+                    obj.GetComponent<MSBBBObjectPart>().SetPart(part);
+                    obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
+                    //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
+                    EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
+                    obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
+                    obj.layer = 12;
+                    obj.transform.parent = DummyObjects.transform;
+                }
+            }
+
+            GameObject DummyEnemies = new GameObject("DummyEnemies");
+            DummyEnemies.transform.parent = PartsSection.transform;
+            foreach (var part in msb.Parts.DummyEnemies)
+            {
+                GameObject src = AssetDatabase.LoadAssetAtPath<GameObject>($@"Assets/Bloodborne/Chr/{part.ModelName}.prefab");
+                if (src != null)
+                {
+                    GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
+                    obj.name = part.Name;
+                    obj.AddComponent<MSBBBEnemyPart>();
+                    obj.GetComponent<MSBBBEnemyPart>().SetPart(part);
+                    obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
+                    //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
+                    EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
+                    obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
+                    obj.layer = 13;
+                    obj.transform.parent = DummyEnemies.transform;
+                }
+                else
+                {
+                    GameObject obj = new GameObject(part.Name);
+                    obj.AddComponent<MSBBBEnemyPart>();
+                    obj.GetComponent<MSBBBEnemyPart>().SetPart(part);
+                    obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
+                    //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
+                    EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
+                    obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
+                    obj.layer = 13;
+                    obj.transform.parent = DummyEnemies.transform;
+                }
+            }
+
+            //
+            // Regions section
+            //
+            GameObject Regions = new GameObject("MSBRegions");
+            foreach (var region in msb.Regions.Regions)
+            {
+                var reg = InstantiateRegion(region, Regions);
+                reg.AddComponent<MSBBBRegion>();
+                reg.GetComponent<MSBBBRegion>().setBaseRegion(region);
+            }
+
+            //
+            // Events Section
+            //
+            GameObject Events = new GameObject("MSBEvents");
+
+            GameObject Sounds = new GameObject("Sounds");
+            Sounds.transform.parent = Events.transform;
+            foreach (var ev in msb.Events.Sounds)
+            {
+                GameObject evt = new GameObject(ev.Name);
+                evt.AddComponent<MSBBBSoundEvent>();
+                evt.GetComponent<MSBBBSoundEvent>().SetEvent(ev);
+                evt.transform.parent = Sounds.transform;
+            }
+
+            GameObject SFXs = new GameObject("SFX");
+            SFXs.transform.parent = Events.transform;
+            foreach (var ev in msb.Events.SFXs)
+            {
+                GameObject evt = new GameObject(ev.Name);
+                evt.AddComponent<MSBBBSFXEvent>();
+                evt.GetComponent<MSBBBSFXEvent>().SetEvent(ev);
+                evt.transform.parent = SFXs.transform;
+            }
+
+            GameObject Treasures = new GameObject("Treasures");
+            Treasures.transform.parent = Events.transform;
+            foreach (var ev in msb.Events.Treasures)
+            {
+                GameObject evt = new GameObject(ev.Name);
+                evt.AddComponent<MSBBBTreasureEvent>();
+                evt.GetComponent<MSBBBTreasureEvent>().SetEvent(ev);
+                evt.transform.parent = Treasures.transform;
+            }
+
+            GameObject Generators = new GameObject("Generators");
+            Generators.transform.parent = Events.transform;
+            foreach (var ev in msb.Events.Generators)
+            {
+                GameObject evt = new GameObject(ev.Name);
+                evt.AddComponent<MSBBBGeneratorEvent>();
+                evt.GetComponent<MSBBBGeneratorEvent>().SetEvent(ev);
+                evt.transform.parent = Generators.transform;
+            }
+
+            GameObject Messages = new GameObject("Messages");
+            Messages.transform.parent = Events.transform;
+            foreach (var ev in msb.Events.Messages)
+            {
+                GameObject evt = new GameObject(ev.Name);
+                evt.AddComponent<MSBBBMessageEvent>();
+                evt.GetComponent<MSBBBMessageEvent>().SetEvent(ev);
+                evt.transform.parent = Messages.transform;
+            }
+
+            GameObject ObjActs = new GameObject("ObjActs");
+            ObjActs.transform.parent = Events.transform;
+            foreach (var ev in msb.Events.ObjActs)
+            {
+                GameObject evt = new GameObject(ev.Name);
+                evt.AddComponent<MSBBBObjActEvent>();
+                evt.GetComponent<MSBBBObjActEvent>().SetEvent(ev);
+                evt.transform.parent = ObjActs.transform;
+            }
+
+            GameObject SpawnPoints = new GameObject("SpawnPoints");
+            SpawnPoints.transform.parent = Events.transform;
+            foreach (var ev in msb.Events.SpawnPoints)
+            {
+                GameObject evt = new GameObject(ev.Name);
+                evt.AddComponent<MSBBBSpawnPointEvent>();
+                evt.GetComponent<MSBBBSpawnPointEvent>().SetEvent(ev);
+                evt.transform.parent = SpawnPoints.transform;
+            }
+
+            GameObject MapOffsets = new GameObject("MapOffsets");
+            MapOffsets.transform.parent = Events.transform;
+            foreach (var ev in msb.Events.MapOffsets)
+            {
+                GameObject evt = new GameObject(ev.Name);
+                evt.AddComponent<MSBBBMapOffsetEvent>();
+                evt.GetComponent<MSBBBMapOffsetEvent>().SetEvent(ev);
+                evt.transform.parent = MapOffsets.transform;
+            }
+
+            GameObject Navimeshes = new GameObject("Navimeshes");
+            Navimeshes.transform.parent = Events.transform;
+            foreach (var ev in msb.Events.Navimeshes)
+            {
+                GameObject evt = new GameObject(ev.Name);
+                evt.AddComponent<MSBBBNavimeshEvent>();
+                evt.GetComponent<MSBBBNavimeshEvent>().SetEvent(ev);
+                evt.transform.parent = Navimeshes.transform;
+            }
+
+            GameObject Environments = new GameObject("Environments");
+            Environments.transform.parent = Events.transform;
+            foreach (var ev in msb.Events.Environments)
+            {
+                GameObject evt = new GameObject(ev.Name);
+                evt.AddComponent<MSBBBEnvironmentEvent>();
+                evt.GetComponent<MSBBBEnvironmentEvent>().SetEvent(ev);
+                evt.transform.parent = Environments.transform;
+            }
+
+            GameObject Winds = new GameObject("Winds");
+            Winds.transform.parent = Events.transform;
+            foreach (var ev in msb.Events.Winds)
+            {
+                GameObject evt = new GameObject(ev.Name);
+                evt.AddComponent<MSBBBWindEvent>();
+                evt.GetComponent<MSBBBWindEvent>().SetEvent(ev);
+                evt.transform.parent = Winds.transform;
+            }
+
+            GameObject Invasions = new GameObject("Invasions");
+            Invasions.transform.parent = Events.transform;
+            foreach (var ev in msb.Events.Invasions)
+            {
+                GameObject evt = new GameObject(ev.Name);
+                evt.AddComponent<MSBBBInvasionEvent>();
+                evt.GetComponent<MSBBBInvasionEvent>().SetEvent(ev);
+                evt.transform.parent = Invasions.transform;
+            }
+
+            GameObject WalkRoutes = new GameObject("WalkRoutes");
+            WalkRoutes.transform.parent = Events.transform;
+            foreach (var ev in msb.Events.WalkRoutes)
+            {
+                GameObject evt = new GameObject(ev.Name);
+                evt.AddComponent<MSBBBWalkRouteEvent>();
+                evt.GetComponent<MSBBBWalkRouteEvent>().SetEvent(ev);
+                evt.transform.parent = WalkRoutes.transform;
+            }
+
+            GameObject Unknowns = new GameObject("Unknowns");
+            Unknowns.transform.parent = Events.transform;
+            foreach (var ev in msb.Events.Unknowns)
+            {
+                GameObject evt = new GameObject(ev.Name);
+                evt.AddComponent<MSBBBUnknownEvent>();
+                evt.GetComponent<MSBBBUnknownEvent>().SetEvent(ev);
+                evt.transform.parent = Unknowns.transform;
+            }
+
+            GameObject GroupTours = new GameObject("GroupTours");
+            GroupTours.transform.parent = Events.transform;
+            foreach (var ev in msb.Events.GroupTours)
+            {
+                GameObject evt = new GameObject(ev.Name);
+                evt.AddComponent<MSBBBGroupTourEvent>();
+                evt.GetComponent<MSBBBGroupTourEvent>().SetEvent(ev);
+                evt.transform.parent = GroupTours.transform;
+            }
+
+            GameObject Others = new GameObject("Others");
+            Others.transform.parent = Events.transform;
+            foreach (var ev in msb.Events.Others)
+            {
+                GameObject evt = new GameObject(ev.Name);
+                evt.AddComponent<MSBBBOtherEvent>();
+                evt.GetComponent<MSBBBOtherEvent>().SetEvent(ev);
+                evt.transform.parent = Others.transform;
+            }
+        }
+        catch (Exception e)
+        {
+            EditorUtility.DisplayDialog("Import failed", e.Message + "\n" + e.StackTrace, "Ok");
+        }
+    }
+
+    void onImportDS1Map(object o, bool remastered)
+    {
+        try
+        {
+            string mapname = (string)o;
+            var msb = DataFile.LoadFromFile<MSB>(GetOverridenPath(Interroot + $@"\map\MapStudio\{mapname}.msb"));
+            int area = int.Parse(mapname.Substring(1, 2));
+            GameFolder(GameType.DarkSoulsPTDE);
+            // Make adjusted mapname so darkroot garden meme works
+            var mapnameAdj = mapname.Substring(0, 6) + "_00_00";
+
+            if (!AssetDatabase.IsValidFolder("Assets/DS1/" + mapnameAdj))
+            {
+                AssetDatabase.CreateFolder("Assets/DS1", mapnameAdj);
+            }
+
+            // Create an MSB asset link to the DS3 asset
+            GameObject AssetLink = new GameObject("MSBAssetLink");
+            AssetLink.AddComponent<MSBAssetLink>();
+            AssetLink.GetComponent<MSBAssetLink>().Interroot = Interroot;
+            AssetLink.GetComponent<MSBAssetLink>().MapID = mapname;
+            AssetLink.GetComponent<MSBAssetLink>().MapPath = $@"{Interroot}\map\MapStudio\{mapname}.msb";
+
+            //
+            // Models section
+            //
+            GameObject ModelsSection = new GameObject("MSBModelDeclarations");
+
+            GameObject MapPieceModels = new GameObject("MapPieces");
+            MapPieceModels.transform.parent = ModelsSection.transform;
+
+            // Do a preload of all the flvers
+            try
+            {
+                AssetDatabase.StartAssetEditing();
+                foreach (var mappiece in msb.Models.MapPieces)
+                {
+                    var assetname = mappiece.Name;
+                    if (AssetDatabase.FindAssets($@"Assets/DS1/{mapnameAdj}/{assetname}.prefab").Length == 0 && LoadMapFlvers)
+                    {
+                        if (File.Exists(Interroot + $@"\map\{mapnameAdj}\{assetname}A{area:D2}.flver"))
+                            FlverUtilities.ImportFlver(type, Interroot + $@"\map\{mapnameAdj}\{assetname}A{area:D2}.flver", $@"Assets/DS1/{mapnameAdj}/{assetname}", $@"Assets/DS1/UDSFMMapTextures");
+                    }
+                }
+            }
+            finally
+            {
+                AssetDatabase.StopAssetEditing();
+            }
+
+            foreach (var mappiece in msb.Models.MapPieces)
+            {
+                var assetname = mappiece.Name;
+                GameObject model = new GameObject(mappiece.Name);
+                model.AddComponent<MSB1MapPieceModel>();
+                model.GetComponent<MSB1MapPieceModel>().SetModel(mappiece);
+                model.transform.parent = MapPieceModels.transform;
+            }
+
+            // Load low res hkx assets
+            /*if (LoadHighResCol)
+            {
+                if (File.Exists(Interroot + $@"\map\{mapname}\h{mapname.Substring(1)}.hkxbhd"))
+                {
+                    ImportCollisionHKXBDT(Interroot + $@"\map\{mapname}\h{mapname.Substring(1)}.hkxbhd", $@"Assets/{mapname}");
+                }
+            }
+            else
+            {
+                if (File.Exists(Interroot + $@"\map\{mapname}\l{mapname.Substring(1)}.hkxbhd"))
+                {
+                    ImportCollisionHKXBDT(Interroot + $@"\map\{mapname}\l{mapname.Substring(1)}.hkxbhd", $@"Assets/{mapname}");
+                }
+            }*/
+            
+            GameObject ObjectModels = new GameObject("Objects");
+            ObjectModels.transform.parent = ModelsSection.transform;
+            foreach (var mod in msb.Models.Objects)
+            {
+                GameObject model = new GameObject(mod.Name);
+                model.AddComponent<MSB1ObjectModel>();
+                model.GetComponent<MSB1ObjectModel>().SetModel(mod);
+                model.transform.parent = ObjectModels.transform;
+            }
+
+            GameObject PlayerModels = new GameObject("Players");
+            PlayerModels.transform.parent = ModelsSection.transform;
+            foreach (var mod in msb.Models.Players)
+            {
+                GameObject model = new GameObject(mod.Name);
+                model.AddComponent<MSB1PlayerModel>();
+                model.GetComponent<MSB1PlayerModel>().SetModel(mod);
+                model.transform.parent = PlayerModels.transform;
+            }
+
+            GameObject EnemyModels = new GameObject("Enemies");
+            EnemyModels.transform.parent = ModelsSection.transform;
+            foreach (var mod in msb.Models.Characters)
+            {
+                GameObject model = new GameObject(mod.Name);
+                model.AddComponent<MSB1EnemyModel>();
+                model.GetComponent<MSB1EnemyModel>().SetModel(mod);
+                model.transform.parent = EnemyModels.transform;
+            }
+
+            GameObject CollisionModels = new GameObject("Collisions");
+            CollisionModels.transform.parent = ModelsSection.transform;
+            AssetDatabase.StartAssetEditing();
+            foreach (var mod in msb.Models.Collisions)
+            {
+                GameObject model = new GameObject(mod.Name);
+                model.AddComponent<MSB1CollisionModel>();
+                model.GetComponent<MSB1CollisionModel>().SetModel(mod);
+                model.transform.parent = CollisionModels.transform;
+
+                if (type == GameType.DarkSoulsPTDE)
+                {
+                    var prefix = LoadHighResCol ? "h" : "l";
+                    var path = $@"{Interroot}\map\{mapnameAdj}\{prefix}{mod.Name.Substring(1)}A{area:D2}.hkx";
+                    if (File.Exists(path))
+                    {
+                        CollisionUtilities.ImportDS1CollisionHKX(HKX.Read(path, HKX.HKXVariation.HKXDS1), $@"Assets/DS1/{mapnameAdj}/{prefix}{mod.Name.Substring(1)}");
+                    }
+                }
+            }
+            AssetDatabase.StopAssetEditing();
+    
+            GameObject NavModels = new GameObject("Navimeshes");
+            NavModels.transform.parent = ModelsSection.transform;
+            foreach (var mod in msb.Models.Navimeshes)
+            {
+                GameObject model = new GameObject(mod.Name);
+                model.AddComponent<MSB1NavimeshModel>();
+                model.GetComponent<MSB1NavimeshModel>().SetModel(mod);
+                model.transform.parent = NavModels.transform;
+            }
+
+            //
+            // Parts Section
+            //
+            GameObject PartsSection = new GameObject("MSBParts");
+
+            GameObject MapPieces = new GameObject("MapPieces");
+            MapPieces.transform.parent = PartsSection.transform;
+            foreach (var part in msb.Parts.MapPieces)
+            {
+                GameObject src = LoadMapFlvers ? AssetDatabase.LoadAssetAtPath<GameObject>($@"Assets/DS1/{mapnameAdj}/{part.ModelName}.prefab") : null;
+                if (src != null)
+                {
+                    GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
+                    obj.name = part.Name;
+                    obj.AddComponent<MSB1MapPiecePart>();
+                    obj.GetComponent<MSB1MapPiecePart>().SetPart(part);
+                    obj.transform.position = new Vector3(part.PosX, part.PosY, part.PosZ);
+                    obj.transform.rotation = Quaternion.Euler(part.RotX, part.RotY, part.RotZ);
+                    obj.transform.localScale = new Vector3(part.ScaleX, part.ScaleY, part.ScaleZ);
+                    obj.layer = 9;
+                    obj.transform.parent = MapPieces.transform;
+                }
+                else
+                {
+                    GameObject obj = new GameObject(part.Name);
+                    obj.AddComponent<MSB1MapPiecePart>();
+                    obj.GetComponent<MSB1MapPiecePart>().SetPart(part);
+                    obj.transform.position = new Vector3(part.PosX, part.PosY, part.PosZ);
+                    obj.transform.rotation = Quaternion.Euler(part.RotX, part.RotY, part.RotZ);
+                    obj.transform.localScale = new Vector3(part.ScaleX, part.ScaleY, part.ScaleZ);
+                    obj.layer = 9;
+                    obj.transform.parent = MapPieces.transform;
+                }
+            }
+
+            GameObject Objects = new GameObject("Objects");
+            Objects.transform.parent = PartsSection.transform;
+            foreach (var part in msb.Parts.Objects)
+            {
+                GameObject src = AssetDatabase.LoadAssetAtPath<GameObject>($@"Assets/DS1/Obj/{part.ModelName}.prefab");
+                if (src != null)
+                {
+                    GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
+                    obj.name = part.Name;
+                    obj.AddComponent<MSB1ObjectPart>();
+                    obj.GetComponent<MSB1ObjectPart>().SetPart(part);
+                    obj.transform.position = new Vector3(part.PosX, part.PosY, part.PosZ);
+                    obj.transform.rotation = Quaternion.Euler(part.RotX, part.RotY, part.RotZ);
+                    obj.transform.localScale = new Vector3(part.ScaleX, part.ScaleY, part.ScaleZ);
+                    obj.layer = 10;
+                    obj.transform.parent = Objects.transform;
+                }
+                else
+                {
+                    GameObject obj = new GameObject(part.Name);
+                    obj.AddComponent<MSB1ObjectPart>();
+                    obj.GetComponent<MSB1ObjectPart>().SetPart(part);
+                    obj.transform.position = new Vector3(part.PosX, part.PosY, part.PosZ);
+                    obj.transform.rotation = Quaternion.Euler(part.RotX, part.RotY, part.RotZ);
+                    obj.transform.localScale = new Vector3(part.ScaleX, part.ScaleY, part.ScaleZ);
+                    obj.layer = 10;
+                    obj.transform.parent = Objects.transform;
+                }
+            }
+
+            GameObject DummyObjects = new GameObject("DummyObjects");
+            DummyObjects.transform.parent = PartsSection.transform;
+            foreach (var part in msb.Parts.DummyObjects)
+            {
+                GameObject src = AssetDatabase.LoadAssetAtPath<GameObject>($@"Assets/DS1/Obj/{part.ModelName}.prefab");
+                if (src != null)
+                {
+                    GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
+                    obj.name = part.Name;
+                    obj.AddComponent<MSB1DummyObjectPart>();
+                    obj.GetComponent<MSB1DummyObjectPart>().SetPart(part);
+                    obj.transform.position = new Vector3(part.PosX, part.PosY, part.PosZ);
+                    obj.transform.rotation = Quaternion.Euler(part.RotX, part.RotY, part.RotZ);
+                    obj.transform.localScale = new Vector3(part.ScaleX, part.ScaleY, part.ScaleZ);
+                    obj.layer = 10;
+                    obj.transform.parent = DummyObjects.transform;
+                }
+                else
+                {
+                    GameObject obj = new GameObject(part.Name);
+                    obj.AddComponent<MSB1DummyObjectPart>();
+                    obj.GetComponent<MSB1DummyObjectPart>().SetPart(part);
+                    obj.transform.position = new Vector3(part.PosX, part.PosY, part.PosZ);
+                    obj.transform.rotation = Quaternion.Euler(part.RotX, part.RotY, part.RotZ);
+                    obj.transform.localScale = new Vector3(part.ScaleX, part.ScaleY, part.ScaleZ);
+                    obj.layer = 10;
+                    obj.transform.parent = DummyObjects.transform;
+                }
+            }
+
+            GameObject NPCs = new GameObject("NPCs");
+            NPCs.transform.parent = PartsSection.transform;
+            foreach (var part in msb.Parts.NPCs)
+            {
+                GameObject src = AssetDatabase.LoadAssetAtPath<GameObject>($@"Assets/DS1/Chr/{part.ModelName}.prefab");
+                if (src != null)
+                {
+                    GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
+                    obj.name = part.Name;
+                    obj.AddComponent<MSB1NPCPart>();
+                    obj.GetComponent<MSB1NPCPart>().SetPart(part);
+                    obj.transform.position = new Vector3(part.PosX, part.PosY, part.PosZ);
+                    obj.transform.rotation = Quaternion.Euler(part.RotX, part.RotY, part.RotZ);
+                    obj.transform.localScale = new Vector3(part.ScaleX, part.ScaleY, part.ScaleZ);
+                    obj.layer = 11;
+                    obj.transform.parent = NPCs.transform;
+                }
+                else
+                {
+                    GameObject obj = new GameObject(part.Name);
+                    obj.AddComponent<MSB1NPCPart>();
+                    obj.GetComponent<MSB1NPCPart>().SetPart(part);
+                    obj.transform.position = new Vector3(part.PosX, part.PosY, part.PosZ);
+                    obj.transform.rotation = Quaternion.Euler(part.RotX, part.RotY, part.RotZ);
+                    obj.transform.localScale = new Vector3(part.ScaleX, part.ScaleY, part.ScaleZ);
+                    obj.layer = 11;
+                    obj.transform.parent = NPCs.transform;
+                }
+            }
+
+            GameObject DummyNPCs = new GameObject("DummyNPCs");
+            DummyNPCs.transform.parent = PartsSection.transform;
+            foreach (var part in msb.Parts.DummyNPCs)
+            {
+                GameObject src = AssetDatabase.LoadAssetAtPath<GameObject>($@"Assets/DS1/Obj/{part.ModelName}.prefab");
+                if (src != null)
+                {
+                    GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
+                    obj.name = part.Name;
+                    obj.AddComponent<MSB1DummyNPCPart>();
+                    obj.GetComponent<MSB1DummyNPCPart>().SetPart(part);
+                    obj.transform.position = new Vector3(part.PosX, part.PosY, part.PosZ);
+                    obj.transform.rotation = Quaternion.Euler(part.RotX, part.RotY, part.RotZ);
+                    obj.transform.localScale = new Vector3(part.ScaleX, part.ScaleY, part.ScaleZ);
+                    obj.layer = 11;
+                    obj.transform.parent = DummyNPCs.transform;
+                }
+                else
+                {
+                    GameObject obj = new GameObject(part.Name);
+                    obj.AddComponent<MSB1DummyNPCPart>();
+                    obj.GetComponent<MSB1DummyNPCPart>().SetPart(part);
+                    obj.transform.position = new Vector3(part.PosX, part.PosY, part.PosZ);
+                    obj.transform.rotation = Quaternion.Euler(part.RotX, part.RotY, part.RotZ);
+                    obj.transform.localScale = new Vector3(part.ScaleX, part.ScaleY, part.ScaleZ);
+                    obj.layer = 11;
+                    obj.transform.parent = DummyNPCs.transform;
+                }
+            }
+
+            GameObject Collisions = new GameObject("Collisions");
+            Collisions.transform.parent = PartsSection.transform;
+            foreach (var part in msb.Parts.Hits)
+            {
+                string lowHigh = LoadHighResCol ? "h" : "l";
+                GameObject src = AssetDatabase.LoadAssetAtPath<GameObject>($@"Assets/DS1/{mapnameAdj}/{lowHigh}{part.ModelName.Substring(1)}.prefab");
+                if (src != null)
+                {
+                    GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
+                    obj.name = part.Name;
+                    obj.AddComponent<MSB1CollisionPart>();
+                    obj.GetComponent<MSB1CollisionPart>().SetPart(part);
+                    obj.transform.position = new Vector3(part.PosX, part.PosY, part.PosZ);
+                    obj.transform.rotation = Quaternion.Euler(part.RotX, part.RotY, part.RotZ);
+                    obj.transform.localScale = new Vector3(part.ScaleX, part.ScaleY, part.ScaleZ);
+                    obj.layer = 12;
+                    obj.transform.parent = Collisions.transform;
+                }
+            }
+
+            GameObject ConnectCollisions = new GameObject("ConnectCollisions");
+            ConnectCollisions.transform.parent = PartsSection.transform;
+            foreach (var part in msb.Parts.ConnectHits)
+            {
+                GameObject obj = new GameObject(part.Name);
+                obj.AddComponent<MSB1ConnectCollisionPart>();
+                obj.GetComponent<MSB1ConnectCollisionPart>().SetPart(part);
+                obj.transform.position = new Vector3(part.PosX, part.PosY, part.PosZ);
+                EulerToTransform(new Vector3(part.RotX, part.RotY, part.RotZ), obj.transform);
+                obj.transform.localScale = new Vector3(part.ScaleX, part.ScaleY, part.ScaleZ);
+                obj.transform.parent = ConnectCollisions.transform;
+            }
+
+            GameObject Navimeshes = new GameObject("Navimeshes");
+            Navimeshes.transform.parent = PartsSection.transform;
+            foreach (var part in msb.Parts.Navimeshes)
+            {
+                GameObject obj = new GameObject(part.Name);
+                obj.AddComponent<MSB1NavimeshPart>();
+                obj.GetComponent<MSB1NavimeshPart>().SetPart(part);
+                obj.transform.position = new Vector3(part.PosX, part.PosY, part.PosZ);
+                EulerToTransform(new Vector3(part.RotX, part.RotY, part.RotZ), obj.transform);
+                obj.transform.localScale = new Vector3(part.ScaleX, part.ScaleY, part.ScaleZ);
+                obj.transform.parent = Navimeshes.transform;
+            }
+
+            GameObject Players = new GameObject("Players");
+            Players.transform.parent = PartsSection.transform;
+            foreach (var part in msb.Parts.Players)
+            {
+                GameObject obj = new GameObject(part.Name);
+                obj.AddComponent<MSB1PlayerPart>();
+                obj.GetComponent<MSB1PlayerPart>().SetPart(part);
+                obj.transform.position = new Vector3(part.PosX, part.PosY, part.PosZ);
+                EulerToTransform(new Vector3(part.RotX, part.RotY, part.RotZ), obj.transform);
+                obj.transform.localScale = new Vector3(part.ScaleX, part.ScaleY, part.ScaleZ);
+                obj.transform.parent = Players.transform;
+            }
+
+            //
+            // Regions section
+            //
+            GameObject Regions = new GameObject("MSBRegions");
+            foreach (var region in msb.Regions)
+            {
+                var reg = InstantiateRegion(region, Regions);
+                reg.AddComponent<MSB1Region>();
+                reg.GetComponent<MSB1Region>().setBaseRegion(region);
+            }
+
+            //
+            // Events Section
+            //
+            GameObject Events = new GameObject("MSBEvents");
+
+            GameObject Environments = new GameObject("Environments");
+            Environments.transform.parent = Events.transform;
+            foreach (var ev in msb.Events.EnvLightMapSpot)
+            {
+                GameObject evt = new GameObject(ev.Name);
+                evt.AddComponent<MSB1EnvironmentEvent>();
+                evt.GetComponent<MSB1EnvironmentEvent>().SetEvent(ev);
+                evt.transform.parent = Environments.transform;
+            }
+
+            GameObject Generators = new GameObject("Generators");
+            Generators.transform.parent = Events.transform;
+            foreach (var ev in msb.Events.Generators)
+            {
+                GameObject evt = new GameObject(ev.Name);
+                evt.AddComponent<MSB1GeneratorEvent>();
+                evt.GetComponent<MSB1GeneratorEvent>().SetEvent(ev);
+                evt.transform.parent = Generators.transform;
+            }
+
+            GameObject Invasions = new GameObject("Invasions");
+            Invasions.transform.parent = Events.transform;
+            foreach (var ev in msb.Events.NpcWorldInvitations)
+            {
+                GameObject evt = new GameObject(ev.Name);
+                evt.AddComponent<MSB1InvasionEvent>();
+                evt.GetComponent<MSB1InvasionEvent>().SetEvent(ev);
+                evt.transform.parent = Invasions.transform;
+            }
+
+            GameObject Lights = new GameObject("Lights");
+            Lights.transform.parent = Events.transform;
+            foreach (var ev in msb.Events.Lights)
+            {
+                GameObject evt = new GameObject(ev.Name);
+                evt.AddComponent<MSB1LightEvent>();
+                evt.GetComponent<MSB1LightEvent>().SetEvent(ev);
+                evt.transform.parent = Lights.transform;
+            }
+
+            GameObject MapOffsets = new GameObject("MapOffsets");
+            MapOffsets.transform.parent = Events.transform;
+            foreach (var ev in msb.Events.MapOffsets)
+            {
+                GameObject evt = new GameObject(ev.Name);
+                evt.AddComponent<MSB1MapOffsetEvent>();
+                evt.GetComponent<MSB1MapOffsetEvent>().SetEvent(ev);
+                evt.transform.parent = MapOffsets.transform;
+            }
+
+            GameObject Messages = new GameObject("Messages");
+            Messages.transform.parent = Events.transform;
+            foreach (var ev in msb.Events.BloodMessages)
+            {
+                GameObject evt = new GameObject(ev.Name);
+                evt.AddComponent<MSB1MessageEvent>();
+                evt.GetComponent<MSB1MessageEvent>().SetEvent(ev);
+                evt.transform.parent = Messages.transform;
+            }
+
+            GameObject NavimeshEvents = new GameObject("Navimeshes");
+            NavimeshEvents.transform.parent = Events.transform;
+            foreach (var ev in msb.Events.Navimeshes)
+            {
+                GameObject evt = new GameObject(ev.Name);
+                evt.AddComponent<MSB1NavimeshEvent>();
+                evt.GetComponent<MSB1NavimeshEvent>().SetEvent(ev);
+                evt.transform.parent = NavimeshEvents.transform;
+            }
+
+            GameObject ObjActs = new GameObject("ObjActs");
+            ObjActs.transform.parent = Events.transform;
+            foreach (var ev in msb.Events.ObjActs)
+            {
+                GameObject evt = new GameObject(ev.Name);
+                evt.AddComponent<MSB1ObjActEvent>();
+                evt.GetComponent<MSB1ObjActEvent>().SetEvent(ev);
+                evt.transform.parent = ObjActs.transform;
+            }
+
+            GameObject SFX = new GameObject("SFX");
+            SFX.transform.parent = Events.transform;
+            foreach (var ev in msb.Events.SFXs)
+            {
+                GameObject evt = new GameObject(ev.Name);
+                evt.AddComponent<MSB1SFXEvent>();
+                evt.GetComponent<MSB1SFXEvent>().SetEvent(ev);
+                evt.transform.parent = SFX.transform;
+            }
+
+            GameObject Sounds = new GameObject("Sounds");
+            Sounds.transform.parent = Events.transform;
+            foreach (var ev in msb.Events.Sounds)
+            {
+                GameObject evt = new GameObject(ev.Name);
+                evt.AddComponent<MSB1SoundEvent>();
+                evt.GetComponent<MSB1SoundEvent>().SetEvent(ev);
+                evt.transform.parent = Sounds.transform;
+            }
+
+            GameObject SpawnPoints = new GameObject("SpawnPoints");
+            SpawnPoints.transform.parent = Events.transform;
+            foreach (var ev in msb.Events.SpawnPoints)
+            {
+                GameObject evt = new GameObject(ev.Name);
+                evt.AddComponent<MSB1SpawnPointEvent>();
+                evt.GetComponent<MSB1SpawnPointEvent>().SetEvent(ev);
+                evt.transform.parent = SpawnPoints.transform;
+            }
+
+            GameObject Treasures = new GameObject("Treasures");
+            Treasures.transform.parent = Events.transform;
+            foreach (var ev in msb.Events.Treasures)
+            {
+                GameObject evt = new GameObject(ev.Name);
+                evt.AddComponent<MSB1TreasureEvent>();
+                evt.GetComponent<MSB1TreasureEvent>().SetEvent(ev);
+                evt.transform.parent = Treasures.transform;
+            }
+
+            GameObject Winds = new GameObject("Winds");
+            Winds.transform.parent = Events.transform;
+            foreach (var ev in msb.Events.WindSFXs)
+            {
+                GameObject evt = new GameObject(ev.Name);
+                evt.AddComponent<MSB1WindEvent>();
+                evt.GetComponent<MSB1WindEvent>().SetEvent(ev);
+                evt.transform.parent = Winds.transform;
+            }
+        }
+        catch (Exception e)
+        {
+            EditorUtility.DisplayDialog("Import failed", e.Message + "\n" + e.StackTrace, "Ok");
+        }
+    }
+    
     void onImportSekiroMap(object o)
     {
         try
@@ -2030,1030 +3361,6 @@ public class DarkSoulsTools : EditorWindow
         }
     }
 
-    void onImportBBMap(object o)
-    {
-        try
-        {
-            string mapname = (string)o;
-            var msb = MSBBB.Read(GetOverridenPath(Interroot + $@"\map\MapStudio\{mapname}.msb.dcx"));
-            GameFolder(GameType.Bloodborne);
-
-            // Make adjusted mapname because bloodborne is a :fatcat:
-            var mapnameAdj = mapname.Substring(0, 6) + "_00_00";
-
-            if (!AssetDatabase.IsValidFolder("Assets/Bloodborne/" + mapnameAdj))
-            {
-                AssetDatabase.CreateFolder("Assets/Bloodborne", mapnameAdj);
-            }
-
-            // Create an MSB asset link to the DS3 asset
-            GameObject AssetLink = new GameObject("MSBAssetLink");
-            AssetLink.AddComponent<MSBAssetLink>();
-            AssetLink.GetComponent<MSBAssetLink>().Interroot = Interroot;
-            AssetLink.GetComponent<MSBAssetLink>().MapID = mapname;
-            AssetLink.GetComponent<MSBAssetLink>().MapPath = $@"{Interroot}\map\MapStudio\{mapname}.msb.dcx";
-
-            //
-            // Models section
-            //
-            GameObject ModelsSection = new GameObject("MSBModelDeclarations");
-
-            GameObject MapPieceModels = new GameObject("MapPieces");
-            MapPieceModels.transform.parent = ModelsSection.transform;
-
-            // Do a preload of all the flvers
-            try
-            {
-                AssetDatabase.StartAssetEditing();
-                foreach (var mappiece in msb.Models.MapPieces)
-                {
-                    var assetname = mappiece.Name;
-                    if (AssetDatabase.FindAssets($@"Assets/Bloodborne/{mapnameAdj}/{assetname}.prefab").Length == 0 && LoadMapFlvers)
-                    {
-                        if (File.Exists(Interroot + $@"\map\{mapnameAdj}\{mapnameAdj}_{assetname.Substring(1)}.flver.dcx"))
-                            FlverUtilities.ImportFlver(Interroot + $@"\map\{mapnameAdj}\{mapnameAdj}_{assetname.Substring(1)}.flver.dcx", $@"Assets/Bloodborne/{mapnameAdj}/{assetname}", $@"Assets/Bloodborne/{mapnameAdj.Substring(0, 3)}");
-                    }
-                }
-            }
-            finally
-            {
-                AssetDatabase.StopAssetEditing();
-            }
-
-            foreach (var mappiece in msb.Models.MapPieces)
-            {
-                var assetname = mappiece.Name;
-                GameObject model = new GameObject(mappiece.Name);
-                model.AddComponent<MSBBBMapPieceModel>();
-                model.GetComponent<MSBBBMapPieceModel>().SetModel(mappiece);
-                model.transform.parent = MapPieceModels.transform;
-            }
-
-            // Load low res hkx assets
-            if (LoadHighResCol)
-            {
-                if (File.Exists(Interroot + $@"\map\{mapnameAdj}\h{mapnameAdj.Substring(1)}.hkxbhd"))
-                {
-                    ImportCollisionHKXBDT(Interroot + $@"\map\{mapnameAdj}\h{mapnameAdj.Substring(1)}.hkxbhd", $@"Assets/Bloodborne/{mapnameAdj}", type);
-                }
-            }
-            else
-            {
-                if (File.Exists(Interroot + $@"\map\{mapnameAdj}\l{mapnameAdj.Substring(1)}.hkxbhd"))
-                {
-                    ImportCollisionHKXBDT(Interroot + $@"\map\{mapnameAdj}\l{mapnameAdj.Substring(1)}.hkxbhd", $@"Assets/Bloodborne/{mapnameAdj}", type);
-                }
-            }
-
-            GameObject ObjectModels = new GameObject("Objects");
-            ObjectModels.transform.parent = ModelsSection.transform;
-            foreach (var mod in msb.Models.Objects)
-            {
-                GameObject model = new GameObject(mod.Name);
-                model.AddComponent<MSBBBObjectModel>();
-                model.GetComponent<MSBBBObjectModel>().SetModel(mod);
-                model.transform.parent = ObjectModels.transform;
-            }
-
-            GameObject PlayerModels = new GameObject("Players");
-            PlayerModels.transform.parent = ModelsSection.transform;
-            foreach (var mod in msb.Models.Players)
-            {
-                GameObject model = new GameObject(mod.Name);
-                model.AddComponent<MSBBBPlayerModel>();
-                model.GetComponent<MSBBBPlayerModel>().SetModel(mod);
-                model.transform.parent = PlayerModels.transform;
-            }
-
-            GameObject EnemyModels = new GameObject("Enemies");
-            EnemyModels.transform.parent = ModelsSection.transform;
-            foreach (var mod in msb.Models.Enemies)
-            {
-                GameObject model = new GameObject(mod.Name);
-                model.AddComponent<MSBBBEnemyModel>();
-                model.GetComponent<MSBBBEnemyModel>().SetModel(mod);
-                model.transform.parent = EnemyModels.transform;
-            }
-
-            GameObject CollisionModels = new GameObject("Collisions");
-            CollisionModels.transform.parent = ModelsSection.transform;
-            foreach (var mod in msb.Models.Collisions)
-            {
-                GameObject model = new GameObject(mod.Name);
-                model.AddComponent<MSBBBCollisionModel>();
-                model.GetComponent<MSBBBCollisionModel>().SetModel(mod);
-                model.transform.parent = CollisionModels.transform;
-            }
-
-            GameObject OtherModels = new GameObject("Others");
-            OtherModels.transform.parent = ModelsSection.transform;
-            foreach (var mod in msb.Models.Others)
-            {
-                GameObject model = new GameObject(mod.Name);
-                model.AddComponent<MSBBBOtherModel>();
-                model.GetComponent<MSBBBOtherModel>().SetModel(mod);
-                model.transform.parent = OtherModels.transform;
-            }
-
-            //
-            // Parts Section
-            //
-            GameObject PartsSection = new GameObject("MSBParts");
-
-            GameObject MapPieces = new GameObject("MapPieces");
-            MapPieces.transform.parent = PartsSection.transform;
-            foreach (var part in msb.Parts.MapPieces)
-            { 
-                GameObject src = AssetDatabase.LoadAssetAtPath<GameObject>($@"Assets/Bloodborne/{mapnameAdj}/{part.ModelName}.prefab");
-                if (src != null)
-                {
-                    GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
-                    obj.name = part.Name;
-                    obj.AddComponent<MSBBBMapPiecePart>(); 
-                    obj.GetComponent<MSBBBMapPiecePart>().SetPart(part);
-                    obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
-                    //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
-                    EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
-                    obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
-                    obj.layer = 9;
-                    obj.transform.parent = MapPieces.transform;
-                }
-                else
-                {
-                    GameObject obj = new GameObject(part.Name);
-                    obj.AddComponent<MSBBBMapPiecePart>();
-                    obj.GetComponent<MSBBBMapPiecePart>().SetPart(part);
-                    obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
-                    //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
-                    EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
-                    obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
-                    obj.layer = 9;
-                    obj.transform.parent = MapPieces.transform;
-                }
-            }
-
-            GameObject Objects = new GameObject("Objects");
-            Objects.transform.parent = PartsSection.transform;
-            foreach (var part in msb.Parts.Objects)
-            {
-                GameObject src = AssetDatabase.LoadAssetAtPath<GameObject>($@"Assets/Bloodborne/Obj/{part.ModelName}.prefab");
-                if (src != null)
-                {
-                    GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
-                    obj.name = part.Name;
-                    obj.AddComponent<MSBBBObjectPart>();
-                    obj.GetComponent<MSBBBObjectPart>().SetPart(part);
-                    obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
-                    //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
-                    EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
-                    obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
-                    obj.layer = 10;
-                    obj.transform.parent = Objects.transform;
-                }
-                else
-                {
-                    GameObject obj = new GameObject(part.Name);
-                    obj.AddComponent<MSBBBObjectPart>();
-                    obj.GetComponent<MSBBBObjectPart>().SetPart(part);
-                    obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
-                    //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
-                    EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
-                    obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
-                    obj.layer = 10;
-                    obj.transform.parent = Objects.transform;
-                }
-            }
-
-            GameObject Collisions = new GameObject("Collisions");
-            Collisions.transform.parent = PartsSection.transform;
-            foreach (var part in msb.Parts.Collisions)
-            {
-                string lowHigh = LoadHighResCol ? "h" : "l";
-                GameObject src = AssetDatabase.LoadAssetAtPath<GameObject>($@"Assets/Bloodborne/{mapnameAdj}/{lowHigh}{mapnameAdj.Substring(1)}_{part.ModelName.Substring(1)}.prefab");
-                if (src != null)
-                {
-                    GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
-                    obj.name = part.Name;
-                    obj.AddComponent<MSBBBCollisionPart>();
-                    obj.GetComponent<MSBBBCollisionPart>().SetPart(part);
-                    obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
-                    //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
-                    EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
-                    obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
-                    obj.layer = 12;
-                    obj.transform.parent = Collisions.transform;
-                }
-            }
-
-            GameObject ConnectCollisions = new GameObject("ConnectCollisions");
-            ConnectCollisions.transform.parent = PartsSection.transform;
-            foreach (var part in msb.Parts.ConnectCollisions)
-            {
-                GameObject obj = new GameObject(part.Name);
-                obj.AddComponent<MSBBBConnectCollisionPart>();
-                obj.GetComponent<MSBBBConnectCollisionPart>().SetPart(part);
-                obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
-                //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
-                EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
-                obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
-                obj.transform.parent = ConnectCollisions.transform;
-            }
-
-            GameObject Enemies = new GameObject("Enemies");
-            Enemies.transform.parent = PartsSection.transform;
-            foreach (var part in msb.Parts.Enemies)
-            {
-                GameObject src = AssetDatabase.LoadAssetAtPath<GameObject>($@"Assets/Bloodborne/Chr/{part.ModelName}.prefab");
-                if (src != null)
-                {
-                    GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
-                    obj.name = part.Name;
-                    obj.AddComponent<MSBBBEnemyPart>();
-                    obj.GetComponent<MSBBBEnemyPart>().SetPart(part);
-                    obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
-                    //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
-                    EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
-                    obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
-                    obj.layer = 11;
-                    obj.transform.parent = Enemies.transform;
-                }
-                else
-                {
-                    GameObject obj = new GameObject(part.Name);
-                    obj.AddComponent<MSBBBEnemyPart>();
-                    obj.GetComponent<MSBBBEnemyPart>().SetPart(part);
-                    obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
-                    //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
-                    EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
-                    obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
-                    obj.layer = 11;
-                    obj.transform.parent = Enemies.transform;
-                }
-            }
-
-            GameObject Players = new GameObject("Players");
-            Players.transform.parent = PartsSection.transform;
-            foreach (var part in msb.Parts.Players)
-            {
-                GameObject obj = new GameObject(part.Name);
-                obj.AddComponent<MSBBBPlayerPart>();
-                obj.GetComponent<MSBBBPlayerPart>().SetPart(part);
-                obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
-                //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
-                EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
-                obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
-                obj.transform.parent = Players.transform;
-            }
-
-            GameObject DummyObjects = new GameObject("DummyObjects");
-            DummyObjects.transform.parent = PartsSection.transform;
-            foreach (var part in msb.Parts.DummyObjects)
-            {
-                GameObject src = AssetDatabase.LoadAssetAtPath<GameObject>($@"Assets/Bloodborne/Obj/{part.ModelName}.prefab");
-                if (src != null)
-                {
-                    GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
-                    obj.name = part.Name;
-                    obj.AddComponent<MSBBBObjectPart>();
-                    obj.GetComponent<MSBBBObjectPart>().SetPart(part);
-                    obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
-                    //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
-                    EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
-                    obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
-                    obj.layer = 12;
-                    obj.transform.parent = DummyObjects.transform;
-                }
-                else
-                {
-                    GameObject obj = new GameObject(part.Name);
-                    obj.AddComponent<MSBBBObjectPart>();
-                    obj.GetComponent<MSBBBObjectPart>().SetPart(part);
-                    obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
-                    //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
-                    EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
-                    obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
-                    obj.layer = 12;
-                    obj.transform.parent = DummyObjects.transform;
-                }
-            }
-
-            GameObject DummyEnemies = new GameObject("DummyEnemies");
-            DummyEnemies.transform.parent = PartsSection.transform;
-            foreach (var part in msb.Parts.DummyEnemies)
-            {
-                GameObject src = AssetDatabase.LoadAssetAtPath<GameObject>($@"Assets/Bloodborne/Chr/{part.ModelName}.prefab");
-                if (src != null)
-                {
-                    GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
-                    obj.name = part.Name;
-                    obj.AddComponent<MSBBBEnemyPart>();
-                    obj.GetComponent<MSBBBEnemyPart>().SetPart(part);
-                    obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
-                    //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
-                    EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
-                    obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
-                    obj.layer = 13;
-                    obj.transform.parent = DummyEnemies.transform;
-                }
-                else
-                {
-                    GameObject obj = new GameObject(part.Name);
-                    obj.AddComponent<MSBBBEnemyPart>();
-                    obj.GetComponent<MSBBBEnemyPart>().SetPart(part);
-                    obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
-                    //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
-                    EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
-                    obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
-                    obj.layer = 13;
-                    obj.transform.parent = DummyEnemies.transform;
-                }
-            }
-
-            //
-            // Regions section
-            //
-            GameObject Regions = new GameObject("MSBRegions");
-            foreach (var region in msb.Regions.Regions)
-            {
-                var reg = InstantiateRegion(region, Regions);
-                reg.AddComponent<MSBBBRegion>();
-                reg.GetComponent<MSBBBRegion>().setBaseRegion(region);
-            }
-
-            //
-            // Events Section
-            //
-            GameObject Events = new GameObject("MSBEvents");
-
-            GameObject Sounds = new GameObject("Sounds");
-            Sounds.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.Sounds)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSBBBSoundEvent>();
-                evt.GetComponent<MSBBBSoundEvent>().SetEvent(ev);
-                evt.transform.parent = Sounds.transform;
-            }
-
-            GameObject SFXs = new GameObject("SFX");
-            SFXs.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.SFXs)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSBBBSFXEvent>();
-                evt.GetComponent<MSBBBSFXEvent>().SetEvent(ev);
-                evt.transform.parent = SFXs.transform;
-            }
-
-            GameObject Treasures = new GameObject("Treasures");
-            Treasures.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.Treasures)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSBBBTreasureEvent>();
-                evt.GetComponent<MSBBBTreasureEvent>().SetEvent(ev);
-                evt.transform.parent = Treasures.transform;
-            }
-
-            GameObject Generators = new GameObject("Generators");
-            Generators.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.Generators)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSBBBGeneratorEvent>();
-                evt.GetComponent<MSBBBGeneratorEvent>().SetEvent(ev);
-                evt.transform.parent = Generators.transform;
-            }
-
-            GameObject Messages = new GameObject("Messages");
-            Messages.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.Messages)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSBBBMessageEvent>();
-                evt.GetComponent<MSBBBMessageEvent>().SetEvent(ev);
-                evt.transform.parent = Messages.transform;
-            }
-
-            GameObject ObjActs = new GameObject("ObjActs");
-            ObjActs.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.ObjActs)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSBBBObjActEvent>();
-                evt.GetComponent<MSBBBObjActEvent>().SetEvent(ev);
-                evt.transform.parent = ObjActs.transform;
-            }
-
-            GameObject SpawnPoints = new GameObject("SpawnPoints");
-            SpawnPoints.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.SpawnPoints)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSBBBSpawnPointEvent>();
-                evt.GetComponent<MSBBBSpawnPointEvent>().SetEvent(ev);
-                evt.transform.parent = SpawnPoints.transform;
-            }
-
-            GameObject MapOffsets = new GameObject("MapOffsets");
-            MapOffsets.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.MapOffsets)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSBBBMapOffsetEvent>();
-                evt.GetComponent<MSBBBMapOffsetEvent>().SetEvent(ev);
-                evt.transform.parent = MapOffsets.transform;
-            }
-
-            GameObject Navimeshes = new GameObject("Navimeshes");
-            Navimeshes.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.Navimeshes)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSBBBNavimeshEvent>();
-                evt.GetComponent<MSBBBNavimeshEvent>().SetEvent(ev);
-                evt.transform.parent = Navimeshes.transform;
-            }
-
-            GameObject Environments = new GameObject("Environments");
-            Environments.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.Environments)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSBBBEnvironmentEvent>();
-                evt.GetComponent<MSBBBEnvironmentEvent>().SetEvent(ev);
-                evt.transform.parent = Environments.transform;
-            }
-
-            GameObject Winds = new GameObject("Winds");
-            Winds.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.Winds)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSBBBWindEvent>();
-                evt.GetComponent<MSBBBWindEvent>().SetEvent(ev);
-                evt.transform.parent = Winds.transform;
-            }
-
-            GameObject Invasions = new GameObject("Invasions");
-            Invasions.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.Invasions)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSBBBInvasionEvent>();
-                evt.GetComponent<MSBBBInvasionEvent>().SetEvent(ev);
-                evt.transform.parent = Invasions.transform;
-            }
-
-            GameObject WalkRoutes = new GameObject("WalkRoutes");
-            WalkRoutes.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.WalkRoutes)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSBBBWalkRouteEvent>();
-                evt.GetComponent<MSBBBWalkRouteEvent>().SetEvent(ev);
-                evt.transform.parent = WalkRoutes.transform;
-            }
-
-            GameObject Unknowns = new GameObject("Unknowns");
-            Unknowns.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.Unknowns)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSBBBUnknownEvent>();
-                evt.GetComponent<MSBBBUnknownEvent>().SetEvent(ev);
-                evt.transform.parent = Unknowns.transform;
-            }
-
-            GameObject GroupTours = new GameObject("GroupTours");
-            GroupTours.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.GroupTours)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSBBBGroupTourEvent>();
-                evt.GetComponent<MSBBBGroupTourEvent>().SetEvent(ev);
-                evt.transform.parent = GroupTours.transform;
-            }
-
-            GameObject Others = new GameObject("Others");
-            Others.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.Others)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSBBBOtherEvent>();
-                evt.GetComponent<MSBBBOtherEvent>().SetEvent(ev);
-                evt.transform.parent = Others.transform;
-            }
-        }
-        catch (Exception e)
-        {
-            EditorUtility.DisplayDialog("Import failed", e.Message + "\n" + e.StackTrace, "Ok");
-        }
-    }
-
-    void onImportDS1Map(object o, bool remastered)
-    {
-        try
-        {
-            string mapname = (string)o;
-            var msb = DataFile.LoadFromFile<MSB>(GetOverridenPath(Interroot + $@"\map\MapStudio\{mapname}.msb"));
-            int area = int.Parse(mapname.Substring(1, 2));
-            GameFolder(GameType.DarkSoulsPTDE);
-            // Make adjusted mapname so darkroot garden meme works
-            var mapnameAdj = mapname.Substring(0, 6) + "_00_00";
-
-            if (!AssetDatabase.IsValidFolder("Assets/DS1/" + mapnameAdj))
-            {
-                AssetDatabase.CreateFolder("Assets/DS1", mapnameAdj);
-            }
-
-            // Create an MSB asset link to the DS3 asset
-            GameObject AssetLink = new GameObject("MSBAssetLink");
-            AssetLink.AddComponent<MSBAssetLink>();
-            AssetLink.GetComponent<MSBAssetLink>().Interroot = Interroot;
-            AssetLink.GetComponent<MSBAssetLink>().MapID = mapname;
-            AssetLink.GetComponent<MSBAssetLink>().MapPath = $@"{Interroot}\map\MapStudio\{mapname}.msb";
-
-            //
-            // Models section
-            //
-            GameObject ModelsSection = new GameObject("MSBModelDeclarations");
-
-            GameObject MapPieceModels = new GameObject("MapPieces");
-            MapPieceModels.transform.parent = ModelsSection.transform;
-
-            // Do a preload of all the flvers
-            try
-            {
-                AssetDatabase.StartAssetEditing();
-                foreach (var mappiece in msb.Models.MapPieces)
-                {
-                    var assetname = mappiece.Name;
-                    if (AssetDatabase.FindAssets($@"Assets/DS1/{mapnameAdj}/{assetname}.prefab").Length == 0 && LoadMapFlvers)
-                    {
-                        if (File.Exists(Interroot + $@"\map\{mapnameAdj}\{assetname}A{area:D2}.flver"))
-                            FlverUtilities.ImportFlver(Interroot + $@"\map\{mapnameAdj}\{assetname}A{area:D2}.flver", $@"Assets/DS1/{mapnameAdj}/{assetname}", $@"Assets/DS1/UDSFMMapTextures");
-                    }
-                }
-            }
-            finally
-            {
-                AssetDatabase.StopAssetEditing();
-            }
-
-            foreach (var mappiece in msb.Models.MapPieces)
-            {
-                var assetname = mappiece.Name;
-                GameObject model = new GameObject(mappiece.Name);
-                model.AddComponent<MSB1MapPieceModel>();
-                model.GetComponent<MSB1MapPieceModel>().SetModel(mappiece);
-                model.transform.parent = MapPieceModels.transform;
-            }
-
-            // Load low res hkx assets
-            /*if (LoadHighResCol)
-            {
-                if (File.Exists(Interroot + $@"\map\{mapname}\h{mapname.Substring(1)}.hkxbhd"))
-                {
-                    ImportCollisionHKXBDT(Interroot + $@"\map\{mapname}\h{mapname.Substring(1)}.hkxbhd", $@"Assets/{mapname}");
-                }
-            }
-            else
-            {
-                if (File.Exists(Interroot + $@"\map\{mapname}\l{mapname.Substring(1)}.hkxbhd"))
-                {
-                    ImportCollisionHKXBDT(Interroot + $@"\map\{mapname}\l{mapname.Substring(1)}.hkxbhd", $@"Assets/{mapname}");
-                }
-            }*/
-            
-            GameObject ObjectModels = new GameObject("Objects");
-            ObjectModels.transform.parent = ModelsSection.transform;
-            foreach (var mod in msb.Models.Objects)
-            {
-                GameObject model = new GameObject(mod.Name);
-                model.AddComponent<MSB1ObjectModel>();
-                model.GetComponent<MSB1ObjectModel>().SetModel(mod);
-                model.transform.parent = ObjectModels.transform;
-            }
-
-            GameObject PlayerModels = new GameObject("Players");
-            PlayerModels.transform.parent = ModelsSection.transform;
-            foreach (var mod in msb.Models.Players)
-            {
-                GameObject model = new GameObject(mod.Name);
-                model.AddComponent<MSB1PlayerModel>();
-                model.GetComponent<MSB1PlayerModel>().SetModel(mod);
-                model.transform.parent = PlayerModels.transform;
-            }
-
-            GameObject EnemyModels = new GameObject("Enemies");
-            EnemyModels.transform.parent = ModelsSection.transform;
-            foreach (var mod in msb.Models.Characters)
-            {
-                GameObject model = new GameObject(mod.Name);
-                model.AddComponent<MSB1EnemyModel>();
-                model.GetComponent<MSB1EnemyModel>().SetModel(mod);
-                model.transform.parent = EnemyModels.transform;
-            }
-
-            GameObject CollisionModels = new GameObject("Collisions");
-            CollisionModels.transform.parent = ModelsSection.transform;
-            AssetDatabase.StartAssetEditing();
-            foreach (var mod in msb.Models.Collisions)
-            {
-                GameObject model = new GameObject(mod.Name);
-                model.AddComponent<MSB1CollisionModel>();
-                model.GetComponent<MSB1CollisionModel>().SetModel(mod);
-                model.transform.parent = CollisionModels.transform;
-
-                if (type == GameType.DarkSoulsPTDE)
-                {
-                    var prefix = LoadHighResCol ? "h" : "l";
-                    var path = $@"{Interroot}\map\{mapnameAdj}\{prefix}{mod.Name.Substring(1)}A{area:D2}.hkx";
-                    if (File.Exists(path))
-                    {
-                        CollisionUtilities.ImportDS1CollisionHKX(HKX.Read(path, HKX.HKXVariation.HKXDS1), $@"Assets/DS1/{mapnameAdj}/{prefix}{mod.Name.Substring(1)}");
-                    }
-                }
-            }
-            AssetDatabase.StopAssetEditing();
-    
-            GameObject NavModels = new GameObject("Navimeshes");
-            NavModels.transform.parent = ModelsSection.transform;
-            foreach (var mod in msb.Models.Navimeshes)
-            {
-                GameObject model = new GameObject(mod.Name);
-                model.AddComponent<MSB1NavimeshModel>();
-                model.GetComponent<MSB1NavimeshModel>().SetModel(mod);
-                model.transform.parent = NavModels.transform;
-            }
-
-            //
-            // Parts Section
-            //
-            GameObject PartsSection = new GameObject("MSBParts");
-
-            GameObject MapPieces = new GameObject("MapPieces");
-            MapPieces.transform.parent = PartsSection.transform;
-            foreach (var part in msb.Parts.MapPieces)
-            {
-                GameObject src = LoadMapFlvers ? AssetDatabase.LoadAssetAtPath<GameObject>($@"Assets/DS1/{mapnameAdj}/{part.ModelName}.prefab") : null;
-                if (src != null)
-                {
-                    GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
-                    obj.name = part.Name;
-                    obj.AddComponent<MSB1MapPiecePart>();
-                    obj.GetComponent<MSB1MapPiecePart>().SetPart(part);
-                    obj.transform.position = new Vector3(part.PosX, part.PosY, part.PosZ);
-                    obj.transform.rotation = Quaternion.Euler(part.RotX, part.RotY, part.RotZ);
-                    obj.transform.localScale = new Vector3(part.ScaleX, part.ScaleY, part.ScaleZ);
-                    obj.layer = 9;
-                    obj.transform.parent = MapPieces.transform;
-                }
-                else
-                {
-                    GameObject obj = new GameObject(part.Name);
-                    obj.AddComponent<MSB1MapPiecePart>();
-                    obj.GetComponent<MSB1MapPiecePart>().SetPart(part);
-                    obj.transform.position = new Vector3(part.PosX, part.PosY, part.PosZ);
-                    obj.transform.rotation = Quaternion.Euler(part.RotX, part.RotY, part.RotZ);
-                    obj.transform.localScale = new Vector3(part.ScaleX, part.ScaleY, part.ScaleZ);
-                    obj.layer = 9;
-                    obj.transform.parent = MapPieces.transform;
-                }
-            }
-
-            GameObject Objects = new GameObject("Objects");
-            Objects.transform.parent = PartsSection.transform;
-            foreach (var part in msb.Parts.Objects)
-            {
-                GameObject src = AssetDatabase.LoadAssetAtPath<GameObject>($@"Assets/DS1/Obj/{part.ModelName}.prefab");
-                if (src != null)
-                {
-                    GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
-                    obj.name = part.Name;
-                    obj.AddComponent<MSB1ObjectPart>();
-                    obj.GetComponent<MSB1ObjectPart>().SetPart(part);
-                    obj.transform.position = new Vector3(part.PosX, part.PosY, part.PosZ);
-                    obj.transform.rotation = Quaternion.Euler(part.RotX, part.RotY, part.RotZ);
-                    obj.transform.localScale = new Vector3(part.ScaleX, part.ScaleY, part.ScaleZ);
-                    obj.layer = 10;
-                    obj.transform.parent = Objects.transform;
-                }
-                else
-                {
-                    GameObject obj = new GameObject(part.Name);
-                    obj.AddComponent<MSB1ObjectPart>();
-                    obj.GetComponent<MSB1ObjectPart>().SetPart(part);
-                    obj.transform.position = new Vector3(part.PosX, part.PosY, part.PosZ);
-                    obj.transform.rotation = Quaternion.Euler(part.RotX, part.RotY, part.RotZ);
-                    obj.transform.localScale = new Vector3(part.ScaleX, part.ScaleY, part.ScaleZ);
-                    obj.layer = 10;
-                    obj.transform.parent = Objects.transform;
-                }
-            }
-
-            GameObject DummyObjects = new GameObject("DummyObjects");
-            DummyObjects.transform.parent = PartsSection.transform;
-            foreach (var part in msb.Parts.DummyObjects)
-            {
-                GameObject src = AssetDatabase.LoadAssetAtPath<GameObject>($@"Assets/DS1/Obj/{part.ModelName}.prefab");
-                if (src != null)
-                {
-                    GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
-                    obj.name = part.Name;
-                    obj.AddComponent<MSB1DummyObjectPart>();
-                    obj.GetComponent<MSB1DummyObjectPart>().SetPart(part);
-                    obj.transform.position = new Vector3(part.PosX, part.PosY, part.PosZ);
-                    obj.transform.rotation = Quaternion.Euler(part.RotX, part.RotY, part.RotZ);
-                    obj.transform.localScale = new Vector3(part.ScaleX, part.ScaleY, part.ScaleZ);
-                    obj.layer = 10;
-                    obj.transform.parent = DummyObjects.transform;
-                }
-                else
-                {
-                    GameObject obj = new GameObject(part.Name);
-                    obj.AddComponent<MSB1DummyObjectPart>();
-                    obj.GetComponent<MSB1DummyObjectPart>().SetPart(part);
-                    obj.transform.position = new Vector3(part.PosX, part.PosY, part.PosZ);
-                    obj.transform.rotation = Quaternion.Euler(part.RotX, part.RotY, part.RotZ);
-                    obj.transform.localScale = new Vector3(part.ScaleX, part.ScaleY, part.ScaleZ);
-                    obj.layer = 10;
-                    obj.transform.parent = DummyObjects.transform;
-                }
-            }
-
-            GameObject NPCs = new GameObject("NPCs");
-            NPCs.transform.parent = PartsSection.transform;
-            foreach (var part in msb.Parts.NPCs)
-            {
-                GameObject src = AssetDatabase.LoadAssetAtPath<GameObject>($@"Assets/DS1/Chr/{part.ModelName}.prefab");
-                if (src != null)
-                {
-                    GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
-                    obj.name = part.Name;
-                    obj.AddComponent<MSB1NPCPart>();
-                    obj.GetComponent<MSB1NPCPart>().SetPart(part);
-                    obj.transform.position = new Vector3(part.PosX, part.PosY, part.PosZ);
-                    obj.transform.rotation = Quaternion.Euler(part.RotX, part.RotY, part.RotZ);
-                    obj.transform.localScale = new Vector3(part.ScaleX, part.ScaleY, part.ScaleZ);
-                    obj.layer = 11;
-                    obj.transform.parent = NPCs.transform;
-                }
-                else
-                {
-                    GameObject obj = new GameObject(part.Name);
-                    obj.AddComponent<MSB1NPCPart>();
-                    obj.GetComponent<MSB1NPCPart>().SetPart(part);
-                    obj.transform.position = new Vector3(part.PosX, part.PosY, part.PosZ);
-                    obj.transform.rotation = Quaternion.Euler(part.RotX, part.RotY, part.RotZ);
-                    obj.transform.localScale = new Vector3(part.ScaleX, part.ScaleY, part.ScaleZ);
-                    obj.layer = 11;
-                    obj.transform.parent = NPCs.transform;
-                }
-            }
-
-            GameObject DummyNPCs = new GameObject("DummyNPCs");
-            DummyNPCs.transform.parent = PartsSection.transform;
-            foreach (var part in msb.Parts.DummyNPCs)
-            {
-                GameObject src = AssetDatabase.LoadAssetAtPath<GameObject>($@"Assets/DS1/Obj/{part.ModelName}.prefab");
-                if (src != null)
-                {
-                    GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
-                    obj.name = part.Name;
-                    obj.AddComponent<MSB1DummyNPCPart>();
-                    obj.GetComponent<MSB1DummyNPCPart>().SetPart(part);
-                    obj.transform.position = new Vector3(part.PosX, part.PosY, part.PosZ);
-                    obj.transform.rotation = Quaternion.Euler(part.RotX, part.RotY, part.RotZ);
-                    obj.transform.localScale = new Vector3(part.ScaleX, part.ScaleY, part.ScaleZ);
-                    obj.layer = 11;
-                    obj.transform.parent = DummyNPCs.transform;
-                }
-                else
-                {
-                    GameObject obj = new GameObject(part.Name);
-                    obj.AddComponent<MSB1DummyNPCPart>();
-                    obj.GetComponent<MSB1DummyNPCPart>().SetPart(part);
-                    obj.transform.position = new Vector3(part.PosX, part.PosY, part.PosZ);
-                    obj.transform.rotation = Quaternion.Euler(part.RotX, part.RotY, part.RotZ);
-                    obj.transform.localScale = new Vector3(part.ScaleX, part.ScaleY, part.ScaleZ);
-                    obj.layer = 11;
-                    obj.transform.parent = DummyNPCs.transform;
-                }
-            }
-
-            GameObject Collisions = new GameObject("Collisions");
-            Collisions.transform.parent = PartsSection.transform;
-            foreach (var part in msb.Parts.Hits)
-            {
-                string lowHigh = LoadHighResCol ? "h" : "l";
-                GameObject src = AssetDatabase.LoadAssetAtPath<GameObject>($@"Assets/DS1/{mapnameAdj}/{lowHigh}{part.ModelName.Substring(1)}.prefab");
-                if (src != null)
-                {
-                    GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
-                    obj.name = part.Name;
-                    obj.AddComponent<MSB1CollisionPart>();
-                    obj.GetComponent<MSB1CollisionPart>().SetPart(part);
-                    obj.transform.position = new Vector3(part.PosX, part.PosY, part.PosZ);
-                    obj.transform.rotation = Quaternion.Euler(part.RotX, part.RotY, part.RotZ);
-                    obj.transform.localScale = new Vector3(part.ScaleX, part.ScaleY, part.ScaleZ);
-                    obj.layer = 12;
-                    obj.transform.parent = Collisions.transform;
-                }
-            }
-
-            GameObject ConnectCollisions = new GameObject("ConnectCollisions");
-            ConnectCollisions.transform.parent = PartsSection.transform;
-            foreach (var part in msb.Parts.ConnectHits)
-            {
-                GameObject obj = new GameObject(part.Name);
-                obj.AddComponent<MSB1ConnectCollisionPart>();
-                obj.GetComponent<MSB1ConnectCollisionPart>().SetPart(part);
-                obj.transform.position = new Vector3(part.PosX, part.PosY, part.PosZ);
-                EulerToTransform(new Vector3(part.RotX, part.RotY, part.RotZ), obj.transform);
-                obj.transform.localScale = new Vector3(part.ScaleX, part.ScaleY, part.ScaleZ);
-                obj.transform.parent = ConnectCollisions.transform;
-            }
-
-            GameObject Navimeshes = new GameObject("Navimeshes");
-            Navimeshes.transform.parent = PartsSection.transform;
-            foreach (var part in msb.Parts.Navimeshes)
-            {
-                GameObject obj = new GameObject(part.Name);
-                obj.AddComponent<MSB1NavimeshPart>();
-                obj.GetComponent<MSB1NavimeshPart>().SetPart(part);
-                obj.transform.position = new Vector3(part.PosX, part.PosY, part.PosZ);
-                EulerToTransform(new Vector3(part.RotX, part.RotY, part.RotZ), obj.transform);
-                obj.transform.localScale = new Vector3(part.ScaleX, part.ScaleY, part.ScaleZ);
-                obj.transform.parent = Navimeshes.transform;
-            }
-
-            GameObject Players = new GameObject("Players");
-            Players.transform.parent = PartsSection.transform;
-            foreach (var part in msb.Parts.Players)
-            {
-                GameObject obj = new GameObject(part.Name);
-                obj.AddComponent<MSB1PlayerPart>();
-                obj.GetComponent<MSB1PlayerPart>().SetPart(part);
-                obj.transform.position = new Vector3(part.PosX, part.PosY, part.PosZ);
-                EulerToTransform(new Vector3(part.RotX, part.RotY, part.RotZ), obj.transform);
-                obj.transform.localScale = new Vector3(part.ScaleX, part.ScaleY, part.ScaleZ);
-                obj.transform.parent = Players.transform;
-            }
-
-            //
-            // Regions section
-            //
-            GameObject Regions = new GameObject("MSBRegions");
-            foreach (var region in msb.Regions)
-            {
-                var reg = InstantiateRegion(region, Regions);
-                reg.AddComponent<MSB1Region>();
-                reg.GetComponent<MSB1Region>().setBaseRegion(region);
-            }
-
-            //
-            // Events Section
-            //
-            GameObject Events = new GameObject("MSBEvents");
-
-            GameObject Environments = new GameObject("Environments");
-            Environments.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.EnvLightMapSpot)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSB1EnvironmentEvent>();
-                evt.GetComponent<MSB1EnvironmentEvent>().SetEvent(ev);
-                evt.transform.parent = Environments.transform;
-            }
-
-            GameObject Generators = new GameObject("Generators");
-            Generators.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.Generators)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSB1GeneratorEvent>();
-                evt.GetComponent<MSB1GeneratorEvent>().SetEvent(ev);
-                evt.transform.parent = Generators.transform;
-            }
-
-            GameObject Invasions = new GameObject("Invasions");
-            Invasions.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.NpcWorldInvitations)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSB1InvasionEvent>();
-                evt.GetComponent<MSB1InvasionEvent>().SetEvent(ev);
-                evt.transform.parent = Invasions.transform;
-            }
-
-            GameObject Lights = new GameObject("Lights");
-            Lights.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.Lights)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSB1LightEvent>();
-                evt.GetComponent<MSB1LightEvent>().SetEvent(ev);
-                evt.transform.parent = Lights.transform;
-            }
-
-            GameObject MapOffsets = new GameObject("MapOffsets");
-            MapOffsets.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.MapOffsets)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSB1MapOffsetEvent>();
-                evt.GetComponent<MSB1MapOffsetEvent>().SetEvent(ev);
-                evt.transform.parent = MapOffsets.transform;
-            }
-
-            GameObject Messages = new GameObject("Messages");
-            Messages.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.BloodMessages)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSB1MessageEvent>();
-                evt.GetComponent<MSB1MessageEvent>().SetEvent(ev);
-                evt.transform.parent = Messages.transform;
-            }
-
-            GameObject NavimeshEvents = new GameObject("Navimeshes");
-            NavimeshEvents.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.Navimeshes)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSB1NavimeshEvent>();
-                evt.GetComponent<MSB1NavimeshEvent>().SetEvent(ev);
-                evt.transform.parent = NavimeshEvents.transform;
-            }
-
-            GameObject ObjActs = new GameObject("ObjActs");
-            ObjActs.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.ObjActs)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSB1ObjActEvent>();
-                evt.GetComponent<MSB1ObjActEvent>().SetEvent(ev);
-                evt.transform.parent = ObjActs.transform;
-            }
-
-            GameObject SFX = new GameObject("SFX");
-            SFX.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.SFXs)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSB1SFXEvent>();
-                evt.GetComponent<MSB1SFXEvent>().SetEvent(ev);
-                evt.transform.parent = SFX.transform;
-            }
-
-            GameObject Sounds = new GameObject("Sounds");
-            Sounds.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.Sounds)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSB1SoundEvent>();
-                evt.GetComponent<MSB1SoundEvent>().SetEvent(ev);
-                evt.transform.parent = Sounds.transform;
-            }
-
-            GameObject SpawnPoints = new GameObject("SpawnPoints");
-            SpawnPoints.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.SpawnPoints)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSB1SpawnPointEvent>();
-                evt.GetComponent<MSB1SpawnPointEvent>().SetEvent(ev);
-                evt.transform.parent = SpawnPoints.transform;
-            }
-
-            GameObject Treasures = new GameObject("Treasures");
-            Treasures.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.Treasures)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSB1TreasureEvent>();
-                evt.GetComponent<MSB1TreasureEvent>().SetEvent(ev);
-                evt.transform.parent = Treasures.transform;
-            }
-
-            GameObject Winds = new GameObject("Winds");
-            Winds.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.WindSFXs)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSB1WindEvent>();
-                evt.GetComponent<MSB1WindEvent>().SetEvent(ev);
-                evt.transform.parent = Winds.transform;
-            }
-        }
-        catch (Exception e)
-        {
-            EditorUtility.DisplayDialog("Import failed", e.Message + "\n" + e.StackTrace, "Ok");
-        }
-    }
-
     void onImportMap(object o)
     {
         if (type == GameType.DarkSoulsPTDE)
@@ -3121,10 +3428,11 @@ public class DarkSoulsTools : EditorWindow
         return output;
     }
 
-    static void ImportMTDBND(string path, bool isDS3)
+    static void ImportMTDBND(string path, GameType type)
     {
         IBinder bnd;
-        if (isDS3)
+        var gameFolder = GameFolder(type);
+        if (type == GameType.Bloodborne || type == GameType.DarkSoulsIII || type == GameType.Sekiro)
         {
             bnd = BND4.Read(GetOverridenPath(path));
         }
@@ -3133,18 +3441,20 @@ public class DarkSoulsTools : EditorWindow
             bnd = BND3.Read(GetOverridenPath(path));
         }
 
-        if (!AssetDatabase.IsValidFolder("Assets/MTD"))
+        if (!AssetDatabase.IsValidFolder($@"Assets/{gameFolder}/MTD"))
         {
-            AssetDatabase.CreateFolder("Assets", "MTD");
+            AssetDatabase.CreateFolder($@"Assets/{gameFolder}", "MTD");
         }
 
+        AssetDatabase.StartAssetEditing();
         foreach (var file in bnd.Files)
         {
             var mtd = SoulsFormats.MTD.Read(file.Bytes);
             var obj = ScriptableObject.CreateInstance<MTDAssetLink>();
             obj.InitializeFromMTD(mtd, file.Name);
-            AssetDatabase.CreateAsset(obj, $@"Assets/MTD/{Path.GetFileNameWithoutExtension(file.Name)}.asset");
+            AssetDatabase.CreateAsset(obj, $@"Assets/{gameFolder}/MTD/{Path.GetFileNameWithoutExtension(file.Name)}.asset");
         }
+        AssetDatabase.StopAssetEditing();
     }
 
     void ExportMapDS1()
@@ -3987,7 +4297,7 @@ public class DarkSoulsTools : EditorWindow
         File.Delete(mapPath);
         File.Move(mapPath + ".temp", mapPath);
     }
-
+    
     void ExportMapSekiro()
     {
         var AssetLink = GameObject.Find("MSBAssetLink");
@@ -4607,7 +4917,7 @@ public class DarkSoulsTools : EditorWindow
             string file = EditorUtility.OpenFilePanel("Select a flver", "", "flver,dcx,mapbnd");
             try
             {
-                FlverUtilities.ImportFlver(file, "Assets/" + Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(file)));
+                FlverUtilities.ImportFlver(type, file, "Assets/" + Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(file)));
             }
             catch (Exception e)
             {
@@ -4641,6 +4951,28 @@ public class DarkSoulsTools : EditorWindow
             }
         }
 
+        if (GUILayout.Button("Import CHRBND"))
+        {
+            string file = EditorUtility.OpenFilePanel("Select an chrbnd", "", "dcx,chrbnd");
+            try
+            {
+                AssetDatabase.StartAssetEditing();
+                ImportChrTexbnd(Path.GetDirectoryName(file), Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(file)), type);
+                ImportChrTextures(Path.GetDirectoryName(file), Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(file)), type);
+                AssetDatabase.StopAssetEditing();
+                AssetDatabase.StartAssetEditing();
+                ImportChr(Path.GetDirectoryName(file), Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(file)), type);
+            }
+            catch (Exception e)
+            {
+                EditorUtility.DisplayDialog("Import failed: " + e.Message, e.StackTrace, "Ok");
+            }
+            finally
+            {
+                AssetDatabase.StopAssetEditing();
+            }
+        }
+
         if (GUILayout.Button("Generate new lightmap UVs for flver"))
         {
             try
@@ -4662,13 +4994,13 @@ public class DarkSoulsTools : EditorWindow
         {
             try
             {
-                if (type != GameType.DarkSoulsIII)
+                if (type != GameType.DarkSoulsIII && type != GameType.Sekiro)
                 {
-                    ImportMTDBND(Interroot + $@"\mtd\Mtd.mtdbnd", false);
+                    ImportMTDBND(Interroot + $@"\mtd\Mtd.mtdbnd", type);
                 }
                 else
                 {
-                    ImportMTDBND(Interroot + $@"\mtd\allmaterialbnd.mtdbnd.dcx", true);
+                    ImportMTDBND(Interroot + $@"\mtd\allmaterialbnd.mtdbnd.dcx", type);
                 }
             }
             catch (Exception e)
@@ -4738,7 +5070,26 @@ public class DarkSoulsTools : EditorWindow
                 }
                 catch (Exception e)
                 {
-                    EditorUtility.DisplayDialog("Import failed", e.Message, "Ok");
+                    EditorUtility.DisplayDialog("Import failed: " + e.Message, e.StackTrace, "Ok");
+                }
+            }
+        }
+
+        if (GUILayout.Button("Import Parts"))
+        {
+            if (Interroot == "")
+            {
+                EditorUtility.DisplayDialog("Import failed", "Please select the DS3 exe for your interroot directory.", "Ok");
+            }
+            else
+            {
+                try
+                {
+                    ImportParts(Interroot + $@"\parts", type);
+                }
+                catch (Exception e)
+                {
+                    EditorUtility.DisplayDialog("Import failed: " + e.Message, e.StackTrace, "Ok");
                 }
             }
         }

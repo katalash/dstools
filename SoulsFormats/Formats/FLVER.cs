@@ -2082,13 +2082,13 @@ namespace SoulsFormats
                             {
                                 BoneWeights = new float[4];
                                 for (int i = 0; i < 4; i++)
-                                    BoneWeights[i] = br.ReadSByte() / (float)sbyte.MaxValue;
+                                    BoneWeights[i] = br.ReadByte() / (float)byte.MaxValue;
                             }
                             else if (member.Type == BufferLayout.MemberType.Short4toFloat4A)
                             {
                                 BoneWeights = new float[4];
                                 for (int i = 0; i < 4; i++)
-                                    BoneWeights[i] = br.ReadInt16() / (float)short.MaxValue;
+                                    BoneWeights[i] = br.ReadUInt16() / (float)ushort.MaxValue;
                             }
                             else
                                 throw new NotImplementedException();
@@ -2318,12 +2318,14 @@ namespace SoulsFormats
                             if (member.Type == BufferLayout.MemberType.Byte4C)
                             {
                                 for (int i = 0; i < 4; i++)
-                                    bw.WriteSByte((sbyte)Math.Round(BoneWeights[i] * sbyte.MaxValue));
+
+                                    bw.WriteByte((byte)Math.Round(BoneWeights[i] * byte.MaxValue));
                             }
                             else if (member.Type == BufferLayout.MemberType.Short4toFloat4A)
                             {
                                 for (int i = 0; i < 4; i++)
-                                    bw.WriteInt16((short)Math.Round(BoneWeights[i] * short.MaxValue));
+
+                                    bw.WriteUInt16((ushort)Math.Round(BoneWeights[i] * ushort.MaxValue));
                             }
                             else
                                 throw new NotImplementedException();
