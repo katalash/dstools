@@ -978,6 +978,65 @@ public class DarkSoulsTools : EditorWindow
         return obj;
     }
 
+    GameObject InstantiateRegion(MSBS.Region region, string type, GameObject parent)
+    {
+        GameObject obj = new GameObject(region.Name);
+        obj.transform.position = new Vector3(region.Position.X, region.Position.Y, region.Position.Z);
+        //obj.transform.rotation = Quaternion.Euler(region.Rotation.X, region.Rotation.Y, region.Rotation.Z);
+        EulerToTransform(new Vector3(region.Rotation.X, region.Rotation.Y, region.Rotation.Z), obj.transform);
+        if (region.Shape is MSBS.Shape.Box)
+        {
+            var shape = (MSBS.Shape.Box)region.Shape;
+            obj.AddComponent<BoxCollider>();
+            var col = obj.GetComponent<BoxCollider>();
+            col.isTrigger = true;
+            col.size = new Vector3(shape.Width, shape.Height, shape.Depth);
+        }
+        else if (region.Shape is MSBS.Shape.Sphere)
+        {
+            var shape = (MSBS.Shape.Sphere)region.Shape;
+            obj.AddComponent<SphereCollider>();
+            var col = obj.GetComponent<SphereCollider>();
+            col.isTrigger = true;
+            col.radius = shape.Radius;
+        }
+        else if (region.Shape is MSBS.Shape.Point)
+        {
+            var shape = (MSBS.Shape.Point)region.Shape;
+            obj.AddComponent<SphereCollider>();
+            var col = obj.GetComponent<SphereCollider>();
+            col.isTrigger = true;
+            col.radius = 1.0f;
+        }
+        else if (region.Shape is MSBS.Shape.Cylinder)
+        {
+            var shape = (MSBS.Shape.Cylinder)region.Shape;
+            obj.AddComponent<CapsuleCollider>();
+            var col = obj.GetComponent<CapsuleCollider>();
+            col.isTrigger = true;
+            col.radius = shape.Radius;
+            col.height = shape.Height;
+        }
+        if (region.Shape is MSBS.Shape.Rect)
+        {
+            var shape = (MSBS.Shape.Rect)region.Shape;
+            obj.AddComponent<BoxCollider>();
+            var col = obj.GetComponent<BoxCollider>();
+            col.isTrigger = true;
+            col.size = new Vector3(shape.Width, 1, shape.Depth);
+        }
+        else if (region.Shape is MSBS.Shape.Composite)
+        {
+            var shape = (MSBS.Shape.Composite)region.Shape;
+            obj.AddComponent<MSBSCompositeShape>();
+            var col = obj.GetComponent<MSBSCompositeShape>();
+            col.setShape(shape);
+        }
+        obj.layer = 13;
+        obj.transform.parent = parent.transform;
+        return obj;
+    }
+
     GameObject InstantiateRegion(MSBBB.Region region, GameObject parent)
     {
         GameObject obj = new GameObject(region.Name);
@@ -2719,7 +2778,7 @@ public class DarkSoulsTools : EditorWindow
                         if (File.Exists(Interroot + $@"\map\{mapname}\{mapname}_{assetname.Substring(1)}.mapbnd.dcx")) {
                             try
                             {
-                                FlverUtilities.ImportFlver(Interroot + $@"\map\{mapname}\{mapname}_{assetname.Substring(1)}.mapbnd.dcx", $@"Assets/Sekiro/{mapname}/{assetname}", $@"Assets/Sekiro/{mapname.Substring(0, 3)}");
+                                FlverUtilities.ImportFlver(GameType.Sekiro, Interroot + $@"\map\{mapname}\{mapname}_{assetname.Substring(1)}.mapbnd.dcx", $@"Assets/Sekiro/{mapname}/{assetname}", $@"Assets/Sekiro/{mapname.Substring(0, 3)}");
                             }
                             catch
                             {
