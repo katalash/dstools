@@ -30,6 +30,11 @@ class MTDAssetLink : ScriptableObject
         public string Name;
 
         /// <summary>
+        /// For Sekiro
+        /// </summary>
+        public string TexturePath = "";
+
+        /// <summary>
         /// UV "number" that is stored in an mtd. It doesn't directly define the UV set for this texture, but can be used to derive it
         /// </summary>
         public int UVNumber;
@@ -64,6 +69,10 @@ class MTDAssetLink : ScriptableObject
             def.UVNumber = tex.UVNumber;
             def.ShaderDataIndex = tex.ShaderDataIndex;
             def.Unk = tex.Unk04;
+            if (tex.Extended)
+            {
+                def.TexturePath = tex.Path;
+            }
 
             // Calculate the uv set index
             int uvoffset = 1;

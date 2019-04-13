@@ -7,7 +7,7 @@ namespace SoulsFormats
     /// <summary>
     /// A general-purpose headered file container used in DS2, DS3, and BB. Extensions: .*bhd (header) and .*bdt (data)
     /// </summary>
-    public class BXF4
+    public class BXF4 : IBinder
     {
         #region Public Is
         /// <summary>
@@ -16,7 +16,7 @@ namespace SoulsFormats
         public static bool IsBHD(byte[] bytes)
         {
             BinaryReaderEx br = new BinaryReaderEx(false, bytes);
-            return IsBHD(Util.GetDecompressedBR(br, out _));
+            return IsBHD(SFUtil.GetDecompressedBR(br, out _));
         }
 
         /// <summary>
@@ -27,7 +27,7 @@ namespace SoulsFormats
             using (FileStream fs = System.IO.File.OpenRead(path))
             {
                 BinaryReaderEx br = new BinaryReaderEx(false, fs);
-                return IsBHD(Util.GetDecompressedBR(br, out _));
+                return IsBHD(SFUtil.GetDecompressedBR(br, out _));
             }
         }
 
@@ -37,7 +37,7 @@ namespace SoulsFormats
         public static bool IsBDT(byte[] bytes)
         {
             BinaryReaderEx br = new BinaryReaderEx(false, bytes);
-            return IsBDT(Util.GetDecompressedBR(br, out _));
+            return IsBDT(SFUtil.GetDecompressedBR(br, out _));
         }
 
         /// <summary>
@@ -48,7 +48,7 @@ namespace SoulsFormats
             using (FileStream fs = System.IO.File.OpenRead(path))
             {
                 BinaryReaderEx br = new BinaryReaderEx(false, fs);
-                return IsBDT(Util.GetDecompressedBR(br, out _));
+                return IsBDT(SFUtil.GetDecompressedBR(br, out _));
             }
         }
         #endregion
@@ -168,7 +168,16 @@ namespace SoulsFormats
         /// <summary>
         /// The files contained within this BXF4.
         /// </summary>
-        public List<File> Files;
+        public List<BinderFile> Files { get; set; }
+
+        /// <summary>
+        /// Indicates the format of the BXF4.
+        /// </summary>
+        public Binder.Format Format
+        {
+            get => BHD.Format;
+            set => BHD.Format = value;
+        }
 
         /// <summary>
         /// Information about this BXF4's header file.
@@ -185,7 +194,7 @@ namespace SoulsFormats
         /// </summary>
         public BXF4()
         {
-            Files = new List<File>();
+            Files = new List<BinderFile>();
             BHD = new BHF4();
             BDT = new BDF4();
         }
@@ -207,10 +216,13 @@ namespace SoulsFormats
             BHD = new BHF4(bhdReader);
             BDT = new BDF4(bdtReader);
 
-            Files = new List<File>();
+            Files = new List<BinderFile>(BHD.FileHeaders.Count);
             foreach (BHF4.FileHeader fileHeader in BHD.FileHeaders)
             {
-                Files.Add(new File(bdtReader, fileHeader));
+                byte[] bytes = bdtReader.GetBytes(fileHeader.Offset, (int)fileHeader.CompressedSize);
+                if (Binder.IsCompressed(fileHeader.Flags))
+                    bytes = DCX.Decompress(bytes);
+                Files.Add(new BinderFile(fileHeader.Flags, fileHeader.ID, fileHeader.Name, bytes));
             }
         }
 
@@ -220,15 +232,15 @@ namespace SoulsFormats
 
             for (int i = 0; i < Files.Count; i++)
             {
-                File file = Files[i];
+                BinderFile file = Files[i];
                 bdtWriter.Pad(0x10);
 
                 byte[] bytes = file.Bytes;
-                if (file.Flags == 0x03 || file.Flags == 0xC0)
+                if (Binder.IsCompressed(file.Flags))
                     bytes = DCX.Compress(bytes, DCX.Type.DarkSouls1);
 
-                if (BHD.Format == 0x3E)
-                    bhdWriter.FillUInt64($"FileOffset{i}", (ulong)bdtWriter.Position);
+                if (Binder.HasLongOffsets(BHD.Format))
+                    bhdWriter.FillInt64($"FileOffset{i}", bdtWriter.Position);
                 else
                     bhdWriter.FillUInt32($"FileOffset{i}", (uint)bdtWriter.Position);
 
@@ -238,84 +250,19 @@ namespace SoulsFormats
         }
 
         /// <summary>
-        /// A generic file in a BXF4 container.
-        /// </summary>
-        public class File
-        {
-            /// <summary>
-            /// The name of the file, typically a virtual path.
-            /// </summary>
-            public string Name;
-
-            /// <summary>
-            /// Flags indicating compression (0x80) and possibly some other things.
-            /// </summary>
-            public byte Flags;
-
-            /// <summary>
-            /// The ID number of the file.
-            /// </summary>
-            public int? ID;
-
-            /// <summary>
-            /// The raw data of the file.
-            /// </summary>
-            public byte[] Bytes;
-
-            /// <summary>
-            /// Creates a new File with the specified information.
-            /// </summary>
-            public File(int id, string name, byte flags, byte[] bytes)
-            {
-                ID = id;
-                Name = name;
-                Flags = flags;
-                Bytes = bytes;
-            }
-
-            internal File(BinaryReaderEx br, BHF4.FileHeader fileHeader)
-            {
-                Name = fileHeader.Name;
-                Flags = fileHeader.Flags;
-                ID = fileHeader.ID;
-                Bytes = br.GetBytes((long)fileHeader.Offset, (int)fileHeader.CompressedSize);
-                if (Flags == 0x03 || Flags == 0xC0)
-                    Bytes = DCX.Decompress(Bytes);
-            }
-
-            /// <summary>
-            /// Returns a string containing the ID and name of this file.
-            /// </summary>
-            public override string ToString()
-            {
-                return $"{ID} {Name ?? "<null>"}";
-            }
-        }
-
-        /// <summary>
         /// Information about the header file of a BXF4.
         /// </summary>
         public class BHF4
         {
-            private string timestamp;
             /// <summary>
-            /// A timestamp of unknown purpose.
+            /// A timestamp or version number, 8 characters maximum.
             /// </summary>
-            public string Timestamp
-            {
-                get { return timestamp; }
-                set
-                {
-                    if (value.Length > 8)
-                        throw new ArgumentException("Timestamp may not be longer than 8 characters.");
-                    timestamp = value;
-                }
-            }
+            public string Timestamp;
 
             /// <summary>
             /// Indicates the format of the BXF4.
             /// </summary>
-            public byte Format;
+            public Binder.Format Format;
 
             /// <summary>
             /// Unknown.
@@ -341,11 +288,11 @@ namespace SoulsFormats
 
             internal BHF4()
             {
-                Timestamp = Util.UnparseBNDTimestamp(DateTime.Now);
+                Timestamp = SFUtil.DateToBinderTimestamp(DateTime.Now);
                 Flag1 = false;
                 Flag2 = false;
                 Unicode = true;
-                Format = 0x74;
+                Format = Binder.Format.x74;
                 Extended = 4;
             }
 
@@ -362,55 +309,30 @@ namespace SoulsFormats
                 int fileCount = br.ReadInt32();
                 // File headers start
                 br.AssertInt64(0x40);
-                Timestamp = br.ReadASCII(8).TrimEnd('\0');
-                // File header size
-                long fileHeaderSize = br.AssertInt64(0x18, 0x24, 0x28);
+                Timestamp = br.ReadFixStr(8);
+                long fileHeaderSize = br.ReadInt64();
                 // Would be data start in BND4
                 br.AssertInt64(0);
 
                 Unicode = br.ReadBoolean();
-                if (fileHeaderSize == 0x18)
-                    Format = br.AssertByte(0x0C, 0x30);
-                else if (fileHeaderSize == 0x24)
-                    Format = br.AssertByte(0x2E, 0x74);
-                else if (fileHeaderSize == 0x28)
-                    Format = br.AssertByte(0x3E);
+                Format = br.ReadEnum8<Binder.Format>();
                 Extended = br.AssertByte(0, 4);
                 br.AssertByte(0);
+
+                if (fileHeaderSize != Binder.FileHeaderSize(Format))
+                    throw new FormatException($"File header size 0x{fileHeaderSize} unexpected for format {Format}");
 
                 br.AssertInt32(0);
                 long hashGroupsOffset = br.ReadInt64();
 
-                FileHeaders = new List<FileHeader>();
+                FileHeaders = new List<FileHeader>(fileCount);
                 for (int i = 0; i < fileCount; i++)
                 {
                     FileHeaders.Add(new FileHeader(br, Unicode, Format));
                 }
-
-                if (Extended == 4)
-                {
-                    br.Position = hashGroupsOffset;
-                    long pathHashesOffset = br.ReadInt64();
-                    int hashGroupsCount = br.ReadInt32();
-                    // Probably 4 bytes
-                    br.AssertInt32(0x00080810);
-
-                    var hashGroups = new List<HashGroup>();
-                    for (int i = 0; i < hashGroupsCount; i++)
-                    {
-                        hashGroups.Add(new HashGroup(br));
-                    }
-
-                    br.Position = pathHashesOffset;
-                    var pathHashes = new List<PathHash>();
-                    for (int i = 0; i < fileCount; i++)
-                    {
-                        pathHashes.Add(new PathHash(br));
-                    }
-                }
             }
 
-            internal void Write(BinaryWriterEx bw, List<File> files)
+            internal void Write(BinaryWriterEx bw, List<BinderFile> files)
             {
                 bw.BigEndian = BigEndian;
                 bw.WriteASCII("BHF4");
@@ -421,17 +343,12 @@ namespace SoulsFormats
                 bw.WriteInt32(0x10000);
                 bw.WriteInt32(files.Count);
                 bw.WriteInt64(0x40);
-                bw.WriteASCII(Timestamp);
-                if (Format == 0x0C || Format == 0x30)
-                    bw.WriteInt64(0x18);
-                else if (Format == 0x2E || Format == 0x74)
-                    bw.WriteInt64(0x24);
-                else if (Format == 0x3E)
-                    bw.WriteInt64(0x28);
+                bw.WriteFixStr(Timestamp, 8);
+                bw.WriteInt64(Binder.FileHeaderSize(Format));
                 bw.WriteInt64(0);
 
                 bw.WriteBoolean(Unicode);
-                bw.WriteByte(Format);
+                bw.WriteByte((byte)Format);
                 bw.WriteByte(Extended);
                 bw.WriteByte(0);
 
@@ -448,8 +365,8 @@ namespace SoulsFormats
 
                 for (int i = 0; i < files.Count; i++)
                 {
-                    File file = files[i];
-                    bw.FillInt32($"FileName{i}", (int)bw.Position);
+                    BinderFile file = files[i];
+                    bw.FillUInt32($"FileName{i}", (uint)bw.Position);
                     if (Unicode)
                         bw.WriteUTF16(file.Name, true);
                     else
@@ -461,7 +378,7 @@ namespace SoulsFormats
                     uint groupCount = 0;
                     for (uint p = (uint)files.Count / 7; p <= 100000; p++)
                     {
-                        if (Util.IsPrime(p))
+                        if (SFUtil.IsPrime(p))
                         {
                             groupCount = p;
                             break;
@@ -520,61 +437,61 @@ namespace SoulsFormats
             internal class FileHeader
             {
                 public string Name;
-                public byte Flags;
-                public ulong Offset;
+                public Binder.FileFlags Flags;
+                public long Offset;
                 public long CompressedSize, UncompressedSize;
-                public int? ID;
+                public int ID;
 
-                public FileHeader(BinaryReaderEx br, bool unicode, byte format)
+                public FileHeader(BinaryReaderEx br, bool unicode, Binder.Format format)
                 {
-                    Flags = br.AssertByte(0x00, 0x02, 0x03, 0x40, 0xC0);
+                    Flags = br.ReadEnum8<Binder.FileFlags>();
                     br.AssertByte(0);
                     br.AssertByte(0);
                     br.AssertByte(0);
 
                     br.AssertInt32(-1);
                     CompressedSize = br.ReadInt64();
-                    if (format == 0x2E || format == 0x3E || format == 0x74)
+                    if (Binder.HasUncompressedSize(format))
                         UncompressedSize = br.ReadInt64();
 
-                    if (format == 0x3E)
-                        Offset = br.ReadUInt64();
+                    if (Binder.HasLongOffsets(format))
+                        Offset = br.ReadInt64();
                     else
                         Offset = br.ReadUInt32();
 
-                    if (format == 0x2E || format == 0x3E || format == 0x74)
+                    if (Binder.HasID(format))
                         ID = br.ReadInt32();
                     else
-                        ID = null;
+                        ID = -1;
 
-                    int nameOffset = br.ReadInt32();
+                    uint nameOffset = br.ReadUInt32();
                     if (unicode)
                         Name = br.GetUTF16(nameOffset);
                     else
                         Name = br.GetShiftJIS(nameOffset);
                 }
 
-                public static void Write(BinaryWriterEx bw, File file, int index, byte format)
+                public static void Write(BinaryWriterEx bw, BinderFile file, int index, Binder.Format format)
                 {
-                    bw.WriteByte(file.Flags);
+                    bw.WriteByte((byte)file.Flags);
                     bw.WriteByte(0);
                     bw.WriteByte(0);
                     bw.WriteByte(0);
 
                     bw.WriteInt32(-1);
                     bw.ReserveInt64($"FileSize{index}");
-                    if (format == 0x2E || format == 0x3E || format == 0x74)
+                    if (Binder.HasUncompressedSize(format))
                         bw.WriteInt64(file.Bytes.LongLength);
 
-                    if (format == 0x3E)
-                        bw.ReserveUInt64($"FileOffset{index}");
+                    if (Binder.HasLongOffsets(format))
+                        bw.ReserveInt64($"FileOffset{index}");
                     else
                         bw.ReserveUInt32($"FileOffset{index}");
 
-                    if (format == 0x2E || format == 0x3E || format == 0x74)
-                        bw.WriteInt32(file.ID ?? 0);
+                    if (Binder.HasID(format))
+                        bw.WriteInt32(file.ID);
 
-                    bw.ReserveInt32($"FileName{index}");
+                    bw.ReserveUInt32($"FileName{index}");
                 }
             }
 
@@ -583,16 +500,10 @@ namespace SoulsFormats
                 public int Index;
                 public uint Hash;
 
-                public PathHash(BinaryReaderEx br)
-                {
-                    Hash = br.ReadUInt32();
-                    Index = br.ReadInt32();
-                }
-
                 public PathHash(int index, string path)
                 {
                     Index = index;
-                    Hash = Util.FromPathHash(path);
+                    Hash = SFUtil.FromPathHash(path);
                 }
 
                 public void Write(BinaryWriterEx bw)
@@ -605,12 +516,6 @@ namespace SoulsFormats
             private class HashGroup
             {
                 public int Index, Length;
-
-                public HashGroup(BinaryReaderEx br)
-                {
-                    Length = br.ReadInt32();
-                    Index = br.ReadInt32();
-                }
 
                 public HashGroup(int index, int length)
                 {
@@ -631,20 +536,10 @@ namespace SoulsFormats
         /// </summary>
         public class BDF4
         {
-            private string timestamp;
             /// <summary>
-            /// A timestamp of unknown purpose.
+            /// A timestamp or version number, 8 characters maximum.
             /// </summary>
-            public string Timestamp
-            {
-                get { return timestamp; }
-                set
-                {
-                    if (value.Length > 8)
-                        throw new ArgumentException("Timestamp may not be longer than 8 characters.");
-                    timestamp = value;
-                }
-            }
+            public string Timestamp;
 
             /// <summary>
             /// Unknown.
@@ -663,7 +558,7 @@ namespace SoulsFormats
 
             internal BDF4()
             {
-                Timestamp = Util.UnparseBNDTimestamp(DateTime.Now);
+                Timestamp = SFUtil.DateToBinderTimestamp(DateTime.Now);
                 Flag1 = false;
                 Flag2 = false;
                 BigEndian = false;
@@ -683,7 +578,7 @@ namespace SoulsFormats
                 br.AssertInt32(0);
                 // I thought this was data start, but it's 0x40 in ds2 network test gamedata.bdt, so I don't know
                 Unk1 = br.AssertInt64(0x30, 0x40);
-                Timestamp = br.ReadASCII(8).TrimEnd('\0');
+                Timestamp = br.ReadFixStr(8);
                 br.AssertInt64(0);
                 br.AssertInt64(0);
             }
@@ -699,7 +594,7 @@ namespace SoulsFormats
                 bw.WriteInt32(0x10000);
                 bw.WriteInt32(0);
                 bw.WriteInt64(Unk1);
-                bw.WriteASCII(Timestamp.PadRight(8, '\0'));
+                bw.WriteFixStr(Timestamp, 8);
                 bw.WriteInt64(0);
                 bw.WriteInt64(0);
             }

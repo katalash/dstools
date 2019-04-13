@@ -18,28 +18,86 @@ class FlverUtilities
         { $@"M[ARSN]_l_m", 2 }
     };
 
-    // Helper method to find a map texture for objects that don't have embedded textures
-    static Texture2D FindMapTexture(string path)
+    static void EulerToTransform(Vector3 e, Transform t)
     {
-        var splits = path.Split('\\');
-        var mapid = splits[splits.Length - 3];
-        var asset = AssetDatabase.LoadAssetAtPath<Texture2D>($@"Assets/{mapid}/{Path.GetFileNameWithoutExtension(path)}.texture2d");
-        if (asset == null)
-        {
-            // Attempt to load UDSFM texture
-            asset = AssetDatabase.LoadAssetAtPath<Texture2D>($@"Assets/UDSFMMapTextures/{Path.GetFileNameWithoutExtension(path)}.texture2d");
-        }
-        if (asset == null)
-        {
-            // Attempt to load shared chr textures
-            asset = AssetDatabase.LoadAssetAtPath<Texture2D>($@"Assets/Chr/sharedTextures/{Path.GetFileNameWithoutExtension(path)}.texture2d");
-        }
-        return asset;
+        Matrix4x4 mat;
+        //mat = Matrix4x4.Rotate(Quaternion.AngleAxis(e.x * Mathf.Rad2Deg, new Vector3(1, 0, 0))) *
+        //      Matrix4x4.Rotate(Quaternion.AngleAxis(-e.z * Mathf.Rad2Deg, new Vector3(0, 0, 1))) *
+        //      Matrix4x4.Rotate(Quaternion.AngleAxis(e.y * Mathf.Rad2Deg, new Vector3(0, 1, 0)));
+        mat = Matrix4x4.Rotate(Quaternion.AngleAxis(e.y * Mathf.Rad2Deg, new Vector3(0, 1, 0))) *
+             Matrix4x4.Rotate(Quaternion.AngleAxis(e.z * Mathf.Rad2Deg, new Vector3(0, 0, 1))) *
+             Matrix4x4.Rotate(Quaternion.AngleAxis(e.x * Mathf.Rad2Deg, new Vector3(1, 0, 0)));
+        t.localRotation = mat.rotation;
+        
     }
 
-    static public void ImportFlver(FLVER flver, FLVERAssetLink assetLink, string assetName, string texturePath = null, bool mapflver = false)
+    static void SetBoneWorldTransform(Transform t, FLVER.Bone[] bones, int boneIndex)
+    {
+        Matrix4x4 mat = Matrix4x4.identity;
+        var bone = bones[boneIndex];
+        do
+        {
+            mat *= Matrix4x4.Scale(new Vector3(bone.Scale.X, bone.Scale.Y, bone.Scale.Z));
+            mat *= Matrix4x4.Rotate(Quaternion.AngleAxis(bone.Rotation.X * Mathf.Rad2Deg, new Vector3(1, 0, 0)));
+            mat *= Matrix4x4.Rotate(Quaternion.AngleAxis(bone.Rotation.Z * Mathf.Rad2Deg, new Vector3(0, 0, 1)));
+            mat *= Matrix4x4.Rotate(Quaternion.AngleAxis(bone.Rotation.Y * Mathf.Rad2Deg, new Vector3(0, 1, 0)));
+            mat *= Matrix4x4.Translate(new Vector3(bone.Translation.X, bone.Translation.Y, bone.Translation.Z));
+            bone = (bone.ParentIndex != -1) ? bones[bone.ParentIndex] : null;
+        } while (bone != null);
+        t.position = new Vector3(mat.m03, mat.m13, mat.m23);
+        var scale = new Vector3();
+        scale.x = new Vector4(mat.m00, mat.m10, mat.m20, mat.m30).magnitude;
+        scale.y = new Vector4(mat.m01, mat.m11, mat.m21, mat.m31).magnitude;
+        scale.z = new Vector4(mat.m02, mat.m12, mat.m22, mat.m32).magnitude;
+        t.localScale = scale;
+        t.rotation = mat.rotation;
+    }
+
+
+    // Helper method to lookup nonlocal textures from another bnd
+    static Texture2D FindTexture(string path, DarkSoulsTools.GameType gameType)
+    {
+        string gamePath = DarkSoulsTools.GameFolder(gameType);
+
+        // Map texture reference
+        if (path.Contains(@"\map\"))
+        {
+            var splits = path.Split('\\');
+            var mapid = splits[splits.Length - 3];
+            var asset = AssetDatabase.LoadAssetAtPath<Texture2D>($@"Assets/{gamePath}/{mapid}/{Path.GetFileNameWithoutExtension(path)}.dds");
+            if (asset == null)
+            {
+                // Attempt to load UDSFM texture
+                asset = AssetDatabase.LoadAssetAtPath<Texture2D>($@"Assets/{gamePath}/UDSFMMapTextures/{Path.GetFileNameWithoutExtension(path)}.dds");
+            }
+            return asset;
+        }
+        // Chr texture reference
+        else if (path.Contains(@"\chr\"))
+        {
+            var splits = path.Split('\\');
+            var chrid = splits[splits.Length - 3];
+            var asset = AssetDatabase.LoadAssetAtPath<Texture2D>($@"Assets/{gamePath}/Chr/{chrid}/{Path.GetFileNameWithoutExtension(path)}.dds");
+            if (asset == null)
+            {
+                // Attempt to load shared chr textures
+                asset = AssetDatabase.LoadAssetAtPath<Texture2D>($@"Assets/{gamePath}/Chr/sharedTextures/{Path.GetFileNameWithoutExtension(path)}.dds");
+            }
+            return asset;
+        }
+        // Parts texture reference
+        else if (path.Contains(@"\parts\"))
+        {
+            var asset = AssetDatabase.LoadAssetAtPath<Texture2D>($@"Assets/{gamePath}/Parts/textures/{Path.GetFileNameWithoutExtension(path)}.dds");
+            return asset;
+        }
+        return null;
+    }
+
+    static public void ImportFlver(FLVER flver, FLVERAssetLink assetLink, DarkSoulsTools.GameType gameType, string assetName, string texturePath = null, bool mapflver = false)
     {
         Material[] materials = new Material[flver.Materials.Count];
+        string gamePath = DarkSoulsTools.GameFolder(gameType);
 
         if (!AssetDatabase.IsValidFolder(assetName))
         {
@@ -57,40 +115,67 @@ class FlverUtilities
             //{
             string name = Path.GetFileNameWithoutExtension(assetName) + $@"_{t}";
             //}
-            bool normalquery = (m.Textures.Where(x => ((x.Type.ToUpper() == "G_BUMPMAPTEXTURE") || (x.Type.ToUpper() == "G_BUMPMAP"))).Count() >= 1);
+            //bool normalquery = (m.Textures.Where(x => ((x.Type.ToUpper() == "G_BUMPMAPTEXTURE") || (x.Type.ToUpper() == "G_BUMPMAP"))).Count() >= 1);
+            bool normalquery = false;
 
             Texture2D albedo = null;
             Texture2D specular = null;
             Texture2D normal = null;
             bool IsMapTexture = mapflver;
+            var MTD = AssetDatabase.LoadAssetAtPath<MTDAssetLink>($@"Assets/{gamePath}/MTD/{Path.GetFileNameWithoutExtension(m.MTD)}.asset");
             if (texturePath != null)
             {
                 foreach (var matParam in m.Textures)
                 {
                     var paramNameCheck = matParam.Type.ToUpper();
-                    if (paramNameCheck == "G_DIFFUSETEXTURE" || paramNameCheck == "G_DIFFUSE")
+                    if (paramNameCheck == "G_DIFFUSETEXTURE" || paramNameCheck == "G_DIFFUSE" || paramNameCheck.Contains("ALBEDO"))
                     {
-                        albedo = AssetDatabase.LoadAssetAtPath<Texture2D>($@"{texturePath}/{Path.GetFileNameWithoutExtension(matParam.Path)}.texture2d");
+                        var texPath = matParam.Path;
+                        if (texPath == "")
+                        {
+                            texPath = MTD.Textures.Find(x => (x.Name == matParam.Type)).TexturePath;
+                            if (texPath == "")
+                            {
+                                continue;
+                            }
+                        }
                         if (albedo == null)
                         {
-                            albedo = FindMapTexture(matParam.Path);
+                            albedo = AssetDatabase.LoadAssetAtPath<Texture2D>($@"{texturePath}/{Path.GetFileNameWithoutExtension(texPath)}.dds");
+                            if (albedo == null)
+                            {
+                                albedo = FindTexture(texPath, gameType);
+                            }
                         }
                     }
                     if (paramNameCheck == "G_SPECULARTEXTURE" || paramNameCheck == "G_SPECULAR")
                     {
-                        specular = AssetDatabase.LoadAssetAtPath<Texture2D>($@"{texturePath}/{Path.GetFileNameWithoutExtension(matParam.Path)}.texture2d");
+                        specular = AssetDatabase.LoadAssetAtPath<Texture2D>($@"{texturePath}/{Path.GetFileNameWithoutExtension(matParam.Path)}.dds");
                         if (specular == null)
                         {
-                            specular = FindMapTexture(matParam.Path);
+                            specular = FindTexture(matParam.Path, gameType);
                         }
                     }
-                    if (paramNameCheck == "G_BUMPMAPTEXTURE" || paramNameCheck == "G_BUMPMAP")
+                    if (paramNameCheck == "G_BUMPMAPTEXTURE" || paramNameCheck == "G_BUMPMAP" || paramNameCheck.Contains("NORMAL"))
                     {
-                        normal = AssetDatabase.LoadAssetAtPath<Texture2D>($@"{texturePath}/{Path.GetFileNameWithoutExtension(matParam.Path)}.texture2d");
+                        var texPath = matParam.Path;
+                        if (texPath == "")
+                        {
+                            texPath = MTD.Textures.Find(x => (x.Name == matParam.Type)).TexturePath;
+                            if (texPath == "")
+                            {
+                                continue;
+                            }
+                        }
                         if (normal == null)
                         {
-                            normal = FindMapTexture(matParam.Path);
+                            normal = AssetDatabase.LoadAssetAtPath<Texture2D>($@"{texturePath}/{Path.GetFileNameWithoutExtension(texPath)}.dds");
+                            if (normal == null)
+                            {
+                                normal = FindTexture(texPath, gameType);
+                            }
                         }
+                        normalquery = true;
                     }
                 }
             }
@@ -106,14 +191,14 @@ class FlverUtilities
             if (!normalquery)
             {
                 mat = new Material(shaderDiff);
-                mat.SetTexture("_Albedo", albedo);
+                mat.SetTexture("_MainTex", albedo);
             }
             else
             {
                 mat = new Material(shaderObj);
-                mat.SetTexture("_Albedo", albedo);
+                mat.SetTexture("_MainTex", albedo);
                 mat.SetTexture("_Specular", specular);
-                mat.SetTexture("_Normal", normal);
+                mat.SetTexture("_BumpMap", normal);
             }
             mat.name = name;
             materials[t] = mat;
@@ -122,7 +207,44 @@ class FlverUtilities
         }
 
         GameObject root = new GameObject(Path.GetFileNameWithoutExtension(assetName));
+        GameObject meshesObj = new GameObject("Meshes");
+        GameObject bonesObj = new GameObject("Bones");
+        meshesObj.transform.parent = root.transform;
+        bonesObj.transform.parent = root.transform;
 
+        // import the skeleton
+        Transform[] bones = new Transform[flver.Bones.Count];
+        Matrix4x4[] bindPoses = new Matrix4x4[flver.Bones.Count];
+        for (int i = 0; i < flver.Bones.Count; i++)
+        {
+            var fbone = flver.Bones[i];
+            bones[i] = new GameObject(fbone.Name).transform;
+            EulerToTransform(new Vector3(fbone.Rotation.X, fbone.Rotation.Y, fbone.Rotation.Z), bones[i]);
+            bones[i].localPosition = new Vector3(fbone.Translation.X, fbone.Translation.Y, fbone.Translation.Z);
+            bones[i].localScale = new Vector3(fbone.Scale.X, fbone.Scale.Y, fbone.Scale.Z);
+            //SetBoneWorldTransform(bones[i], flver.Bones.ToArray(), i);
+            //bindPoses[i] = bones[i].worldToLocalMatrix * root.transform.localToWorldMatrix;
+        }
+
+        // Skeleton parenting
+        for (int i = 0; i < flver.Bones.Count; i++)
+        {
+            var fbone = flver.Bones[i];
+            if (fbone.ParentIndex == -1)
+            {
+                //bones[i].parent = root.transform;
+                bones[i].SetParent(bonesObj.transform, false);
+                bindPoses[i] = bones[i].worldToLocalMatrix * root.transform.localToWorldMatrix;
+            }
+            else
+            {
+                //bones[i].parent = bones[fbone.ParentIndex];
+                bones[i].SetParent(bones[fbone.ParentIndex], false);
+                bindPoses[i] = bones[i].worldToLocalMatrix * root.transform.localToWorldMatrix;
+            }
+        }
+
+        // Import the meshes
         int index = 0;
         foreach (var m in flver.Meshes)
         {
@@ -131,6 +253,7 @@ class FlverUtilities
             var verts = new List<Vector3>();
             var normals = new List<Vector3>();
             var tangents = new List<Vector4>();
+            var boneweights = new List<BoneWeight>();
             var smcount = 0;
             bool usestangents = false;
             int uvcount = m.Vertices[0].UVs.Count;
@@ -140,34 +263,38 @@ class FlverUtilities
             // Add the mesh to the asset link
             FLVERAssetLink.SubmeshInfo info = new FLVERAssetLink.SubmeshInfo();
             info.Name = flver.Materials[m.MaterialIndex].Name;
-            var MTD = AssetDatabase.LoadAssetAtPath<MTDAssetLink>($@"Assets/MTD/{Path.GetFileNameWithoutExtension(flver.Materials[m.MaterialIndex].MTD)}.asset");
+            var MTD = AssetDatabase.LoadAssetAtPath<MTDAssetLink>($@"Assets/{gamePath}/MTD/{Path.GetFileNameWithoutExtension(flver.Materials[m.MaterialIndex].MTD)}.asset");
             info.Mtd = MTD;
             assetLink.Submeshes.Add(info);
 
             int lightmapUVIndex = 1;
             // Use MTD to get lightmap uv index
-            if (MTD != null)
+            if (gameType != DarkSoulsTools.GameType.Sekiro)
             {
-                lightmapUVIndex = (MTD.LightmapUVIndex != -1) ? MTD.LightmapUVIndex : 1;
-                if (lightmapUVIndex >= uvs.Length)
-                    lightmapUVIndex = 1;
-            }
-            else
-            {
-                // Do a hardcoded lookup of a material's lightmap UV index from a shitty table :fatcat:
-                if (MaterialLightmapUVIndex.ContainsKey(Path.GetFileNameWithoutExtension(flver.Materials[m.MaterialIndex].MTD)))
+                if (MTD != null)
                 {
-                    lightmapUVIndex = MaterialLightmapUVIndex[Path.GetFileNameWithoutExtension(flver.Materials[m.MaterialIndex].MTD)];
+                    lightmapUVIndex = (MTD.LightmapUVIndex != -1) ? MTD.LightmapUVIndex : 1;
+                    if (lightmapUVIndex >= uvs.Length)
+                        lightmapUVIndex = 1;
+                }
+                else
+                {
+                    // Do a hardcoded lookup of a material's lightmap UV index from a shitty table :fatcat:
+                    if (MaterialLightmapUVIndex.ContainsKey(Path.GetFileNameWithoutExtension(flver.Materials[m.MaterialIndex].MTD)))
+                    {
+                        lightmapUVIndex = MaterialLightmapUVIndex[Path.GetFileNameWithoutExtension(flver.Materials[m.MaterialIndex].MTD)];
+                    }
                 }
             }
             for (int i = 0; i < uvs.Length; i++)
             {
                 uvs[i] = new List<Vector2>();
             }
+            bool isSkinned = false;
             foreach (var v in m.Vertices)
             {
-                verts.Add(new Vector3(v.Position.X, v.Position.Y, v.Position.Z));
-                normals.Add(new Vector3(v.Normal.X, v.Normal.Y, v.Normal.Z));
+                verts.Add(new Vector3(v.Positions[0].X, v.Positions[0].Y, v.Positions[0].Z));
+                normals.Add(new Vector3(v.Normals[0].X, v.Normals[0].Y, v.Normals[0].Z));
                 if (v.Tangents.Count > 0)
                 {
                     tangents.Add(new Vector4(v.Tangents[0].X, v.Tangents[0].Y, v.Tangents[0].Z, v.Tangents[0].W));
@@ -182,16 +309,41 @@ class FlverUtilities
                     // Swap lightmap uvs with uv index 1 because lmao unity
                     if (i == 1)
                     {
-                        uvs[i].Add(new Vector2(v.UVs[lightmapUVIndex].X, v.UVs[lightmapUVIndex].Y));
+                        uvs[i].Add(new Vector2(v.UVs[lightmapUVIndex].X, 1.0f - v.UVs[lightmapUVIndex].Y));
                     }
                     else if (i == lightmapUVIndex)
                     {
-                        uvs[i].Add(new Vector2(v.UVs[1].X, v.UVs[1].Y));
+                        uvs[i].Add(new Vector2(v.UVs[1].X, 1.0f - v.UVs[1].Y));
                     }
                     else
                     {
-                        uvs[i].Add(new Vector2(v.UVs[i].X, v.UVs[i].Y));
+                        uvs[i].Add(new Vector2(v.UVs[i].X, 1.0f - v.UVs[i].Y));
                     }
+                }
+                if (v.BoneWeights.Count() > 0)
+                {
+                    isSkinned = true;
+                    var weight = new BoneWeight();
+                    weight.boneIndex0 = m.BoneIndices[v.BoneIndices[0]];
+                    weight.boneIndex1 = m.BoneIndices[v.BoneIndices[1]];
+                    weight.boneIndex2 = m.BoneIndices[v.BoneIndices[2]];
+                    weight.boneIndex3 = m.BoneIndices[v.BoneIndices[3]];
+                    if (v.BoneWeights[0] < 0.0)
+                    {
+                        weight.weight0 = 1.0f;
+                    }
+                    else
+                    {
+                        weight.weight0 = v.BoneWeights[0];
+                    }
+                    weight.weight1 = v.BoneWeights[1];
+                    weight.weight2 = v.BoneWeights[2];
+                    weight.weight3 = v.BoneWeights[3];
+                    boneweights.Add(weight);
+                }
+                else
+                {
+                    boneweights.Add(new BoneWeight());
                 }
             }
             foreach (var fs in m.FaceSets)
@@ -209,6 +361,11 @@ class FlverUtilities
             mesh.SetNormals(normals);
             if (usestangents)
                 mesh.SetTangents(tangents);
+            if (isSkinned)
+            {
+                mesh.boneWeights = boneweights.ToArray();
+                mesh.bindposes = bindPoses;
+            }
 
             for (int i = 0; i < uvs.Length; i++)
             {
@@ -230,17 +387,66 @@ class FlverUtilities
 
             // Setup a game object asset
             GameObject obj = new GameObject(Path.GetFileNameWithoutExtension(assetName) + $@"_{index}");
-            obj.AddComponent<MeshFilter>();
-            obj.AddComponent<MeshRenderer>();
-            obj.GetComponent<MeshFilter>().mesh = mesh;
-            obj.GetComponent<MeshRenderer>().materials = matList.ToArray();
+            if (isSkinned)
+            {
+                obj.AddComponent<SkinnedMeshRenderer>();
+                obj.GetComponent<SkinnedMeshRenderer>().materials = matList.ToArray();
+                obj.GetComponent<SkinnedMeshRenderer>().bones = bones;
+                obj.GetComponent<SkinnedMeshRenderer>().sharedMesh = mesh;
+            }
+            else
+            {
+                obj.AddComponent<MeshRenderer>();
+                obj.GetComponent<MeshRenderer>().materials = matList.ToArray();
+                obj.AddComponent<MeshFilter>();
+                obj.GetComponent<MeshFilter>().mesh = mesh;
+            }
             obj.AddComponent<FlverSubmesh>();
             obj.GetComponent<FlverSubmesh>().Link = assetLink;
             obj.GetComponent<FlverSubmesh>().SubmeshIdx = index;
-            obj.transform.parent = root.transform;
+            obj.transform.parent = meshesObj.transform;
 
             AssetDatabase.CreateAsset(mesh, assetName + $@"/{Path.GetFileNameWithoutExtension(assetName)}_{index}.mesh");
             index++;
+        }
+
+        // If there's no meshes, create an empty one to bind the skeleton to so that Maya works
+        // when you export the skeleton (like with c0000).
+        if (flver.Meshes.Count == 0)
+        {
+            var mesh = new Mesh();
+
+            var verts = new List<Vector3>();
+            var normals = new List<Vector3>();
+            var tangents = new List<Vector4>();
+            var boneweights = new List<BoneWeight>();
+            for (var i = 0; i < 3; i++)
+            {
+                verts.Add(new Vector3(0.0f, 0.0f, 0.0f));
+                normals.Add(new Vector3(0.0f, 1.0f, 0.0f));
+                tangents.Add(new Vector4(1.0f, 0.0f, 0.0f, 1.0f));
+                var weight = new BoneWeight();
+                weight.boneIndex0 = 0;
+                weight.weight0 = 1.0f;
+                boneweights.Add(weight);
+            }
+
+            mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+            mesh.subMeshCount = 1;
+            mesh.SetVertices(verts);
+            mesh.SetNormals(normals);
+            mesh.SetTangents(tangents);
+            mesh.boneWeights = boneweights.ToArray();
+            mesh.bindposes = bindPoses;
+            mesh.SetTriangles( new int [] { 0, 1, 2 }, 0);
+
+            GameObject obj = new GameObject(Path.GetFileNameWithoutExtension(assetName) + $@"_{index}");
+            obj.AddComponent<SkinnedMeshRenderer>();
+            obj.GetComponent<SkinnedMeshRenderer>().bones = bones;
+            obj.GetComponent<SkinnedMeshRenderer>().sharedMesh = mesh;
+            obj.transform.parent = meshesObj.transform;
+
+            AssetDatabase.CreateAsset(mesh, assetName + $@"/{Path.GetFileNameWithoutExtension(assetName)}_{index}.mesh");
         }
 
         root.AddComponent<FlverMesh>();
@@ -252,7 +458,7 @@ class FlverUtilities
         Object.DestroyImmediate(root);
     }
 
-    static public void ImportFlver(string path, string assetName, string texturePath = null)
+    static public void ImportFlver(DarkSoulsTools.GameType gameType, string path, string assetName, string texturePath = null)
     {
         FLVER flver;
         FLVERAssetLink link = ScriptableObject.CreateInstance<FLVERAssetLink>();
@@ -271,7 +477,7 @@ class FlverUtilities
             flver = FLVER.Read(path);
         }
 
-        ImportFlver(flver, link, assetName, texturePath);
+        ImportFlver(flver, link, gameType, assetName, texturePath);
     }
 
     /// <summary>
@@ -337,5 +543,238 @@ class FlverUtilities
             if (uvs[i].Count > 0)
                 mesh.SetUVs(i, newUVs[i]);
         mesh.SetTriangles(newIndices.ToArray(), 0);
+    }
+
+    [MenuItem("DSTools/FLVER Tools/Create Model Replacement")]
+    static void CreateModelReplacement(MenuCommand menuCommand)
+    {
+        if (Selection.activeObject == null)
+        {
+            return;
+        }
+        var assetPath = AssetDatabase.GetAssetPath(Selection.activeObject);
+        if (!assetPath.EndsWith(".prefab"))
+        {
+            EditorUtility.DisplayDialog("Invalid asset", "Please select a prefab imported with DSTools", "Ok");
+        }
+        //UnityEditor.Formats.Fbx.Exporter.ModelExporter.ExportObject
+    }
+
+    // Really hacky initial flver exporter
+    [MenuItem("DSTools/FLVER Tools/Export Model")]
+    static void ExportModel(MenuCommand menuCommand)
+    {
+        if (Selection.activeObject == null)
+        {
+            return;
+        }
+        var assetPath = AssetDatabase.GetAssetPath(Selection.activeObject);
+        if (!assetPath.EndsWith(".fbx"))
+        {
+            EditorUtility.DisplayDialog("Invalid asset", "Please select an fbx asset", "Ok");
+        }
+
+        // Load the FBX as a prefab
+        //GameObject obj = PrefabUtility.LoadPrefabContents(assetPath);
+        GameObject obj = AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
+
+        // Go through everything and strip the prefixes fbx exporters love to add
+        Stack<GameObject> gameObjects = new Stack<GameObject>();
+        GameObject bonesRoot = null;
+        GameObject meshesRoot = null;
+        gameObjects.Push(obj);
+        while (gameObjects.Count > 0)
+        {
+            var o = gameObjects.Pop();
+            o.name = o.name.Split(':').Last();
+            if (o.name == "Bones")
+            {
+                bonesRoot = o;
+            }
+            if (o.name == "Meshes")
+            {
+                meshesRoot = o;
+            }
+            for (int i = 0; i < o.transform.childCount; i++)
+            {
+                gameObjects.Push(o.transform.GetChild(i).gameObject);
+            }
+        }
+
+        // Load the source c0000 and target flvers
+        var sourceBnd = BND4.Read($@"{DarkSoulsTools.Interroot}\chr\c0000.chrbnd.dcx");
+        var sourceFlver = FLVER.Read(sourceBnd.Files.Where(x => x.Name.ToUpper().EndsWith(".FLVER")).First().Bytes);
+        var targetBnd = BND4.Read($@"{DarkSoulsTools.Interroot}\parts\lg_m_9000.partsbnd.dcx");
+        var targetFlver = FLVER.Read(targetBnd.Files.Where(x => x.Name.ToUpper().EndsWith(".FLVER")).First().Bytes);
+
+        // Build a bone reindexing table
+        Dictionary<string, int> SourceBoneTable = new Dictionary<string, int>();
+        for (int i = 0; i < sourceFlver.Bones.Count; i++)
+        {
+            if (!SourceBoneTable.ContainsKey(sourceFlver.Bones[i].Name))
+            {
+                SourceBoneTable.Add(sourceFlver.Bones[i].Name, i);
+            }
+        }
+
+        if (meshesRoot == null)
+        {
+            throw new Exception("Could not find Meshes group for this FBX");
+        }
+
+        if (bonesRoot == null)
+        {
+            throw new Exception("Could not find Bones group for this FBX");
+        }
+
+        // Get the mesh object (this is hacky for now)
+        var meshObj = meshesRoot.transform.GetChild(0).gameObject;
+
+        // Get the skin and mesh
+        var meshSkin = meshObj.GetComponent<SkinnedMeshRenderer>();
+        var bones = meshSkin.bones;
+        var mesh = meshSkin.sharedMesh;
+
+        // Remap table to recover source bone indices
+        var boneRemap = new int[bones.Length];
+        for (int i = 0; i < bones.Length; i++)
+        {
+            var name = bones[i].gameObject.name;
+            if (SourceBoneTable.ContainsKey(name))
+            {
+                boneRemap[i] = SourceBoneTable[name];
+            }
+            else
+            {
+                boneRemap[i] = 0;
+            }
+        }
+
+        // Build the submesh's bone table
+        HashSet<int> usedBones = new HashSet<int>();
+        foreach (var weight in mesh.boneWeights)
+        {
+            if (weight.boneIndex0 >= 0)
+            {
+                usedBones.Add(boneRemap[weight.boneIndex0]);
+            }
+            if (weight.boneIndex1 >= 0)
+            {
+                usedBones.Add(boneRemap[weight.boneIndex1]);
+            }
+            if (weight.boneIndex2 >= 0)
+            {
+                usedBones.Add(boneRemap[weight.boneIndex2]);
+            }
+            if (weight.boneIndex3 >= 0)
+            {
+                usedBones.Add(boneRemap[weight.boneIndex3]);
+            }
+        }
+
+        // Bad hack
+        for (int i = 0; i < usedBones.Max(); i++)
+        {
+            usedBones.Add(i);
+        }
+
+        var submeshBones = usedBones.OrderBy(x => x).ToArray();
+        var meshToSubmeshBone = new Dictionary<int, int>();
+        for (int i = 0; i < submeshBones.Count(); i++)
+        {
+            meshToSubmeshBone.Add(submeshBones[i], i);
+        }
+
+        // Finally port the mesh to the target
+        sourceFlver.Bones.Add(targetFlver.Bones[29]);
+        targetFlver.Bones = sourceFlver.Bones;
+        targetFlver.Meshes = new List<FLVER.Mesh> { targetFlver.Meshes.First() };
+        targetFlver.SekiroUnk = sourceFlver.SekiroUnk;
+        var fmesh = targetFlver.Meshes[0];
+        fmesh.BoneIndices = submeshBones.ToList();
+        var min = mesh.bounds.min;
+        var max = mesh.bounds.max;
+        //fmesh.BoundingBoxMax = sourceFlver.Header.BoundingBoxMax;
+        //fmesh.BoundingBoxMin = new System.Numerics.Vector3(max.x*100, max.y*100, max.z*100);
+        //fmesh.BoundingBoxMin = sourceFlver.Header.BoundingBoxMin;
+        //fmesh.MaterialIndex = 0;
+        //targetFlver.Header.BoundingBoxMin = sourceFlver.Header.BoundingBoxMin;
+        //targetFlver.Header.BoundingBoxMax = sourceFlver.Header.BoundingBoxMax;
+
+        /*foreach (var b in usedBones)
+        {
+            targetFlver.Bones[b].Unk3C = 8;
+        }*/
+        foreach (var b in targetFlver.Bones)
+        {
+            if (b.Unk3C == 2)
+            {
+                b.Unk3C = 8;
+            }
+        }
+        targetFlver.Bones[140].Unk3C = 4;
+        targetFlver.Bones[140].Name = "LG_M_9000";
+
+        // Port vertices
+        fmesh.Vertices.Clear();
+        for (int i = 0; i < mesh.vertexCount; i++)
+        {
+            var vert = new FLVER.Vertex();
+            var pos = mesh.vertices[i];
+            vert.Positions.Add(new System.Numerics.Vector3(pos.x, pos.y, pos.z));
+            var normal = mesh.normals[i];
+            vert.Normals.Add(new System.Numerics.Vector4(-normal.x, -normal.y, -normal.z, -1.0f));
+            var tangent = mesh.tangents[i];
+            vert.Tangents.Add(new System.Numerics.Vector4(-tangent.x, -tangent.y, -tangent.z, -tangent.w));
+            var color = new Color32(0xFF, 0xFF, 0xFF, 0xFF); //mesh.colors32[i];
+            vert.Colors.Add(new FLVER.Vertex.Color(color.a, color.r, color.g, color.b));
+            vert.UVs.Add(new System.Numerics.Vector3(0.0f, 0.0f, 0.0f));
+            vert.UVs.Add(new System.Numerics.Vector3(0.0f, 0.0f, 0.0f));
+            vert.BoneIndices = new int[4];
+            vert.BoneWeights = new float[4];
+            var bone = mesh.boneWeights[i];
+            vert.BoneWeights[0] = bone.weight0;
+            vert.BoneWeights[1] = bone.weight1;
+            vert.BoneWeights[2] = bone.weight2;
+            vert.BoneWeights[3] = bone.weight3;
+            vert.BoneIndices[0] = meshToSubmeshBone[boneRemap[bone.boneIndex0]];
+            vert.BoneIndices[1] = meshToSubmeshBone[boneRemap[bone.boneIndex1]];
+            vert.BoneIndices[2] = meshToSubmeshBone[boneRemap[bone.boneIndex2]];
+            vert.BoneIndices[3] = meshToSubmeshBone[boneRemap[bone.boneIndex3]];
+            for (int b = 0; b < 3; b++)
+            {
+                if (vert.BoneIndices[b] == -1)
+                {
+                    vert.BoneIndices[b] = 0;
+                }
+            }
+
+            fmesh.Vertices.Add(vert);
+        }
+
+        // Port faceset
+        fmesh.FaceSets = new List<FLVER.FaceSet> { fmesh.FaceSets.First() };
+        var fset = fmesh.FaceSets[0];
+        var tris = new List<uint>();
+        for (int i = 0; i < mesh.triangles.Count(); i++)
+        {
+            tris.Add((uint)mesh.triangles[i]);
+        }
+        fset.Vertices = tris.ToArray();
+        fset.CullBackfaces = false;
+        fset.TriangleStrip = false;
+
+        var fset2 = new FLVER.FaceSet(FLVER.FaceSet.FSFlags.LodLevel1, false, false, fset.Unk06, fset.Unk07, fset.IndexSize, fset.Vertices);
+        var fset3 = new FLVER.FaceSet(FLVER.FaceSet.FSFlags.LodLevel2, false, false, fset.Unk06, fset.Unk07, fset.IndexSize, fset.Vertices);
+        var fset4 = new FLVER.FaceSet(FLVER.FaceSet.FSFlags.Unk80000000, false, false, fset.Unk06, fset.Unk07, fset.IndexSize, fset.Vertices);
+        fmesh.FaceSets.Add(fset2);
+        fmesh.FaceSets.Add(fset3);
+        fmesh.FaceSets.Add(fset4);
+
+        //targetFlver.Materials[0].MTD = $@"M[ARSN].mtd";
+
+        // Finally save
+        targetBnd.Files.Where(x => x.Name.ToUpper().EndsWith(".FLVER")).First().Bytes = targetFlver.Write();
+        targetBnd.Write($@"{DarkSoulsTools.ModProjectDirectory}\parts\lg_m_9000.partsbnd.dcx", DCX.Type.SekiroDFLT);
     }
 }
