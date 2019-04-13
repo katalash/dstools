@@ -799,6 +799,7 @@ public class DarkSoulsTools : EditorWindow
             AssetDatabase.CreateFolder($@"Assets/{gameFolder}", name.Substring(0, 3));
         }
 
+        AssetDatabase.StartAssetEditing();
         foreach (var tpf in bxf.Files)
         {
             try
@@ -817,6 +818,7 @@ public class DarkSoulsTools : EditorWindow
                 Console.Error.WriteLine($"Error loading {tpf.Name}: {ex.Message}");
             }
         }
+        AssetDatabase.StopAssetEditing();
     }
 
     // Loads all the map textures created by UDSFM
@@ -4980,7 +4982,7 @@ public class DarkSoulsTools : EditorWindow
             }
             catch (Exception e)
             {
-                EditorUtility.DisplayDialog("Import failed", e.Message, "Ok");
+                EditorUtility.DisplayDialog("Import failed: " + e.Message, e.StackTrace, "Ok");
             }
         }
 

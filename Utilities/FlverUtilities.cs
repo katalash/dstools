@@ -320,7 +320,7 @@ class FlverUtilities
                         uvs[i].Add(new Vector2(v.UVs[i].X, 1.0f - v.UVs[i].Y));
                     }
                 }
-                if (v.BoneWeights.Count() > 0)
+                if (v.BoneWeights != null && v.BoneWeights.Count() > 0)
                 {
                     isSkinned = true;
                     var weight = new BoneWeight();
