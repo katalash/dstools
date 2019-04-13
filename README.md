@@ -1,14 +1,14 @@
 # Welcome to DSTools
-DSTools is a Unity Editor plugin that aims to create an integrated modding solution for Dark Souls 1 (currently only Prepare to Die Edition is supported), Dark Souls 3, and Bloodborne. Currently the tools support editing existing maps for the games and allow you to move enemies and objects around, but aims to eventually allow the creation of completely new levels.
+DSTools is a Unity Editor plugin that aims to create an integrated modding solution for Dark Souls 1 (currently only Prepare to Die Edition is supported), Dark Souls 3, Bloodborne, and Sekiro. Currently the tools support editing existing maps for the games and allow you to move enemies and objects around, but aims to eventually allow the creation of completely new levels.
 ## Features
-* Import object, character, and map assets from Dark Souls 1, Dark Souls 3, or Bloodborne into Unity.
+* Import object, character, and map assets from Dark Souls 1, Dark Souls 3, Bloodborne, or Sekiro into Unity.
 * Import an entire map including object and enemy placement into a Unity scene.
 * Move, add, or delete enemies and objects in a map with the Unity editor in a mostly what you see is what you get manner.
 * Export modified maps directly back to the game in a ready to play manner.
 * Edit everything about the Dark Souls maps, including unknown properties.
 
 ## Installation and Basic Tutorial
-0. Be warned that a lot of disk space is needed. You'll probably want at least 25GB of storage for DS1 modding and 50GB+ for DS3. This is because all the archives need to be unpacked, unity needs to be installed, and there needs to be room for imported assets cached in Unity.
+0. Be warned that a lot of disk space is needed. You'll probably want at least 25GB of storage for DS1 modding and 50GB+ for DS3/Sekiro. This is because all the archives need to be unpacked, unity needs to be installed, and there needs to be room for imported assets cached in Unity.
 1. Join the Souls modding discord (https://discord.gg/mT2JJjx). Trust us, Dark Souls modding is still difficult, and almost all active modders are in this community and are happy to answer questions.
 2. Unpack your game of choice that you are modding. Use [UDSFM](https://www.nexusmods.com/darksouls/mods/1304) for DS1:PTDE and [UXM](https://www.nexusmods.com/darksouls3/mods/286) for DS3.
 3. Install Unity 2018.3.6 (free edition works and is what I used). Older and newer versions are not tested and may not work.
@@ -85,6 +85,7 @@ DSTools uses MeowDSIO by Meowmaritus. MeowDSIO (and only MeowDSIO under the Meow
 
 ## Shoutouts and Credits:
 DSTools was made possible by the dedicated members of the Dark Souls modding community including:
+* FloorBelow for contributing Sekiro MSB read/write support.
 * TKGP for making Soulsformats, UXM, general reverse engineering, and for answering many questions for me.
 * Meowmaritus for making MeowDSIO, reverse engineering, also answering questions.
 * Pav for beta testing and helping me with lots of reverse engineering of various aspects of DS3.
