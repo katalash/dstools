@@ -2188,6 +2188,11 @@ namespace SoulsFormats
                                 UVs.Add(new Vector3(br.ReadInt16() / uvFactor, br.ReadInt16() / uvFactor, 0));
                                 UVs.Add(new Vector3(br.ReadInt16() / uvFactor, br.ReadInt16() / uvFactor, 0));
                             }
+                            else if (member.Type == BufferLayout.MemberType.Short4toFloat4B)
+                            {
+                                UVs.Add(new Vector3(br.ReadInt16() / uvFactor, br.ReadInt16() / uvFactor, br.ReadInt16() / uvFactor));
+                                br.AssertInt16(0);
+                            }
                             else
                                 throw new NotImplementedException();
                             break;
@@ -2313,11 +2318,13 @@ namespace SoulsFormats
                             if (member.Type == BufferLayout.MemberType.Byte4C)
                             {
                                 for (int i = 0; i < 4; i++)
+
                                     bw.WriteByte((byte)Math.Round(BoneWeights[i] * byte.MaxValue));
                             }
                             else if (member.Type == BufferLayout.MemberType.Short4toFloat4A)
                             {
                                 for (int i = 0; i < 4; i++)
+
                                     bw.WriteUInt16((ushort)Math.Round(BoneWeights[i] * ushort.MaxValue));
                             }
                             else
@@ -2426,6 +2433,13 @@ namespace SoulsFormats
                                 uv = uvQueue.Dequeue() * uvFactor;
                                 bw.WriteInt16((short)Math.Round(uv.X));
                                 bw.WriteInt16((short)Math.Round(uv.Y));
+                            }
+                            else if (member.Type == BufferLayout.MemberType.Short4toFloat4B)
+                            {
+                                bw.WriteInt16((short)Math.Round(uv.X));
+                                bw.WriteInt16((short)Math.Round(uv.Y));
+                                bw.WriteInt16((short)Math.Round(uv.Z));
+                                bw.WriteInt16(0);
                             }
                             else
                                 throw new NotImplementedException();
