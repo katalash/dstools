@@ -477,7 +477,7 @@ public class DarkSoulsTools : EditorWindow
     static void ImportPartTextures(string partpath, string partname, GameType type)
     {
         string gameFolder = GameFolder(type);
-        if (!AssetDatabase.IsValidFolder($@"Assets/{gameFolder}/Parts"))
+        /*if (!AssetDatabase.IsValidFolder($@"Assets/{gameFolder}/Parts"))
         {
             AssetDatabase.CreateFolder($@"Assets/{gameFolder}", "Parts");
         }
@@ -490,7 +490,7 @@ public class DarkSoulsTools : EditorWindow
         if (!AssetDatabase.IsValidFolder($@"Assets/{gameFolder}/Parts/{partname}"))
         {
             AssetDatabase.CreateFolder($@"Assets/{gameFolder}/Parts", partname);
-        }
+        }*/
 
         IBinder partsbnd;
         string path = "";
@@ -538,10 +538,10 @@ public class DarkSoulsTools : EditorWindow
     static void ImportPart(string partpath, string partname, GameType type)
     {
         string gameFolder = GameFolder(type);
-        if (!AssetDatabase.IsValidFolder($@"Assets/{gameFolder}/Parts"))
+        /*if (!AssetDatabase.IsValidFolder($@"Assets/{gameFolder}/Parts"))
         {
             AssetDatabase.CreateFolder($@"Assets/{gameFolder}", "Parts");
-        }
+        }*/
 
         if (!AssetDatabase.IsValidFolder($@"Assets/{gameFolder}/Parts/{partname}"))
         {
@@ -696,78 +696,6 @@ public class DarkSoulsTools : EditorWindow
                 throw new Exception($"Unknown DDS Type: {str}");
         }
     }
-
-    /*static Texture2D CreateTextureFromTPF(TPF.Texture tpf)
-    {
-        var textureBytes = tpf.Bytes;
-        DDS header = new DDS(textureBytes);
-        int height = header.dwHeight;
-        int width = header.dwWidth;
-
-        int mipmapCount = header.dwMipMapCount;
-        var br = new BinaryReaderEx(false, textureBytes);
-
-        br.Skip((int)header.dataOffset);
-
-        TextureFormat surfaceFormat;
-        if (header.ddspf.dwFourCC == "DX10")
-        {
-            // See if there are DX9 textures
-            int fmt = (int)header.header10.dxgiFormat;
-            if (fmt == 70 || fmt == 71 || fmt == 72)
-                surfaceFormat = TextureFormat.DXT1;
-            else if (fmt == 73 || fmt == 74 || fmt == 75)
-                surfaceFormat = TextureFormat.DXT5;
-            else if (fmt == 76 || fmt == 77 || fmt == 78)
-                surfaceFormat = TextureFormat.DXT5;
-            else if (fmt == 97 || fmt == 98 || fmt == 99)
-                surfaceFormat = TextureFormat.BC7;
-            else
-            {
-                return null;
-            }
-        }
-        else
-        {
-            surfaceFormat = GetSurfaceFormatFromString(header.ddspf.dwFourCC);
-        }
-        // Adjust width and height because from has some DXTC textures that have dimensions not a multiple of 4 :shrug:
-        Texture2D tex = new Texture2D(GetNextMultipleOf4(width), GetNextMultipleOf4(height), surfaceFormat, mipmapCount > 1);
-        List<byte> texels = new List<byte>();
-        var totaltexels = 0;
-        //for (int i = 0; i < mipmapCount; i++)
-        //{
-        int w = width;
-        int h = height;
-        int i = 0;
-        while (w > 0 || h > 0)
-        {
-            int numTexels = GetNextMultipleOf4(width >> i) * GetNextMultipleOf4(height >> i);
-            if (surfaceFormat == TextureFormat.DXT1)
-                numTexels /= 2;
-            //byte[] thisMipMap = br.ReadBytes(numTexels);
-            for (int t = 0; t < numTexels; t++)
-            {
-                if (i < mipmapCount)
-                {
-                    texels.Add(br.ReadByte());
-                }
-                else
-                {
-                    texels.Add(0);
-                }
-            }
-            totaltexels += numTexels;
-            i++;
-            w >>= 1;
-            h >>= 1;
-        }
-        //}
-        
-        tex.LoadRawTextureData(texels.ToArray());
-
-        return tex;
-    }*/
 
     // Serialize a TPF file as a DDS and import it into Unity
     static void CreateTextureFromTPF(string texPath, TPF.Texture tpf)
@@ -2871,7 +2799,8 @@ public class DarkSoulsTools : EditorWindow
             MapPieces.transform.parent = PartsSection.transform;
             foreach (var part in msb.Parts.MapPieces)
             {
-                GameObject src = LoadMapFlvers ? AssetDatabase.LoadAssetAtPath<GameObject>($@"Assets/Sekiro/{mapname}/{part.ModelName}.prefab") : null;
+                //GameObject src = LoadMapFlvers ? AssetDatabase.LoadAssetAtPath<GameObject>($@"Assets/Sekiro/{mapname}/{part.ModelName}.prefab") : null;
+                GameObject src = AssetDatabase.LoadAssetAtPath<GameObject>($@"Assets/Sekiro/{mapname}/{part.ModelName}.prefab");
                 if (src != null)
                 {
                     GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
