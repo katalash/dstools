@@ -93,13 +93,9 @@ public class DarkSoulsTools : EditorWindow
         }
     }
 
-    static void ImportObj(string objpath, string objid, GameType type)
+    static void ImportObjTextures(string objpath, string objid, GameType type)
     {
         string gameFolder = GameFolder(type);
-        if (!AssetDatabase.IsValidFolder($@"Assets/{gameFolder}/Obj"))
-        {
-            AssetDatabase.CreateFolder($@"Assets/{gameFolder}", "Obj");
-        }
 
         if (!AssetDatabase.IsValidFolder($@"Assets/{gameFolder}/Obj/{objid}"))
         {
@@ -139,13 +135,42 @@ public class DarkSoulsTools : EditorWindow
             }
             foreach (var tex in tpf.Textures)
             {
-                //var t2d = CreateTextureFromTPF(tex);
-                //if (t2d != null)
-                //{
-                //    AssetDatabase.CreateAsset(t2d, $@"Assets/{gameFolder}/Obj/{objid}/{tex.Name}.texture2d");
-                //}
                 CreateTextureFromTPF($@"{gameFolder}/Obj/{objid}/{tex.Name}.dds", tex);
             }
+        }
+    }
+
+    static void ImportObj(string objpath, string objid, GameType type)
+    {
+        string gameFolder = GameFolder(type);
+
+        if (!AssetDatabase.IsValidFolder($@"Assets/{gameFolder}/Obj/{objid}"))
+        {
+            AssetDatabase.CreateFolder($@"Assets/{gameFolder}/Obj", objid);
+        }
+
+        IBinder objbnd;
+        string path = "";
+        if (File.Exists($@"{objpath}\{objid}.objbnd.dcx"))
+        {
+            path = $@"{objpath}\{objid}.objbnd.dcx";
+        }
+        else if (File.Exists($@"{objpath}\{objid}.objbnd"))
+        {
+            path = $@"{objpath}\{objid}.objbnd";
+        }
+        else
+        {
+            throw new FileNotFoundException("Could not find bnd for object " + objid);
+        }
+
+        if (type == GameType.DarkSoulsIII || type == GameType.Bloodborne || type == GameType.Sekiro)
+        {
+            objbnd = BND4.Read(GetOverridenPath(path));
+        }
+        else
+        {
+            objbnd = BND3.Read(GetOverridenPath(path));
         }
 
         // Should only be one flver in a bnd
@@ -169,9 +194,27 @@ public class DarkSoulsTools : EditorWindow
                     .Select(Path.GetFileNameWithoutExtension) //Remove .objbnd
                     .ToArray();
         }
-        AssetDatabase.StartAssetEditing();
         try
         {
+            AssetDatabase.StartAssetEditing();
+            string gameFolder = GameFolder(type);
+            if (!AssetDatabase.IsValidFolder($@"Assets/{gameFolder}/Obj"))
+            {
+                AssetDatabase.CreateFolder($@"Assets/{gameFolder}", "Obj");
+            }
+            foreach (var obj in objFiles)
+            {
+                try
+                {
+                    ImportObjTextures(objpath, obj, type);
+                }
+                catch (Exception e)
+                {
+                    Console.Error.WriteLine($"Error loading obj {obj}: {e.Message}");
+                }
+            }
+            AssetDatabase.StopAssetEditing();
+            AssetDatabase.StartAssetEditing();
             foreach (var obj in objFiles)
             {
                 try
@@ -193,10 +236,6 @@ public class DarkSoulsTools : EditorWindow
     static void ImportChrTexbnd(string chrpath, string chrid, GameType type)
     {
         string gameFolder = GameFolder(type);
-        if (!AssetDatabase.IsValidFolder($@"Assets/{gameFolder}/Chr"))
-        {
-            AssetDatabase.CreateFolder($@"Assets/{gameFolder}", "Chr");
-        }
 
         if (!AssetDatabase.IsValidFolder($@"Assets/{gameFolder}/Chr/{chrid}"))
         {
@@ -229,11 +268,6 @@ public class DarkSoulsTools : EditorWindow
                 }
                 foreach (var tex in tpf.Textures)
                 {
-                    //var t2d = CreateTextureFromTPF(tex);
-                    //if (t2d != null)
-                    //{
-                    //    AssetDatabase.CreateAsset(t2d, $@"Assets/{gameFolder}/Chr/{chrid}/{tex.Name}.texture2d");
-                    //}
                     CreateTextureFromTPF($@"{gameFolder}/Chr/{chrid}/{tex.Name}.dds", tex);
                 }
             }
@@ -243,10 +277,6 @@ public class DarkSoulsTools : EditorWindow
     static void ImportChrTextures(string chrpath, string chrid, GameType type)
     {
         string gameFolder = GameFolder(type);
-        if (!AssetDatabase.IsValidFolder($@"Assets/{gameFolder}/Chr"))
-        {
-            AssetDatabase.CreateFolder($@"Assets/{gameFolder}", "Chr");
-        }
 
         if (!AssetDatabase.IsValidFolder($@"Assets/{gameFolder}/Chr/{chrid}"))
         {
@@ -286,49 +316,9 @@ public class DarkSoulsTools : EditorWindow
             }
             foreach (var tex in tpf.Textures)
             {
-                //var t2d = CreateTextureFromTPF(tex);
-                //if (t2d != null)
-                //{
-                //    AssetDatabase.CreateAsset(t2d, $@"Assets/{gameFolder}/Chr/{chrid}/{tex.Name}.texture2d");
-                //}
                 CreateTextureFromTPF($@"{gameFolder}/Chr/{chrid}/{tex.Name}.dds", tex);
             }
         }
-
-        // Load a separate texbnd if needed
-        /*IBinder texbnd;
-        string tpath = null;
-        if (File.Exists($@"{chrpath}\{chrid}.texbnd.dcx"))
-        {
-            tpath = $@"{chrpath}\{chrid}.texbnd.dcx";
-        }
-        else if (File.Exists($@"{chrpath}\{chrid}.texbnd"))
-        {
-            tpath = $@"{chrpath}\{chrid}.texbnd";
-        }
-
-        if (tpath != null)
-        {
-            texbnd = BND4.Read(GetOverridenPath(tpath));
-
-            var tentries = texbnd.Files.Where(x => x.Name.ToUpper().EndsWith(".TPF"));
-            foreach (var entry in tentries)
-            {
-                TPF tpf = TPF.Read(entry.Bytes);
-                if (type == GameType.Bloodborne)
-                {
-                    tpf.ConvertPS4ToPC();
-                }
-                foreach (var tex in tpf.Textures)
-                {
-                    var t2d = CreateTextureFromTPF(tex);
-                    if (t2d != null)
-                    {
-                        AssetDatabase.CreateAsset(t2d, $@"Assets/{gameFolder}/Chr/{chrid}/{tex.Name}.texture2d");
-                    }
-                }
-            }
-        }*/
 
         // Load external DS1 UDSFM textures
         if (type == GameType.DarkSoulsPTDE)
@@ -346,11 +336,6 @@ public class DarkSoulsTools : EditorWindow
                     TPF tpf = TPF.Read(file);
                     foreach (var tex in tpf.Textures)
                     {
-                        //var t2d = CreateTextureFromTPF(tex);
-                        //if (t2d != null)
-                        //{
-                        //    AssetDatabase.CreateAsset(t2d, $@"Assets/{gameFolder}/Chr/sharedTextures/{tex.Name}.texture2d");
-                        //}
                         CreateTextureFromTPF($@"{gameFolder}/Chr/sharedTextures/{tex.Name}.dds", tex);
                     }
                 }
@@ -361,10 +346,6 @@ public class DarkSoulsTools : EditorWindow
     static void ImportChr(string chrpath, string chrid, GameType type)
     {
         string gameFolder = GameFolder(type);
-        if (!AssetDatabase.IsValidFolder($@"Assets/{gameFolder}/Chr"))
-        {
-            AssetDatabase.CreateFolder($@"Assets/{gameFolder}", "Chr");
-        }
 
         if (!AssetDatabase.IsValidFolder($@"Assets/{gameFolder}/Chr/{chrid}"))
         {
@@ -430,6 +411,11 @@ public class DarkSoulsTools : EditorWindow
         {
             // Import all textures before the models because they can reference each other
             AssetDatabase.StartAssetEditing();
+            string gameFolder = GameFolder(type);
+            if (!AssetDatabase.IsValidFolder($@"Assets/{gameFolder}/Chr"))
+            {
+                AssetDatabase.CreateFolder($@"Assets/{gameFolder}", "Chr");
+            }
             foreach (var chr in texFiles)
             {
                 try
@@ -438,7 +424,7 @@ public class DarkSoulsTools : EditorWindow
                 }
                 catch (Exception e)
                 {
-                    Console.Error.WriteLine($"Error loading chr {chr}: {e.Message}");
+                    Debug.LogError($"Error loading chr {chr}: {e.Message}, {e.StackTrace}");
                 }
             }
             AssetDatabase.StopAssetEditing();
@@ -451,7 +437,7 @@ public class DarkSoulsTools : EditorWindow
                 }
                 catch (Exception e)
                 {
-                    Console.Error.WriteLine($"Error loading chr {chr}: {e.Message}");
+                    Debug.LogError($"Error loading chr {chr}: {e.Message}, {e.StackTrace}");
                 }
             }
             AssetDatabase.StopAssetEditing();
@@ -464,7 +450,7 @@ public class DarkSoulsTools : EditorWindow
                 }
                 catch (Exception e)
                 {
-                    Console.Error.WriteLine($"Error loading chr {chr}: {e.Message}");
+                    Debug.LogError($"Error loading chr {chr}: {e.Message}, {e.StackTrace}");
                 }
             }
         }
@@ -525,11 +511,6 @@ public class DarkSoulsTools : EditorWindow
             }
             foreach (var tex in tpf.Textures)
             {
-                //var t2d = CreateTextureFromTPF(tex);
-                //if (t2d != null)
-                //{
-                //    AssetDatabase.CreateAsset(t2d, $@"Assets/{gameFolder}/Parts/textures/{tex.Name}.texture2d");
-                //}
                 CreateTextureFromTPF($@"{gameFolder}/Parts/textures/{tex.Name}.dds", tex);
             }
         }
@@ -538,10 +519,6 @@ public class DarkSoulsTools : EditorWindow
     static void ImportPart(string partpath, string partname, GameType type)
     {
         string gameFolder = GameFolder(type);
-        /*if (!AssetDatabase.IsValidFolder($@"Assets/{gameFolder}/Parts"))
-        {
-            AssetDatabase.CreateFolder($@"Assets/{gameFolder}", "Parts");
-        }*/
 
         if (!AssetDatabase.IsValidFolder($@"Assets/{gameFolder}/Parts/{partname}"))
         {
@@ -618,11 +595,6 @@ public class DarkSoulsTools : EditorWindow
                 }
                 foreach (var tex in tpf.Textures)
                 {
-                    //var t2d = CreateTextureFromTPF(tex);
-                    //if (t2d != null)
-                    //{
-                    //    AssetDatabase.CreateAsset(t2d, $@"Assets/{gameFolder}/Parts/textures/{tex.Name}.texture2d");
-                    //}
                     CreateTextureFromTPF($@"{gameFolder}/Parts/textures/{tex.Name}.dds", tex);
                 }
             }
@@ -737,8 +709,6 @@ public class DarkSoulsTools : EditorWindow
                 {
                     t.ConvertPS4ToPC();
                 }
-                //var tex = CreateTextureFromTPF(t.Textures[0]);
-                //AssetDatabase.CreateAsset(tex, $@"Assets/{gameFolder}/" + name.Substring(0, 3) + "/" + Path.GetFileNameWithoutExtension((Path.GetFileNameWithoutExtension(tpf.Name))) + ".texture2d");
                 CreateTextureFromTPF($@"{gameFolder}/" + name.Substring(0, 3) + "/" + Path.GetFileNameWithoutExtension((Path.GetFileNameWithoutExtension(tpf.Name))) + ".dds", t.Textures[0]);
             }
             catch (Exception ex)
@@ -766,8 +736,6 @@ public class DarkSoulsTools : EditorWindow
             try
             {
                 var tpf = TPF.Read(file);
-                //var tex = CreateTextureFromTPF(tpf.Textures[0]);
-                //AssetDatabase.CreateAsset(tex, $@"Assets/DS1/UDSFMMapTextures/{Path.GetFileNameWithoutExtension(file)}.texture2d");
                 CreateTextureFromTPF($@"DS1/UDSFMMapTextures/{Path.GetFileNameWithoutExtension(file)}.dds", tpf.Textures[0]);
             }
             catch (Exception ex)
@@ -3282,11 +3250,11 @@ public class DarkSoulsTools : EditorWindow
 
             GameObject Event23s = new GameObject("Event23Events");
             Event23s.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.Event23s)
+            foreach (var ev in msb.Events.Talks)
             {
                 GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSBSEvent23Event>();
-                evt.GetComponent<MSBSEvent23Event>().SetEvent(ev);
+                evt.AddComponent<MSBSTalkEvent>();
+                evt.GetComponent<MSBSTalkEvent>().SetEvent(ev);
                 evt.transform.parent = Event23s.transform;
             }
 
@@ -3372,6 +3340,155 @@ public class DarkSoulsTools : EditorWindow
         else if (type == GameType.Sekiro)
         {
             onImportSekiroMap(o);
+        }
+    }
+
+    void onImportBtl(object o)
+    {
+        var assetLink = GameObject.Find("MSBAssetLink");
+        var alc = assetLink.GetComponent<MSBAssetLink>();
+        var mapid = alc.MapID;
+
+        // Create a folder for BTLs
+        var btlroot = GameObject.Find("/BTLLights");
+        if (btlroot == null)
+        {
+            btlroot = new GameObject("BTLLights");
+        }
+
+        string btlid = (string)o;
+        var btlobject = GameObject.Find($@"/BTLLights/{btlid}");
+        if (btlobject == null)
+        {
+            btlobject = new GameObject(btlid);
+            btlobject.transform.parent = btlroot.transform;
+            // Attempt to find a MapOffset object to transform the lights
+            var mapoffset = GameObject.Find($@"/MSBEvents/MapOffsets");
+            if (mapoffset != null)
+            {
+                if (type == GameType.DarkSoulsIII)
+                {
+                    var mo = mapoffset.GetComponentsInChildren<MSB3MapOffsetEvent>().FirstOrDefault(x => (x.ID == 0));
+                    if (mo != null)
+                    {
+                        btlobject.transform.position = new Vector3(mo.Position.x, mo.Position.y, mo.Position.z);
+                        btlobject.transform.localRotation = Quaternion.Euler(new Vector3(0.0f, mo.Degree, 0.0f));
+                    }
+                }
+                else if (type == GameType.Sekiro)
+                {
+                    var mo = mapoffset.GetComponentsInChildren<MSBSMapOffsetEvent>().FirstOrDefault();
+                    if (mo != null)
+                    {
+                        btlobject.transform.position = new Vector3(mo.Position.x, mo.Position.y, mo.Position.z);
+                        btlobject.transform.localRotation = Quaternion.Euler(new Vector3(0.0f, mo.Degree, 0.0f));
+                    }
+                }
+            }
+            btlobject.AddComponent<BTLAssetLink>();
+            var comp = btlobject.GetComponent<BTLAssetLink>();
+            comp.BTLID = btlid;
+            comp.BTLPath = Interroot + $@"\map\{mapid}\{btlid}.btl.dcx";
+        }
+
+        var btlfile = BTL.Read(GetOverridenPath(Interroot + $@"\map\{mapid}\{btlid}.btl.dcx"));
+        foreach (var light in btlfile.Lights)
+        {
+            GameObject obj = new GameObject(light.Name);
+            if (type == GameType.DarkSoulsIII || type == GameType.Bloodborne)
+            {
+                obj.AddComponent<BTLDS3Light>();
+                obj.GetComponent<BTLDS3Light>().SetFromLight(light);
+            }
+            else if (type == GameType.Sekiro)
+            {
+                obj.AddComponent<BTLSekiroLight>();
+                obj.GetComponent<BTLSekiroLight>().SetFromLight(light);
+            }
+            obj.AddComponent<Light>();
+            obj.transform.parent = btlobject.transform;
+            obj.transform.localPosition = new Vector3(light.Position.X, light.Position.Y, light.Position.Z);
+        }
+    }
+
+    void ExportBTLs()
+    {
+        var AssetLink = GameObject.Find("MSBAssetLink");
+        if (AssetLink == null || AssetLink.GetComponent<MSBAssetLink>() == null)
+        {
+            throw new Exception("Could not find a valid MSB asset link. Make sure a valid map is imported.");
+        }
+        var al = AssetLink.GetComponent<MSBAssetLink>();
+
+        var btlRoot = GameObject.Find("/BTLLights");
+        if (btlRoot == null)
+        {
+            throw new Exception("No lights have been imported. Please import a BTL set for the current map");
+        }
+
+        for (int i = 0; i < btlRoot.transform.childCount; i++)
+        {
+            var btlset = btlRoot.transform.GetChild(i).gameObject;
+            var btlal = btlset.GetComponent<BTLAssetLink>();
+            if (btlal == null)
+            {
+                continue;
+            }
+
+            BTL export = new BTL();
+            if (type == GameType.DarkSoulsIII || type == GameType.Bloodborne)
+            {
+                export.Version = 6;
+                foreach (var l in GetChildrenOfType<BTLDS3Light>(btlset))
+                {
+                    export.Lights.Add(l.GetComponent<BTLDS3Light>().Serialize(l));
+                }
+            }
+            else if (type == GameType.Sekiro)
+            {
+                foreach (var l in GetChildrenOfType<BTLSekiroLight>(btlset))
+                {
+                    export.Lights.Add(l.GetComponent<BTLSekiroLight>().Serialize(l));
+                }
+            }
+
+            // Directory setup for overrides
+            if (ModProjectDirectory != null)
+            {
+                if (!Directory.Exists($@"{ModProjectDirectory}\map\{al.MapID}"))
+                {
+                    Directory.CreateDirectory($@"{ModProjectDirectory}\map\{al.MapID}");
+                }
+            }
+
+            // Save a backup if one doesn't exist
+            if (ModProjectDirectory == null && !File.Exists(btlal.BTLPath + ".backup"))
+            {
+                File.Copy(btlal.BTLPath, btlal.BTLPath + ".backup");
+            }
+
+            // Write as a temporary file to make sure there are no errors before overwriting current file 
+            string btlPath = btlal.BTLPath;
+            if (GetModProjectPathForFile(btlPath) != null)
+            {
+                btlPath = GetModProjectPathForFile(btlPath);
+            }
+
+            if (File.Exists(btlPath + ".temp"))
+            {
+                File.Delete(btlPath + ".temp");
+            }
+            export.Write(btlPath + ".temp", (type == GameType.Sekiro) ? SoulsFormats.DCX.Type.SekiroDFLT : SoulsFormats.DCX.Type.DarkSouls3);
+
+            // Make a copy of the previous map
+            if (File.Exists(btlPath))
+            {
+                File.Copy(btlPath, btlPath + ".prev", true);
+            }
+
+            // Move temp file as new map file
+            File.Delete(btlPath);
+            File.Move(btlPath + ".temp", btlPath);
         }
     }
 
@@ -4737,9 +4854,9 @@ public class DarkSoulsTools : EditorWindow
             var event23s = GetChild(Events, "Event23Events");
             if (event23s != null)
             {
-                foreach (var obj in GetChildrenOfType<MSBSEvent23Event>(event23s))
+                foreach (var obj in GetChildrenOfType<MSBSTalkEvent>(event23s))
                 {
-                    export.Events.Event23s.Add(obj.GetComponent<MSBSEvent23Event>().Serialize(obj));
+                    export.Events.Talks.Add(obj.GetComponent<MSBSTalkEvent>().Serialize(obj));
                 }
             }
 
@@ -4818,7 +4935,7 @@ public class DarkSoulsTools : EditorWindow
         {
             File.Delete(mapPath + ".temp");
         }
-        export.Write(mapPath + ".temp", SoulsFormats.DCX.Type.SekiroKRAK);
+        export.Write(mapPath + ".temp", SoulsFormats.DCX.Type.SekiroDFLT);
 
         // Make a copy of the previous map
         if (File.Exists(mapPath))
@@ -5099,6 +5216,25 @@ public class DarkSoulsTools : EditorWindow
             menu.ShowAsContext();
         }
 
+        if ((type == GameType.DarkSoulsIII || type == GameType.Sekiro) && GameObject.Find("MSBAssetLink") != null)
+        {
+            if (GUILayout.Button("Import BTL (Lights)"))
+            {
+                GenericMenu menu = new GenericMenu();
+                var assetLink = GameObject.Find("MSBAssetLink");
+                var alc = assetLink.GetComponent<MSBAssetLink>();
+                var mapid = alc.MapID;
+                var btlFiles = Directory.GetFileSystemEntries(Interroot + $@"\map\{mapid}\", @"*.btl.dcx")
+                    .Select(Path.GetFileNameWithoutExtension).Select(Path.GetFileNameWithoutExtension);
+                var btls = new List<string>();
+                foreach (var btl in btlFiles)
+                {
+                    menu.AddItem(new GUIContent(btl), false, onImportBtl, btl);
+                }
+                menu.ShowAsContext();
+            }
+        }
+
         if (type == GameType.DarkSoulsIII)
         {
             PreservePartsPose = GUILayout.Toggle(PreservePartsPose, "Preserve parts pose (will restore from backup if needed)");
@@ -5113,6 +5249,18 @@ public class DarkSoulsTools : EditorWindow
             catch (Exception e)
             {
                 EditorUtility.DisplayDialog("Map Export failed: " + e.Message, e.StackTrace, "Ok");
+            }
+        }
+
+        if ((type == GameType.DarkSoulsIII || type == GameType.Sekiro) && GUILayout.Button("Export BTLs (lights)"))
+        {
+            try
+            {
+                ExportBTLs();
+            }
+            catch (Exception e)
+            {
+                EditorUtility.DisplayDialog("BTL Export failed: " + e.Message, e.StackTrace, "Ok");
             }
         }
     }

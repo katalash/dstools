@@ -976,6 +976,7 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown.
             /// </summary>
+            public int Unk0;
             public int Unk1;
 
             private int[] faceSetIndices, vertexBufferIndices;
@@ -1011,7 +1012,7 @@ namespace SoulsFormats
                     br.AssertInt32(0);
                 DefaultBoneIndex = br.ReadInt32();
 
-                int boneCount = br.ReadInt32();
+                Unk0 = br.ReadInt32();
                 Unk1 = br.AssertInt32(0, 1, 10);
                 if (version >= 0x20013)
                 {
@@ -1026,7 +1027,6 @@ namespace SoulsFormats
                     br.StepOut();
                 }
                 int boneOffset = br.ReadInt32();
-                BoneIndices = new List<int>(br.GetInt32s(boneOffset, boneCount));
 
                 int faceSetCount = br.ReadInt32();
                 int faceSetOffset = br.ReadInt32();
@@ -1035,6 +1035,8 @@ namespace SoulsFormats
                 int vertexBufferCount = br.AssertInt32(1, 2, 3);
                 int vertexBufferOffset = br.ReadInt32();
                 vertexBufferIndices = br.GetInt32s(vertexBufferOffset, vertexBufferCount);
+
+                BoneIndices = new List<int>(br.GetInt32s(boneOffset, (vertexBufferOffset - boneOffset) / 4)); 
             }
 
             internal void TakeFaceSets(Dictionary<int, FaceSet> faceSetDict)
@@ -1119,7 +1121,7 @@ namespace SoulsFormats
                     bw.WriteInt32(0);
                 bw.WriteInt32(DefaultBoneIndex);
 
-                bw.WriteInt32(BoneIndices.Count);
+                bw.WriteInt32(Unk0);
                 bw.WriteInt32(Unk1);
                 if (version >= 0x20013)
                     bw.ReserveInt32($"MeshBoundingBox{index}");

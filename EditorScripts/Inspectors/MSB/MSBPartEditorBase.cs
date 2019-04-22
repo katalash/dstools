@@ -20,7 +20,8 @@ public abstract class MSBPartEditorBase : Editor
     {
         MSB1,
         MSB3,
-        MSBBB
+        MSBBB,
+        MSBSekiro,
     }
     protected MSBType _MSBType = MSBType.MSB1;
 
@@ -65,6 +66,22 @@ public abstract class MSBPartEditorBase : Editor
                         EditorGUI.indentLevel++;
                         EditorGUILayout.LabelField($@"Lot Param 1: {comp.ItemLot1}");
                         EditorGUILayout.LabelField($@"Lot Param 2: {comp.ItemLot2}");
+                        if (GUILayout.Button("Select Treasure Event"))
+                        {
+                            Selection.activeGameObject = t;
+                        }
+                        EditorGUI.indentLevel--;
+                    }
+                }
+                else if (_MSBType == MSBType.MSBSekiro)
+                {
+                    var comp = t.GetComponent<MSBSTreasureEvent>();
+                    if (comp != null && comp.TreasurePartName == serializedObject.targetObject.name)
+                    {
+                        matched = true;
+                        EditorGUILayout.LabelField($@"Treasure: {t.name}");
+                        EditorGUI.indentLevel++;
+                        EditorGUILayout.LabelField($@"Lot Param ID: {comp.ItemLotID}");
                         if (GUILayout.Button("Select Treasure Event"))
                         {
                             Selection.activeGameObject = t;

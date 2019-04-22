@@ -20,7 +20,8 @@ public abstract class MSBEventEditorBase : Editor
     {
         MSB1,
         MSB3,
-        MSBBB
+        MSBBB,
+        MSBSekiro,
     }
     protected MSBType _MSBType = MSBType.MSB1;
 
@@ -33,7 +34,15 @@ public abstract class MSBEventEditorBase : Editor
             {
                 if (GUILayout.Button("Go to Target Object"))
                 {
-                    var objectName = serializedObject.FindProperty("PartName2").stringValue;
+                    string objectName;
+                    if (_MSBType == MSBType.MSBSekiro)
+                    {
+                        objectName = serializedObject.FindProperty("TreasurePartName").stringValue;
+                    }
+                    else
+                    {
+                        objectName = serializedObject.FindProperty("PartName2").stringValue;
+                    }
                     var obj = GameObject.Find($@"/MSBParts/Objects/{objectName}");
                     if (obj == null)
                     {
@@ -51,8 +60,17 @@ public abstract class MSBEventEditorBase : Editor
                 }
 
                 var itemLots = new int[2];
-                itemLots[0] = serializedObject.FindProperty("ItemLot1").intValue;
-                itemLots[1] = serializedObject.FindProperty("ItemLot2").intValue;
+                if (_MSBType == MSBType.MSB3 ||_MSBType == MSBType.MSBBB)
+                {
+                    itemLots[0] = serializedObject.FindProperty("ItemLot1").intValue;
+                    itemLots[1] = serializedObject.FindProperty("ItemLot2").intValue;
+                }
+                else if (_MSBType == MSBType.MSBSekiro)
+                {
+                    itemLots[0] = serializedObject.FindProperty("ItemLotID").intValue;
+                    itemLots[1] = -1;
+                }
+
                 foreach (var lot in itemLots)
                 {
                     if (lot == -1)

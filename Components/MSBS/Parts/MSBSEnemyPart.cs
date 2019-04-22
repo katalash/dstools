@@ -23,7 +23,7 @@ public class MSBSEnemyPart : MSBSDummyEnemyPart
         part.Unk5 = Unk5.Serialize();
         part.ThinkParamID = ThinkParamID;
         part.NPCParamID = NPCParamID;
-        part.TalkParamID = TalkParamID;
+        part.UnkT10 = UnkT10;
         part.ChrManipulatorAllocationParameter = ChrManipulatorAllocationParameter;
         part.CharaInitID = CharaInitID;
         part.CollisionPartName = CollisionPartName;

@@ -85,6 +85,19 @@ class FlverUtilities
             }
             return asset;
         }
+        // Obj texture reference
+        else if (path.Contains(@"\obj\"))
+        {
+            var splits = path.Split('\\');
+            var objid = splits[splits.Length - 3];
+            var asset = AssetDatabase.LoadAssetAtPath<Texture2D>($@"Assets/{gamePath}/Obj/{objid}/{Path.GetFileNameWithoutExtension(path)}.dds");
+            if (asset == null)
+            {
+                // Attempt to load shared chr textures
+                asset = AssetDatabase.LoadAssetAtPath<Texture2D>($@"Assets/{gamePath}/Obj/sharedTextures/{Path.GetFileNameWithoutExtension(path)}.dds");
+            }
+            return asset;
+        }
         // Parts texture reference
         else if (path.Contains(@"\parts\"))
         {
@@ -324,10 +337,21 @@ class FlverUtilities
                 {
                     isSkinned = true;
                     var weight = new BoneWeight();
-                    weight.boneIndex0 = m.BoneIndices[v.BoneIndices[0]];
-                    weight.boneIndex1 = m.BoneIndices[v.BoneIndices[1]];
-                    weight.boneIndex2 = m.BoneIndices[v.BoneIndices[2]];
-                    weight.boneIndex3 = m.BoneIndices[v.BoneIndices[3]];
+
+                    if (m.Unk1 == 0)
+                    {
+                        weight.boneIndex0 = v.BoneIndices[0];
+                        weight.boneIndex1 = v.BoneIndices[1];
+                        weight.boneIndex2 = v.BoneIndices[2];
+                        weight.boneIndex3 = v.BoneIndices[3];
+                    }
+                    else
+                    {
+                        weight.boneIndex0 = m.BoneIndices[v.BoneIndices[0]];
+                        weight.boneIndex1 = m.BoneIndices[v.BoneIndices[1]];
+                        weight.boneIndex2 = m.BoneIndices[v.BoneIndices[2]];
+                        weight.boneIndex3 = m.BoneIndices[v.BoneIndices[3]];
+                    }
                     if (v.BoneWeights[0] < 0.0)
                     {
                         weight.weight0 = 1.0f;

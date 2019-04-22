@@ -9,7 +9,7 @@ public class MSBSDummyEnemyPart : MSBSPart
     public MSBSUnkStruct5Part Unk5;
     public int ThinkParamID;
     public int NPCParamID;
-    public int TalkParamID;
+    public int UnkT10;
     public short ChrManipulatorAllocationParameter;
     public int CharaInitID;
     public string CollisionPartName;
@@ -32,7 +32,7 @@ public class MSBSDummyEnemyPart : MSBSPart
         Unk5.setStruct(part.Unk5);
         ThinkParamID = part.ThinkParamID;
         NPCParamID = part.NPCParamID;
-        TalkParamID = part.TalkParamID;
+        UnkT10 = part.UnkT10;
         ChrManipulatorAllocationParameter = part.ChrManipulatorAllocationParameter;
         CharaInitID = part.CharaInitID;
         CollisionPartName = part.CollisionPartName;
@@ -56,7 +56,7 @@ public class MSBSDummyEnemyPart : MSBSPart
         part.Unk5 = Unk5.Serialize();
         part.ThinkParamID = ThinkParamID;
         part.NPCParamID = NPCParamID;
-        part.TalkParamID = TalkParamID;
+        part.UnkT10 = UnkT10;
         part.ChrManipulatorAllocationParameter = ChrManipulatorAllocationParameter;
         part.CharaInitID = CharaInitID;
         part.CollisionPartName = CollisionPartName;
