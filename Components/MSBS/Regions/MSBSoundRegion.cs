@@ -45,7 +45,10 @@ public class MSBSSoundRegion : MSBSRegion
         for (int i = 0; i < 16; i++)
         {
             if (i >= ChildRegionNames.Length)
-                break;
+            {
+                region.ChildRegionNames[i] = null;
+                continue;
+            }
             region.ChildRegionNames[i] = (ChildRegionNames[i] == "") ? null : ChildRegionNames[i];
         }
         region.UnkT48 = UnkT48;

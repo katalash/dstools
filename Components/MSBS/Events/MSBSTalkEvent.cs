@@ -33,13 +33,19 @@ public class MSBSTalkEvent : MSBSEvent
         for (int i = 0; i < 8; i++)
         {
             if (i >= EnemyNames.Length)
-                break;
+            {
+                evt.EnemyNames[i] = null;
+                continue;
+            }
             evt.EnemyNames[i] = (EnemyNames[i] == "") ? null : EnemyNames[i];
         }
         for (int i = 0; i < 8; i++)
         {
             if (i >= TalkIDs.Length)
-                break;
+            {
+                evt.TalkIDs[i] = -1;
+                continue;
+            }
             evt.TalkIDs[i] = TalkIDs[i];
         }
         evt.UnkT44 = UnkT44;

@@ -56,7 +56,7 @@ class BTLDS3Light : MonoBehaviour
     /// <summary>
     /// Unknown.
     /// </summary>
-    public bool Unk27;
+    public bool CastsShadows;
 
     /// <summary>
     /// Intensity of specular lighting.
@@ -196,7 +196,7 @@ class BTLDS3Light : MonoBehaviour
         SpecularColor = new Color((float)l.SpecularColor.R / 255.0f, (float)l.SpecularColor.G / 255.0f, (float)l.SpecularColor.B / 255.0f, (float)l.SpecularColor.A / 255.0f);
         SpecularPower = l.SpecularPower;
         ConeAngle = l.ConeAngle;
-        Unk27 = l.Unk27;
+        CastsShadows = l.Unk27;
         Unk30 = l.Unk30;
         Unk34 = l.Unk34;
         Rotation = new Vector3(l.Rotation.X * Mathf.Rad2Deg, l.Rotation.Y * Mathf.Rad2Deg, l.Rotation.Z * Mathf.Rad2Deg);
@@ -242,7 +242,7 @@ class BTLDS3Light : MonoBehaviour
         l.SpecularColor = System.Drawing.Color.FromArgb((byte)(SpecularColor.a * 255.0f), (byte)(SpecularColor.r * 255.0f), (byte)(SpecularColor.g * 255.0f), (byte)(SpecularColor.b * 255.0f));
         l.SpecularPower = SpecularPower;
         l.ConeAngle = ConeAngle;
-        l.Unk27 = Unk27;
+        l.Unk27 = CastsShadows;
         l.Unk30 = Unk30;
         l.Unk34 = Unk34;
         l.Rotation = new System.Numerics.Vector3(l.Rotation.X * Mathf.Deg2Rad, l.Rotation.Y * Mathf.Deg2Rad, l.Rotation.Z * Mathf.Deg2Rad);

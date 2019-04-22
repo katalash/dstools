@@ -21,7 +21,10 @@ public class MSBSEvent21Event : MSBSEvent
         for (int i = 0; i < 32; i++)
         {
             if (i >= PartNames.Length)
-                break;
+            {
+                evt.Event21PartNames[i] = null;
+                continue;
+            }
             evt.Event21PartNames[i] = (PartNames[i] == "") ? null : PartNames[i];
         }
         return evt;

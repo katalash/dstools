@@ -79,7 +79,10 @@ public class MSBSGeneratorEvent : MSBSEvent
         for (int i = 0; i < 32; i++)
         {
             if (i >= SpawnPartNames.Length)
-                break;
+            {
+                evt.SpawnPartNames[i] = null;
+                continue;
+            }
             evt.SpawnPartNames[i] = (SpawnPartNames[i] == "") ? null : SpawnPartNames[i];
         }
         return evt;

@@ -4,6 +4,7 @@ using System.Linq;
 using System.IO;
 using UnityEngine;
 using UnityEditor;
+using UnityEngine.Experimental.Rendering.HDPipeline;
 using SoulsFormats;
 using MeowDSIO;
 using MeowDSIO.DataFiles;
@@ -3395,17 +3396,27 @@ public class DarkSoulsTools : EditorWindow
         foreach (var light in btlfile.Lights)
         {
             GameObject obj = new GameObject(light.Name);
+            BTLDS3Light l = null;
             if (type == GameType.DarkSoulsIII || type == GameType.Bloodborne)
             {
                 obj.AddComponent<BTLDS3Light>();
                 obj.GetComponent<BTLDS3Light>().SetFromLight(light);
+                l = obj.GetComponent<BTLDS3Light>();
             }
             else if (type == GameType.Sekiro)
             {
                 obj.AddComponent<BTLSekiroLight>();
                 obj.GetComponent<BTLSekiroLight>().SetFromLight(light);
+                l = obj.GetComponent<BTLSekiroLight>();
             }
             obj.AddComponent<Light>();
+            var lcomp = obj.GetComponent<Light>();
+            var hdlcomp = obj.AddComponent<HDAdditionalLightData>();
+            lcomp.color = l.DiffuseColor;
+            lcomp.range = l.Radius;
+            hdlcomp.lightUnit = LightUnit.Lux;
+            hdlcomp.luxAtDistance = l.Radius;
+            hdlcomp.intensity = l.DiffusePower;
             obj.transform.parent = btlobject.transform;
             obj.transform.localPosition = new Vector3(light.Position.X, light.Position.Y, light.Position.Z);
         }

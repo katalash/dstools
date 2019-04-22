@@ -30,7 +30,10 @@ public class MSBSGroupTourEvent : MSBSEvent
         for (int i = 0; i < 32; i++)
         {
             if (i >= GroupPartNames.Length)
-                break;
+            {
+                evt.GroupPartNames[i] = null;
+                continue;
+            }
             evt.GroupPartNames[i] = (GroupPartNames[i] == "") ? null : GroupPartNames[i];
         }
         return evt;

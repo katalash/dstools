@@ -244,7 +244,10 @@ public abstract class MSB3Part : MonoBehaviour
         for (int i = 0; i < 8; i++)
         {
             if (i >= EventEntityGroups.Length)
-                break;
+            {
+                part.EventEntityGroups[i] = -1;
+                continue;
+            }
             part.EventEntityGroups[i] = EventEntityGroups[i];
         }
     }

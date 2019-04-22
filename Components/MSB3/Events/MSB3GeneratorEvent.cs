@@ -85,13 +85,19 @@ public class MSB3GeneratorEvent : MSB3Event
         for (int i = 0; i < 8; i++)
         {
             if (i >= SpawnPointNames.Length)
-                break;
+            {
+                evt.SpawnPointNames[i] = null;
+                continue;
+            }
             evt.SpawnPointNames[i] = (SpawnPointNames[i] == "") ? null : SpawnPointNames[i];
         }
         for (int i = 0; i < 32; i++)
         {
             if (i >= SpawnPartNames.Length)
-                break;
+            {
+                evt.SpawnPartNames[i] = null;
+                continue;
+            }
             evt.SpawnPartNames[i] = (SpawnPartNames[i] == "") ? null : SpawnPartNames[i];
         }
         evt.SessionCondition = SessionCondition;

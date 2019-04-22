@@ -58,7 +58,10 @@ public class MSBSWalkRouteEvent : MSBSEvent
         for (int i = 0; i < 32; i++)
         {
             if (i >= WalkRegionNames.Length)
-                break;
+            {
+                evt.WalkRegionNames[i] = null;
+                continue;
+            }
             evt.WalkRegionNames[i] = (WalkRegionNames[i] == "") ? null : WalkRegionNames[i];
         }
         evt.WREntries[0].RegionName = RegionName1;

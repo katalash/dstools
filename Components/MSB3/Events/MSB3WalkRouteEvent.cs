@@ -31,7 +31,10 @@ public class MSB3WalkRouteEvent : MSB3Event
         for (int i = 0; i < 32; i++)
         {
             if (i >= WalkPointNames.Length)
-                break;
+            {
+                evt.WalkPointNames[i] = null;
+                continue;
+            }
             evt.WalkPointNames[i] = (WalkPointNames[i] == "") ? null : WalkPointNames[i];
         }
         return evt;
