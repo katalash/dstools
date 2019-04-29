@@ -245,7 +245,7 @@ class BTLDS3Light : MonoBehaviour
         l.Unk27 = CastsShadows;
         l.Unk30 = Unk30;
         l.Unk34 = Unk34;
-        l.Rotation = new System.Numerics.Vector3(l.Rotation.X * Mathf.Deg2Rad, l.Rotation.Y * Mathf.Deg2Rad, l.Rotation.Z * Mathf.Deg2Rad);
+        l.Rotation = new System.Numerics.Vector3(Rotation.x * Mathf.Deg2Rad, Rotation.y * Mathf.Deg2Rad, Rotation.z * Mathf.Deg2Rad);
         l.Unk50 = Unk50;
         l.Unk54 = Unk54;
         l.Radius = Radius;

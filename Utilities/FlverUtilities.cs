@@ -593,7 +593,7 @@ class FlverUtilities
             return;
         }
         var assetPath = AssetDatabase.GetAssetPath(Selection.activeObject);
-        if (!assetPath.EndsWith(".fbx"))
+        if (!assetPath.ToUpper().EndsWith(".FBX"))
         {
             EditorUtility.DisplayDialog("Invalid asset", "Please select an fbx asset", "Ok");
         }
@@ -626,9 +626,13 @@ class FlverUtilities
         }
 
         // Load the source c0000 and target flvers
-        var sourceBnd = BND4.Read($@"{DarkSoulsTools.Interroot}\chr\c0000.chrbnd.dcx");
+        /*var sourceBnd = BND4.Read($@"{DarkSoulsTools.Interroot}\chr\c0000.chrbnd.dcx");
         var sourceFlver = FLVER.Read(sourceBnd.Files.Where(x => x.Name.ToUpper().EndsWith(".FLVER")).First().Bytes);
         var targetBnd = BND4.Read($@"{DarkSoulsTools.Interroot}\parts\lg_m_9000.partsbnd.dcx");
+        var targetFlver = FLVER.Read(targetBnd.Files.Where(x => x.Name.ToUpper().EndsWith(".FLVER")).First().Bytes);*/
+        var sourceBnd = BND4.Read($@"{DarkSoulsTools.Interroot}\chr\c5020.chrbnd.dcx");
+        var sourceFlver = FLVER.Read(sourceBnd.Files.Where(x => x.Name.ToUpper().EndsWith(".FLVER")).First().Bytes);
+        var targetBnd = BND4.Read($@"{DarkSoulsTools.Interroot}\chr\c5020.chrbnd.dcx");
         var targetFlver = FLVER.Read(targetBnd.Files.Where(x => x.Name.ToUpper().EndsWith(".FLVER")).First().Bytes);
 
         // Build a bone reindexing table
@@ -651,154 +655,185 @@ class FlverUtilities
             throw new Exception("Could not find Bones group for this FBX");
         }
 
-        // Get the mesh object (this is hacky for now)
-        var meshObj = meshesRoot.transform.GetChild(0).gameObject;
-
-        // Get the skin and mesh
-        var meshSkin = meshObj.GetComponent<SkinnedMeshRenderer>();
-        var bones = meshSkin.bones;
-        var mesh = meshSkin.sharedMesh;
-
-        // Remap table to recover source bone indices
-        var boneRemap = new int[bones.Length];
-        for (int i = 0; i < bones.Length; i++)
-        {
-            var name = bones[i].gameObject.name;
-            if (SourceBoneTable.ContainsKey(name))
-            {
-                boneRemap[i] = SourceBoneTable[name];
-            }
-            else
-            {
-                boneRemap[i] = 0;
-            }
-        }
-
-        // Build the submesh's bone table
-        HashSet<int> usedBones = new HashSet<int>();
-        foreach (var weight in mesh.boneWeights)
-        {
-            if (weight.boneIndex0 >= 0)
-            {
-                usedBones.Add(boneRemap[weight.boneIndex0]);
-            }
-            if (weight.boneIndex1 >= 0)
-            {
-                usedBones.Add(boneRemap[weight.boneIndex1]);
-            }
-            if (weight.boneIndex2 >= 0)
-            {
-                usedBones.Add(boneRemap[weight.boneIndex2]);
-            }
-            if (weight.boneIndex3 >= 0)
-            {
-                usedBones.Add(boneRemap[weight.boneIndex3]);
-            }
-        }
-
-        // Bad hack
-        for (int i = 0; i < usedBones.Max(); i++)
-        {
-            usedBones.Add(i);
-        }
-
-        var submeshBones = usedBones.OrderBy(x => x).ToArray();
-        var meshToSubmeshBone = new Dictionary<int, int>();
-        for (int i = 0; i < submeshBones.Count(); i++)
-        {
-            meshToSubmeshBone.Add(submeshBones[i], i);
-        }
-
-        // Finally port the mesh to the target
-        sourceFlver.Bones.Add(targetFlver.Bones[29]);
+        //sourceFlver.Bones.Add(targetFlver.Bones[29]);
+        var templateMesh = targetFlver.Meshes.First();
         targetFlver.Bones = sourceFlver.Bones;
-        targetFlver.Meshes = new List<FLVER.Mesh> { targetFlver.Meshes.First() };
+        targetFlver.Meshes.Clear();
         targetFlver.SekiroUnk = sourceFlver.SekiroUnk;
-        var fmesh = targetFlver.Meshes[0];
-        fmesh.BoneIndices = submeshBones.ToList();
-        var min = mesh.bounds.min;
-        var max = mesh.bounds.max;
-        //fmesh.BoundingBoxMax = sourceFlver.Header.BoundingBoxMax;
-        //fmesh.BoundingBoxMin = new System.Numerics.Vector3(max.x*100, max.y*100, max.z*100);
-        //fmesh.BoundingBoxMin = sourceFlver.Header.BoundingBoxMin;
-        //fmesh.MaterialIndex = 0;
-        //targetFlver.Header.BoundingBoxMin = sourceFlver.Header.BoundingBoxMin;
-        //targetFlver.Header.BoundingBoxMax = sourceFlver.Header.BoundingBoxMax;
 
-        /*foreach (var b in usedBones)
+        for (var meshIdx = 0; meshIdx < meshesRoot.transform.childCount; meshIdx++)
         {
-            targetFlver.Bones[b].Unk3C = 8;
-        }*/
-        foreach (var b in targetFlver.Bones)
-        {
-            if (b.Unk3C == 2)
-            {
-                b.Unk3C = 8;
-            }
-        }
-        targetFlver.Bones[140].Unk3C = 4;
-        targetFlver.Bones[140].Name = "LG_M_9000";
+            // Get the mesh object
+            var meshObj = meshesRoot.transform.GetChild(meshIdx).gameObject;
 
-        // Port vertices
-        fmesh.Vertices.Clear();
-        for (int i = 0; i < mesh.vertexCount; i++)
-        {
-            var vert = new FLVER.Vertex();
-            var pos = mesh.vertices[i];
-            vert.Positions.Add(new System.Numerics.Vector3(pos.x, pos.y, pos.z));
-            var normal = mesh.normals[i];
-            vert.Normals.Add(new System.Numerics.Vector4(-normal.x, -normal.y, -normal.z, -1.0f));
-            var tangent = mesh.tangents[i];
-            vert.Tangents.Add(new System.Numerics.Vector4(-tangent.x, -tangent.y, -tangent.z, -tangent.w));
-            var color = new Color32(0xFF, 0xFF, 0xFF, 0xFF); //mesh.colors32[i];
-            vert.Colors.Add(new FLVER.Vertex.Color(color.a, color.r, color.g, color.b));
-            vert.UVs.Add(new System.Numerics.Vector3(0.0f, 0.0f, 0.0f));
-            vert.UVs.Add(new System.Numerics.Vector3(0.0f, 0.0f, 0.0f));
-            vert.BoneIndices = new int[4];
-            vert.BoneWeights = new float[4];
-            var bone = mesh.boneWeights[i];
-            vert.BoneWeights[0] = bone.weight0;
-            vert.BoneWeights[1] = bone.weight1;
-            vert.BoneWeights[2] = bone.weight2;
-            vert.BoneWeights[3] = bone.weight3;
-            vert.BoneIndices[0] = meshToSubmeshBone[boneRemap[bone.boneIndex0]];
-            vert.BoneIndices[1] = meshToSubmeshBone[boneRemap[bone.boneIndex1]];
-            vert.BoneIndices[2] = meshToSubmeshBone[boneRemap[bone.boneIndex2]];
-            vert.BoneIndices[3] = meshToSubmeshBone[boneRemap[bone.boneIndex3]];
-            for (int b = 0; b < 3; b++)
+            // Get the skin and mesh
+            var meshSkin = meshObj.GetComponent<SkinnedMeshRenderer>();
+            var bones = meshSkin.bones;
+            var mesh = meshSkin.sharedMesh;
+
+            // Remap table to recover source bone indices
+            var boneRemap = new int[bones.Length];
+            for (int i = 0; i < bones.Length; i++)
             {
-                if (vert.BoneIndices[b] == -1)
+                var name = bones[i].gameObject.name;
+                if (SourceBoneTable.ContainsKey(name))
                 {
-                    vert.BoneIndices[b] = 0;
+                    boneRemap[i] = SourceBoneTable[name];
+                }
+                else
+                {
+                    boneRemap[i] = 0;
                 }
             }
 
-            fmesh.Vertices.Add(vert);
-        }
+            // Build the submesh's bone table
+            HashSet<int> usedBones = new HashSet<int>();
+            foreach (var weight in mesh.boneWeights)
+            {
+                if (weight.boneIndex0 >= 0)
+                {
+                    usedBones.Add(boneRemap[weight.boneIndex0]);
+                }
+                if (weight.boneIndex1 >= 0)
+                {
+                    usedBones.Add(boneRemap[weight.boneIndex1]);
+                }
+                if (weight.boneIndex2 >= 0)
+                {
+                    usedBones.Add(boneRemap[weight.boneIndex2]);
+                }
+                if (weight.boneIndex3 >= 0)
+                {
+                    usedBones.Add(boneRemap[weight.boneIndex3]);
+                }
+            }
 
-        // Port faceset
-        fmesh.FaceSets = new List<FLVER.FaceSet> { fmesh.FaceSets.First() };
-        var fset = fmesh.FaceSets[0];
-        var tris = new List<uint>();
-        for (int i = 0; i < mesh.triangles.Count(); i++)
-        {
-            tris.Add((uint)mesh.triangles[i]);
-        }
-        fset.Vertices = tris.ToArray();
-        fset.CullBackfaces = false;
-        fset.TriangleStrip = false;
+            // Bad hack
+            for (int i = 0; i < targetFlver.Bones.Count(); i++)
+            {
+                usedBones.Add(i);
+            }
 
-        var fset2 = new FLVER.FaceSet(FLVER.FaceSet.FSFlags.LodLevel1, false, false, fset.Unk06, fset.Unk07, fset.IndexSize, fset.Vertices);
-        var fset3 = new FLVER.FaceSet(FLVER.FaceSet.FSFlags.LodLevel2, false, false, fset.Unk06, fset.Unk07, fset.IndexSize, fset.Vertices);
-        var fset4 = new FLVER.FaceSet(FLVER.FaceSet.FSFlags.Unk80000000, false, false, fset.Unk06, fset.Unk07, fset.IndexSize, fset.Vertices);
-        fmesh.FaceSets.Add(fset2);
-        fmesh.FaceSets.Add(fset3);
-        fmesh.FaceSets.Add(fset4);
+            var submeshBones = usedBones.OrderBy(x => x).ToArray();
+            var meshToSubmeshBone = new Dictionary<int, int>();
+            for (int i = 0; i < submeshBones.Count(); i++)
+            {
+                meshToSubmeshBone.Add(submeshBones[i], i);
+            }
+
+            // Finally port the mesh to the target
+            //var fmesh = targetFlver.Meshes[0];
+            var fmesh = new FLVER.Mesh(templateMesh);
+            fmesh.BoneIndices = submeshBones.ToList();
+            var min = mesh.bounds.min;
+            var max = mesh.bounds.max;
+            //fmesh.BoundingBoxMax = sourceFlver.Header.BoundingBoxMax;
+            //fmesh.BoundingBoxMin = new System.Numerics.Vector3(max.x*100, max.y*100, max.z*100);
+            //fmesh.BoundingBoxMin = sourceFlver.Header.BoundingBoxMin;
+            //fmesh.MaterialIndex = 0;
+            //targetFlver.Header.BoundingBoxMin = sourceFlver.Header.BoundingBoxMin;
+            //targetFlver.Header.BoundingBoxMax = sourceFlver.Header.BoundingBoxMax;
+
+            /*foreach (var b in usedBones)
+            {
+                targetFlver.Bones[b].Unk3C = 8;
+            }*/
+            foreach (var b in targetFlver.Bones)
+            {
+                if (b.Unk3C == 2)
+                {
+                    b.Unk3C = 8;
+                }
+            }
+            //targetFlver.Bones[140].Unk3C = 4;
+            //targetFlver.Bones[140].Name = "LG_M_9000";
+
+            // Port vertices
+            fmesh.Vertices.Clear();
+            fmesh.Vertices.Capacity = mesh.vertexCount;
+
+            var mverts = mesh.vertices;
+            var mnorms = mesh.normals;
+            var mtangs = mesh.tangents;
+            var muvs = mesh.uv;
+            var mbones = mesh.boneWeights;
+
+            for (int i = 0; i < mesh.vertexCount; i++)
+            {
+                var vert = new FLVER.Vertex();
+                var pos = mverts[i];
+                vert.Positions.Add(new System.Numerics.Vector3(pos.x, pos.y, pos.z));
+                var normal = mnorms[i];
+                vert.Normals.Add(new System.Numerics.Vector4(-normal.x, -normal.y, -normal.z, -1.0f));
+                var tangent = mtangs[i];
+                vert.Tangents.Add(new System.Numerics.Vector4(-tangent.x, -tangent.y, -tangent.z, -tangent.w));
+                var color = new Color32(0xFF, 0xFF, 0xFF, 0xFF); //mesh.colors32[i];
+                vert.Colors.Add(new FLVER.Vertex.Color(color.a, color.r, color.g, color.b));
+                /*vert.UVs.Add(new System.Numerics.Vector3(0.0f, 0.0f, 0.0f));
+                vert.UVs.Add(new System.Numerics.Vector3(0.0f, 0.0f, 0.0f));
+                vert.UVs.Add(new System.Numerics.Vector3(0.0f, 0.0f, 0.0f));
+                vert.UVs.Add(new System.Numerics.Vector3(0.0f, 0.0f, 0.0f));*/
+                var uv = muvs[i];
+                vert.UVs.Add(new System.Numerics.Vector3(uv.x, 1.0f - uv.y, 0.0f));
+                vert.UVs.Add(new System.Numerics.Vector3(uv.x, 1.0f - uv.y, 0.0f));
+                vert.UVs.Add(new System.Numerics.Vector3(uv.x, 1.0f - uv.y, 0.0f));
+                vert.UVs.Add(new System.Numerics.Vector3(uv.x, 1.0f - uv.y, 0.0f));
+                vert.BoneIndices = new int[4];
+                vert.BoneWeights = new float[4];
+                var bone = mbones[i];
+                vert.BoneWeights[0] = bone.weight0;
+                vert.BoneWeights[1] = bone.weight1;
+                vert.BoneWeights[2] = bone.weight2;
+                vert.BoneWeights[3] = bone.weight3;
+                vert.BoneIndices[0] = meshToSubmeshBone[boneRemap[bone.boneIndex0]];
+                vert.BoneIndices[1] = meshToSubmeshBone[boneRemap[bone.boneIndex1]];
+                vert.BoneIndices[2] = meshToSubmeshBone[boneRemap[bone.boneIndex2]];
+                vert.BoneIndices[3] = meshToSubmeshBone[boneRemap[bone.boneIndex3]];
+                for (int b = 0; b < 3; b++)
+                {
+                    if (vert.BoneIndices[b] == -1)
+                    {
+                        vert.BoneIndices[b] = 0;
+                    }
+                }
+
+                fmesh.Vertices.Add(vert);
+            }
+
+            // Port faceset
+            var fset = new FLVER.FaceSet(fmesh.FaceSets[0]);
+            var tris = new uint[mesh.triangles.Count()];
+            var mtris = mesh.triangles;
+            for (int i = 0; i < tris.Count(); i++)
+            {
+                tris[i] = ((uint)mtris[i]);
+            }
+            fset.Vertices = tris;
+            fset.CullBackfaces = false;
+            fset.TriangleStrip = false;
+
+            fmesh.FaceSets.Clear();
+            var fset2 = new FLVER.FaceSet(FLVER.FaceSet.FSFlags.LodLevel1, false, false, fset.Unk06, fset.Unk07, fset.IndexSize, fset.Vertices);
+            var fset3 = new FLVER.FaceSet(FLVER.FaceSet.FSFlags.LodLevel2, false, false, fset.Unk06, fset.Unk07, fset.IndexSize, fset.Vertices);
+            var fset4 = new FLVER.FaceSet(FLVER.FaceSet.FSFlags.Unk80000000, false, false, fset.Unk06, fset.Unk07, fset.IndexSize, fset.Vertices);
+            fmesh.FaceSets.Add(fset);
+            fmesh.FaceSets.Add(fset2);
+            fmesh.FaceSets.Add(fset3);
+            fmesh.FaceSets.Add(fset4);
+
+            targetFlver.Materials[0].MTD = "M[A].mtd";
+            targetFlver.Materials[0].Textures[0].Type = "g_DiffuseTexture";
+            //targetFlver.Materials[0].Textures[0].Path = "c5010_BodyB_a.dds";
+
+            targetFlver.Meshes.Add(fmesh);
+            //targetFlver.BufferLayouts
+        }
 
         //targetFlver.Materials[0].MTD = $@"M[ARSN].mtd";
 
         // Finally save
         targetBnd.Files.Where(x => x.Name.ToUpper().EndsWith(".FLVER")).First().Bytes = targetFlver.Write();
-        targetBnd.Write($@"{DarkSoulsTools.ModProjectDirectory}\parts\lg_m_9000.partsbnd.dcx", DCX.Type.SekiroDFLT);
+        //targetBnd.Write($@"{DarkSoulsTools.ModProjectDirectory}\parts\lg_m_9000.partsbnd.dcx", DCX.Type.SekiroDFLT);
+        targetBnd.Write($@"{DarkSoulsTools.ModProjectDirectory}\chr\c5020.chrbnd.dcx", DCX.Type.SekiroDFLT);
     }
 }

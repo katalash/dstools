@@ -999,6 +999,26 @@ namespace SoulsFormats
                 Unk1 = 0;
             }
 
+            /// <summary>
+            /// Create Mesh as a clone of another one
+            /// </summary>
+            /// <param name="clone"></param>
+            public Mesh(Mesh clone)
+            {
+                Dynamic = clone.Dynamic;
+                MaterialIndex = clone.MaterialIndex;
+                DefaultBoneIndex = clone.DefaultBoneIndex;
+                BoneIndices = new List<int>(clone.BoneIndices);
+                FaceSets = new List<FaceSet>(clone.FaceSets);
+                VertexBuffers = new List<VertexBuffer>(clone.VertexBuffers);
+                Vertices = new List<Vertex>(clone.Vertices);
+                BoundingBoxMin = clone.BoundingBoxMin;
+                BoundingBoxMax = clone.BoundingBoxMax;
+                BoundingBoxUnk = clone.BoundingBoxUnk;
+                Unk0 = clone.Unk0;
+                Unk1 = clone.Unk1;
+            }
+
             internal Mesh(BinaryReaderEx br, int version)
             {
                 Dynamic = br.ReadBoolean();
@@ -1244,6 +1264,17 @@ namespace SoulsFormats
                 Unk07 = 0;
                 IndexSize = 16;
                 Vertices = null;
+            }
+
+            public FaceSet(FaceSet clone)
+            {
+                Flags = clone.Flags;
+                TriangleStrip = clone.TriangleStrip;
+                CullBackfaces = clone.TriangleStrip;
+                Unk06 = clone.Unk06;
+                Unk07 = clone.Unk07;
+                IndexSize = clone.IndexSize;
+                Vertices = clone.Vertices;
             }
 
             /// <summary>
