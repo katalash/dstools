@@ -100,6 +100,11 @@ class ItemLotParamUtils
 
     public static void ReloadParams()
     {
+        if (!File.Exists(ParamPath))
+        {
+            Debug.Log("Data0.bdt not found. This will make treasure editor have less functionality.");
+            return;
+        }
         BND4 paramBnd = SFUtil.DecryptDS3Regulation(DarkSoulsTools.GetOverridenPath(ParamPath));
         DS3Param = PARAM64.Read(paramBnd.Files.Find(x => Path.GetFileName(x.Name) == "ItemLotParam.param").Bytes);
         PARAM64.Layout layout = PARAM64.Layout.ReadXMLFile($@"{Application.dataPath.Replace('/', '\\')}\dstools\ParamLayouts\DS3\{DS3Param.ID}.xml");

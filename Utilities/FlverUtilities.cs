@@ -820,10 +820,18 @@ class FlverUtilities
             fmesh.FaceSets.Add(fset2);
             fmesh.FaceSets.Add(fset3);
             fmesh.FaceSets.Add(fset4);
+            fmesh.MaterialIndex = meshIdx;
 
-            targetFlver.Materials[0].MTD = "M[A].mtd";
+            targetFlver.Materials[0].MTD = "M[ARNS].mtd";
             targetFlver.Materials[0].Textures[0].Type = "g_DiffuseTexture";
-            //targetFlver.Materials[0].Textures[0].Path = "c5010_BodyB_a.dds";
+            targetFlver.Materials[0].Textures[0].Path = "c5020_shrek_a.dds";
+            targetFlver.Materials[0].Textures[1].Type = "g_BumpmapTexture";
+            targetFlver.Materials[0].Textures[1].Path = "c5020_shrek_n.dds";
+            targetFlver.Materials[1].MTD = "M[ARNS].mtd";
+            targetFlver.Materials[1].Textures[0].Type = "g_DiffuseTexture";
+            targetFlver.Materials[1].Textures[0].Path = "c5020_shrekshirt_a.dds";
+            targetFlver.Materials[1].Textures[1].Type = "g_BumpmapTexture";
+            targetFlver.Materials[1].Textures[1].Path = "c5020_shrekshirt_n.dds";
 
             targetFlver.Meshes.Add(fmesh);
             //targetFlver.BufferLayouts

@@ -1265,6 +1265,18 @@ public class DarkSoulsTools : EditorWindow
                     obj.layer = 12;
                     obj.transform.parent = Collisions.transform;
                 }
+                else
+                {
+                    GameObject obj = new GameObject(part.Name);
+                    obj.AddComponent<MSB3CollisionPart>();
+                    obj.GetComponent<MSB3CollisionPart>().SetPart(part);
+                    obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
+                    //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
+                    EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
+                    obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
+                    obj.layer = 12;
+                    obj.transform.parent = Collisions.transform;
+                }
             }
 
             GameObject ConnectCollisions = new GameObject("ConnectCollisions");
