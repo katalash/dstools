@@ -75,15 +75,15 @@ public class MSB1NPCPart : MSB1Part
     {
         var part = new MsbPartsNPC();
         _Serialize(part, parent);
-        part.HitName = CollisionName;
+        part.HitName = (CollisionName == "") ? null : CollisionName;
         part.ThinkParamID = ThinkParamID;
         part.NPCParamID = NPCParamID;
         part.TalkID = TalkID;
         part.CharaInitID = CharaInitID;
-        part.MovePoint1 = MovePoint1;
-        part.MovePoint2 = MovePoint2;
-        part.MovePoint3 = MovePoint3;
-        part.MovePoint4 = MovePoint4;
+        part.MovePoint1 = (MovePoint1 == "") ? null : MovePoint1;
+        part.MovePoint2 = (MovePoint2 == "") ? null : MovePoint2;
+        part.MovePoint3 = (MovePoint3 == "") ? null : MovePoint3;
+        part.MovePoint4 = (MovePoint4 == "") ? null : MovePoint4;
         part.SubUnk1 = Unk1;
         part.SubUnk2 = Unk2;
         part.SubUnk3 = Unk3;

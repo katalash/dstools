@@ -12,7 +12,7 @@ public class MSB1DummyObjectPart : MSB1ObjectPart
     {
         var part = new MsbPartsObjectDummy();
         _Serialize(part, parent);
-        part.PartName = CollisionName;
+        part.PartName = (CollisionName == "") ? null : CollisionName;
         part.SubUnk1 = Unk1;
         part.SubUnk2 = Unk2;
         part.SubUnk3 = Unk3;

@@ -217,7 +217,7 @@ namespace SoulsFormats
             /// <summary>
             /// Unknown; related to which parts do or don't appear in different ceremonies.
             /// </summary>
-            public int MapStudioLayer;
+            public uint MapStudioLayer;
 
             /// <summary>
             /// Unknown.
@@ -358,7 +358,7 @@ namespace SoulsFormats
                 Scale = br.ReadVector3();
 
                 OldDrawGroup1 = br.ReadUInt32(); // -1
-                MapStudioLayer = br.ReadInt32();
+                MapStudioLayer = br.ReadUInt32();
                 DrawGroups = br.ReadUInt32s(8);
                 DispGroups = br.ReadUInt32s(8);
                 BackreadGroups = br.ReadUInt32s(8);
@@ -431,7 +431,7 @@ namespace SoulsFormats
                 bw.WriteVector3(Scale);
 
                 bw.WriteUInt32(OldDrawGroup1);
-                bw.WriteInt32(MapStudioLayer);
+                bw.WriteUInt32(MapStudioLayer);
                 bw.WriteUInt32s(DrawGroups);
                 bw.WriteUInt32s(DispGroups);
                 bw.WriteUInt32s(BackreadGroups);

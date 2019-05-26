@@ -35,7 +35,7 @@ public abstract class MSB3Part : MonoBehaviour
     /// <summary>
     /// Unknown; related to which parts do or don't appear in different ceremonies.
     /// </summary>
-    public int MapStudioLayer;
+    public uint MapStudioLayer;
 
     /// <summary>
     /// Unknown.

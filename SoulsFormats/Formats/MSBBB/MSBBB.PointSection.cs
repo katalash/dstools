@@ -16,11 +16,41 @@ namespace SoulsFormats
             public List<Region> Regions;
 
             /// <summary>
+            /// The points in this section.
+            /// </summary>
+            public List<Region.Point> Points;
+
+            /// <summary>
+            /// The circles in this section.
+            /// </summary>
+            public List<Region.Circle> Circles;
+
+            /// <summary>
+            /// The spheres in this section.
+            /// </summary>
+            public List<Region.Sphere> Spheres;
+
+            /// <summary>
+            /// The cylinders in this section.
+            /// </summary>
+            public List<Region.Cylinder> Cylinders;
+
+            /// <summary>
+            /// The boxes in this section.
+            /// </summary>
+            public List<Region.Box> Boxes;
+
+            /// <summary>
             /// Creates a new PointSection with no regions.
             /// </summary>
             public PointSection(int unk1 = 3) : base(unk1)
             {
                 Regions = new List<Region>();
+                /*Points = new List<Region.Point>();
+                Circles = new List<Region.Circle>();
+                Spheres = new List<Region.Sphere>();
+                Cylinders = new List<Region.Cylinder>();
+                Boxes = new List<Region.Box>();*/
             }
 
             /// <summary>
@@ -28,6 +58,8 @@ namespace SoulsFormats
             /// </summary>
             public override List<Region> GetEntries()
             {
+                //return SFUtil.ConcatAll<Region>(
+                //    Points, Circles, Spheres, Cylinders, Boxes);
                 return Regions;
             }
 
@@ -39,26 +71,31 @@ namespace SoulsFormats
                 {
                     case RegionType.Point:
                         var point = new Region.Point(br);
+                        //Points.Add(point);
                         Regions.Add(point);
                         return point;
 
                     case RegionType.Circle:
                         var circle = new Region.Circle(br);
+                        //Circles.Add(circle);
                         Regions.Add(circle);
                         return circle;
 
                     case RegionType.Sphere:
                         var sphere = new Region.Sphere(br);
+                        //Spheres.Add(sphere);
                         Regions.Add(sphere);
                         return sphere;
 
                     case RegionType.Cylinder:
                         var cylinder = new Region.Cylinder(br);
+                        //Cylinders.Add(cylinder);
                         Regions.Add(cylinder);
                         return cylinder;
 
                     case RegionType.Box:
                         var box = new Region.Box(br);
+                        //Boxes.Add(box);
                         Regions.Add(box);
                         return box;
 
@@ -112,6 +149,11 @@ namespace SoulsFormats
             public override string Name { get; set; }
 
             /// <summary>
+            /// Whether this region has additional type data. The only region type where this actually varies is Sound.
+            /// </summary>
+            public bool HasTypeData;
+
+            /// <summary>
             /// The ID of this region.
             /// </summary>
             public int ID;
@@ -120,6 +162,11 @@ namespace SoulsFormats
             /// Unknown.
             /// </summary>
             public int Unk2, Unk3, Unk4;
+
+            /// <summary>
+            /// Not sure if this is exactly a drawgroup, but it's what makes messages not appear in dark Firelink.
+            /// </summary>
+            public uint DrawGroup;
 
             /// <summary>
             /// Center of the region.
@@ -131,33 +178,45 @@ namespace SoulsFormats
             /// </summary>
             public Vector3 Rotation;
 
-           /// <summary>
+            private int ActivationPartIndex;
+            /// <summary>
+            /// Region is inactive unless this part is drawn; null for always active.
+            /// </summary>
+            public string ActivationPartName;
+
+            /// <summary>
             /// An ID used to identify this region in event scripts.
             /// </summary>
             public int EventEntityID;
 
-            internal Region(int id, string name)
+            public Region(int id, string name, bool hasTypeData)
             {
                 ID = id;
                 Name = name;
                 Position = Vector3.Zero;
                 Rotation = Vector3.Zero;
+                ActivationPartName = null;
                 EventEntityID = -1;
                 Unk2 = 0;
                 Unk3 = 0;
                 Unk4 = 0;
+                DrawGroup = 0;
+                HasTypeData = hasTypeData;
             }
 
-            internal Region(Region clone)
+            public Region(Region clone)
             {
                 Name = clone.Name;
                 ID = clone.ID;
                 Position = clone.Position;
                 Rotation = clone.Rotation;
+                ActivationPartName = clone.ActivationPartName;
                 EventEntityID = clone.EventEntityID;
                 Unk2 = clone.Unk2;
                 Unk3 = clone.Unk3;
                 Unk4 = clone.Unk4;
+                DrawGroup = clone.DrawGroup;
+                HasTypeData = clone.HasTypeData;
             }
 
             internal Region(BinaryReaderEx br)
@@ -249,10 +308,12 @@ namespace SoulsFormats
 
             internal virtual void GetNames(MSBBB msb, Entries entries)
             {
+                ActivationPartName = GetName(entries.Parts, ActivationPartIndex);
             }
 
             internal virtual void GetIndices(MSBBB msb, Entries entries)
             {
+                ActivationPartIndex = GetIndex(entries.Parts, ActivationPartName);
             }
 
             /// <summary>
@@ -268,6 +329,8 @@ namespace SoulsFormats
                 internal override RegionType Type => RegionType.Point;
 
                 internal Point(BinaryReaderEx br) : base(br) { }
+
+                public Point(Point clone) : base(clone) { }
 
                 internal override void ReadSpecific(BinaryReaderEx br) { }
 
@@ -287,6 +350,11 @@ namespace SoulsFormats
                 public float Radius;
 
                 internal Circle(BinaryReaderEx br) : base(br) { }
+
+                public Circle(Circle clone) : base(clone)
+                {
+                    Radius = clone.Radius;
+                }
 
                 internal override void ReadSpecific(BinaryReaderEx br)
                 {
@@ -310,6 +378,11 @@ namespace SoulsFormats
                 public float Radius;
 
                 internal Sphere(BinaryReaderEx br) : base(br) { }
+
+                public Sphere(Sphere clone) : base(clone)
+                {
+                    Radius = clone.Radius;
+                }
 
                 internal override void ReadSpecific(BinaryReaderEx br)
                 {
@@ -338,6 +411,12 @@ namespace SoulsFormats
                 public float Height;
 
                 internal Cylinder(BinaryReaderEx br) : base(br) { }
+
+                public Cylinder(Cylinder clone) : base(clone)
+                {
+                    Radius = clone.Radius;
+                    Height = clone.Height;
+                }
 
                 internal override void ReadSpecific(BinaryReaderEx br)
                 {
@@ -373,6 +452,13 @@ namespace SoulsFormats
                 public float Height;
 
                 internal Box(BinaryReaderEx br) : base(br) { }
+
+                public Box(Box clone) : base(clone)
+                {
+                    Length = clone.Length;
+                    Width = clone.Width;
+                    Height = clone.Height;
+                }
 
                 internal override void ReadSpecific(BinaryReaderEx br)
                 {

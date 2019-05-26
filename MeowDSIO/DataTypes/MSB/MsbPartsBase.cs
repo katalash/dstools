@@ -103,15 +103,15 @@ namespace MeowDSIO.DataTypes.MSB
         public float ScaleY { get; set; } = 0;
         public float ScaleZ { get; set; } = 0;
 
-        public int DrawGroup1 { get; set; } = 0;
-        public int DrawGroup2 { get; set; } = 0;
-        public int DrawGroup3 { get; set; } = 0;
-        public int DrawGroup4 { get; set; } = 0;
+        public uint DrawGroup1 { get; set; } = 0;
+        public uint DrawGroup2 { get; set; } = 0;
+        public uint DrawGroup3 { get; set; } = 0;
+        public uint DrawGroup4 { get; set; } = 0;
 
-        public int DispGroup1 { get; set; } = 0;
-        public int DispGroup2 { get; set; } = 0;
-        public int DispGroup3 { get; set; } = 0;
-        public int DispGroup4 { get; set; } = 0;
+        public uint DispGroup1 { get; set; } = 0;
+        public uint DispGroup2 { get; set; } = 0;
+        public uint DispGroup3 { get; set; } = 0;
+        public uint DispGroup4 { get; set; } = 0;
 
         internal int BASE_CONST_1 { get; set; } = 0;
 
@@ -170,15 +170,15 @@ namespace MeowDSIO.DataTypes.MSB
             ScaleY = bin.ReadSingle();
             ScaleZ = bin.ReadSingle();
 
-            DrawGroup1 = bin.ReadInt32();
-            DrawGroup2 = bin.ReadInt32();
-            DrawGroup3 = bin.ReadInt32();
-            DrawGroup4 = bin.ReadInt32();
+            DrawGroup1 = bin.ReadUInt32();
+            DrawGroup2 = bin.ReadUInt32();
+            DrawGroup3 = bin.ReadUInt32();
+            DrawGroup4 = bin.ReadUInt32();
 
-            DispGroup1 = bin.ReadInt32();
-            DispGroup2 = bin.ReadInt32();
-            DispGroup3 = bin.ReadInt32();
-            DispGroup4 = bin.ReadInt32();
+            DispGroup1 = bin.ReadUInt32();
+            DispGroup2 = bin.ReadUInt32();
+            DispGroup3 = bin.ReadUInt32();
+            DispGroup4 = bin.ReadUInt32();
 
             int baseDataOffset = bin.ReadInt32();
             int subtypeDataOffset = bin.ReadInt32();

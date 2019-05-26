@@ -16,6 +16,7 @@ public abstract class MSBPartEditorBase : Editor
 {
     static bool ShowDefaultInspector = true;
     static bool ShowTreasures = true;
+    static bool ShowRenderGroups = true;
     protected enum MSBType
     {
         MSB1,
@@ -94,6 +95,230 @@ public abstract class MSBPartEditorBase : Editor
             {
                 EditorGUILayout.LabelField($@"No attached treasures");
             }
+        }
+    }
+
+    internal bool[] UnpackBitfield(uint field)
+    {
+        bool[] ret = new bool[32];
+        for (int i = 0; i < 32; i++)
+        {
+            ret[i] = ((field >> i) & 0x1) == 1;
+        }
+        return ret;
+    }
+
+    internal uint PackBitfield(bool[] field)
+    {
+        uint ret = 0;
+        for (int i = 0; i < 32; i++)
+        {
+            if (field[i])
+            {
+                ret |= ((uint)1 << i);
+            }
+        }
+        return ret;
+    }
+
+    static void ApplyDrawgroups(uint[] drawgroups, MSBType type)
+    {
+        var mapPieces = GameObject.Find("MSBParts/MapPieces");
+        for (int i = 0; i < mapPieces.transform.childCount; i++)
+        {
+            var mapPiece = mapPieces.transform.GetChild(i).gameObject;
+
+            if (type == MSBType.MSB3)
+            {
+                var comp = mapPiece.GetComponent<MSB3MapPiecePart>();
+                bool visible = ((drawgroups[0] & comp.DrawGroup1) != 0) ||
+                               ((drawgroups[1] & comp.DrawGroup2) != 0) ||
+                               ((drawgroups[2] & comp.DrawGroup3) != 0) ||
+                               ((drawgroups[3] & comp.DrawGroup4) != 0) ||
+                               ((drawgroups[4] & comp.DrawGroup5) != 0) ||
+                               ((drawgroups[5] & comp.DrawGroup6) != 0) ||
+                               ((drawgroups[6] & comp.DrawGroup7) != 0) ||
+                               ((drawgroups[7] & comp.DrawGroup8) != 0);
+                mapPiece.SetActive(visible);
+            }
+            else if (type == MSBType.MSB1)
+            {
+                var comp = mapPiece.GetComponent<MSB1MapPiecePart>();
+                bool visible = ((drawgroups[0] & comp.DrawGroup1) != 0) ||
+                               ((drawgroups[1] & comp.DrawGroup2) != 0) ||
+                               ((drawgroups[2] & comp.DrawGroup3) != 0) ||
+                               ((drawgroups[3] & comp.DrawGroup4) != 0);
+                mapPiece.SetActive(visible);
+            }
+        }
+    }
+
+    static void ApplyDispgroups(uint[] dispgroups, MSBType type)
+    {
+        var mapPieces = GameObject.Find("MSBParts/MapPieces");
+        for (int i = 0; i < mapPieces.transform.childCount; i++)
+        {
+            var mapPiece = mapPieces.transform.GetChild(i).gameObject;
+
+            if (type == MSBType.MSB3)
+            {
+                var comp = mapPiece.GetComponent<MSB3MapPiecePart>();
+                bool visible = ((dispgroups[0] & comp.DispGroup1) != 0) ||
+                               ((dispgroups[1] & comp.DispGroup2) != 0) ||
+                               ((dispgroups[2] & comp.DispGroup3) != 0) ||
+                               ((dispgroups[3] & comp.DispGroup4) != 0) ||
+                               ((dispgroups[4] & comp.DispGroup5) != 0) ||
+                               ((dispgroups[5] & comp.DispGroup6) != 0) ||
+                               ((dispgroups[6] & comp.DispGroup7) != 0) ||
+                               ((dispgroups[7] & comp.DispGroup8) != 0);
+                mapPiece.SetActive(visible);
+            }
+            else if (type == MSBType.MSB1)
+            {
+                var comp = mapPiece.GetComponent<MSB1MapPiecePart>();
+                bool visible = ((dispgroups[0] & comp.DispGroup1) != 0) ||
+                               ((dispgroups[1] & comp.DispGroup2) != 0) ||
+                               ((dispgroups[2] & comp.DispGroup3) != 0) ||
+                               ((dispgroups[3] & comp.DispGroup4) != 0);
+                mapPiece.SetActive(visible);
+            }
+        }
+    }
+
+    protected void DrawRenderGroups()
+    {
+        ShowRenderGroups = EditorGUILayout.Foldout(ShowRenderGroups, "Rendering Groups");
+        if (ShowRenderGroups)
+        {
+            int groupCount = (_MSBType == MSBType.MSB1 ? 4 : 8);
+            bool[] mapstudiolayer;
+            var drawgroups = new bool[groupCount][];
+            var dispgroups = new bool[groupCount][];
+            var backreadgroups = new bool[groupCount][];
+
+            if (_MSBType == MSBType.MSB3 || _MSBType == MSBType.MSBSekiro)
+            {
+                var msl = (uint)serializedObject.FindProperty($@"MapStudioLayer").longValue;
+                mapstudiolayer = UnpackBitfield(msl);
+                EditorGUILayout.LabelField("Ceremony Layers:");
+                EditorGUILayout.BeginHorizontal();
+                for (int i = 0; i < 32; i++)
+                {
+                    if (i == 16)
+                    {
+                        EditorGUILayout.EndHorizontal();
+                        EditorGUILayout.BeginHorizontal();
+                    }
+                    mapstudiolayer[i] = GUILayout.Toggle(mapstudiolayer[i], "");
+                }
+                EditorGUILayout.EndHorizontal();
+
+                for (int g = 0; g < groupCount; g++)
+                {
+                    uint pack = PackBitfield(mapstudiolayer);
+                    serializedObject.FindProperty($@"MapStudioLayer").longValue = pack;
+                }
+            }
+
+            for (int g = 0; g < groupCount; g++)
+            {
+                var dg = (uint)serializedObject.FindProperty($@"DrawGroup{g+1}").longValue;
+                drawgroups[g] = UnpackBitfield(dg);
+            }
+            EditorGUILayout.LabelField("Draw Groups:");
+            for (int j = 0; j < groupCount; j++)
+            {
+                EditorGUILayout.BeginHorizontal();
+                for (int i = 0; i < 32; i++)
+                {
+                    if (i == 16)
+                    {
+                        EditorGUILayout.EndHorizontal();
+                        EditorGUILayout.BeginHorizontal();
+                    }
+                    drawgroups[j][i] = GUILayout.Toggle(drawgroups[j][i], "");
+                }
+                EditorGUILayout.EndHorizontal();
+            }
+            for (int g = 0; g < groupCount; g++)
+            {
+                uint pack = PackBitfield(drawgroups[g]);
+                serializedObject.FindProperty($@"DrawGroup{g+1}").longValue = pack;
+            }
+            if (GUILayout.Button("Show Visible objects"))
+            {
+                var dgs = new uint[groupCount];
+                for (int g = 0; g < groupCount; g++)
+                {
+                    dgs[g] = (uint)serializedObject.FindProperty($@"DrawGroup{g + 1}").longValue;
+                }
+                ApplyDrawgroups(dgs, _MSBType);
+            }
+
+            for (int g = 0; g < groupCount; g++)
+            {
+                var dg = (uint)serializedObject.FindProperty($@"DispGroup{g + 1}").longValue;
+                dispgroups[g] = UnpackBitfield(dg);
+            }
+            EditorGUILayout.LabelField("Display Groups:");
+            for (int j = 0; j < groupCount; j++)
+            {
+                EditorGUILayout.BeginHorizontal();
+                for (int i = 0; i < 32; i++)
+                {
+                    if (i == 16)
+                    {
+                        EditorGUILayout.EndHorizontal();
+                        EditorGUILayout.BeginHorizontal();
+                    }
+                    dispgroups[j][i] = GUILayout.Toggle(dispgroups[j][i], "");
+                }
+                EditorGUILayout.EndHorizontal();
+            }
+            for (int g = 0; g < groupCount; g++)
+            {
+                uint pack = PackBitfield(dispgroups[g]);
+                serializedObject.FindProperty($@"DispGroup{g + 1}").longValue = pack;
+            }
+            if (GUILayout.Button("Show Visible objects"))
+            {
+                var dgs = new uint[groupCount];
+                for (int g = 0; g < groupCount; g++)
+                {
+                    dgs[g] = (uint)serializedObject.FindProperty($@"DispGroup{g + 1}").longValue;
+                }
+                ApplyDispgroups(dgs, _MSBType);
+            }
+
+            if (_MSBType != MSBType.MSB1)
+            {
+                for (int g = 0; g < groupCount; g++)
+                {
+                    var dg = (uint)serializedObject.FindProperty($@"BackreadGroup{g + 1}").longValue;
+                    backreadgroups[g] = UnpackBitfield(dg);
+                }
+                EditorGUILayout.LabelField("Backread Groups:");
+                for (int j = 0; j < groupCount; j++)
+                {
+                    EditorGUILayout.BeginHorizontal();
+                    for (int i = 0; i < 32; i++)
+                    {
+                        if (i == 16)
+                        {
+                            EditorGUILayout.EndHorizontal();
+                            EditorGUILayout.BeginHorizontal();
+                        }
+                        backreadgroups[j][i] = GUILayout.Toggle(backreadgroups[j][i], "");
+                    }
+                    EditorGUILayout.EndHorizontal();
+                }
+                for (int g = 0; g < groupCount; g++)
+                {
+                    uint pack = PackBitfield(backreadgroups[g]);
+                    serializedObject.FindProperty($@"BackreadGroup{g + 1}").longValue = pack;
+                }
+            }
+            serializedObject.ApplyModifiedProperties();
         }
     }
 

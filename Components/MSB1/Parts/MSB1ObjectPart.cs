@@ -28,7 +28,7 @@ public class MSB1ObjectPart : MSB1Part
     {
         var part = new MsbPartsObject();
         _Serialize(part, parent);
-        part.PartName = CollisionName;
+        part.PartName = (CollisionName == "") ? null : CollisionName;
         part.SubUnk1 = Unk1;
         part.SubUnk2 = Unk2;
         part.SubUnk3 = Unk3;

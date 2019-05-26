@@ -630,9 +630,9 @@ class FlverUtilities
         var sourceFlver = FLVER.Read(sourceBnd.Files.Where(x => x.Name.ToUpper().EndsWith(".FLVER")).First().Bytes);
         var targetBnd = BND4.Read($@"{DarkSoulsTools.Interroot}\parts\lg_m_9000.partsbnd.dcx");
         var targetFlver = FLVER.Read(targetBnd.Files.Where(x => x.Name.ToUpper().EndsWith(".FLVER")).First().Bytes);*/
-        var sourceBnd = BND4.Read($@"{DarkSoulsTools.Interroot}\chr\c5020.chrbnd.dcx");
+        var sourceBnd = BND4.Read($@"{DarkSoulsTools.Interroot}\chr\c4033.chrbnd.dcx");
         var sourceFlver = FLVER.Read(sourceBnd.Files.Where(x => x.Name.ToUpper().EndsWith(".FLVER")).First().Bytes);
-        var targetBnd = BND4.Read($@"{DarkSoulsTools.Interroot}\chr\c5020.chrbnd.dcx");
+        var targetBnd = BND4.Read($@"{DarkSoulsTools.Interroot}\chr\c4033.chrbnd.dcx");
         var targetFlver = FLVER.Read(targetBnd.Files.Where(x => x.Name.ToUpper().EndsWith(".FLVER")).First().Bytes);
 
         // Build a bone reindexing table
@@ -659,7 +659,7 @@ class FlverUtilities
         var templateMesh = targetFlver.Meshes.First();
         targetFlver.Bones = sourceFlver.Bones;
         targetFlver.Meshes.Clear();
-        targetFlver.SekiroUnk = sourceFlver.SekiroUnk;
+        //targetFlver.SekiroUnk = sourceFlver.SekiroUnk;
 
         for (var meshIdx = 0; meshIdx < meshesRoot.transform.childCount; meshIdx++)
         {
@@ -724,7 +724,7 @@ class FlverUtilities
             // Finally port the mesh to the target
             //var fmesh = targetFlver.Meshes[0];
             var fmesh = new FLVER.Mesh(templateMesh);
-            fmesh.BoneIndices = submeshBones.ToList();
+            fmesh.BoneIndices = sourceFlver.Meshes[0].BoneIndices; //submeshBones.ToList();
             var min = mesh.bounds.min;
             var max = mesh.bounds.max;
             //fmesh.BoundingBoxMax = sourceFlver.Header.BoundingBoxMax;
@@ -767,7 +767,8 @@ class FlverUtilities
                 vert.Normals.Add(new System.Numerics.Vector4(-normal.x, -normal.y, -normal.z, -1.0f));
                 var tangent = mtangs[i];
                 vert.Tangents.Add(new System.Numerics.Vector4(-tangent.x, -tangent.y, -tangent.z, -tangent.w));
-                var color = new Color32(0xFF, 0xFF, 0xFF, 0xFF); //mesh.colors32[i];
+                vert.Tangents.Add(new System.Numerics.Vector4(-tangent.x, -tangent.y, -tangent.z, -tangent.w));
+                var color = new Color32(0xFF, 0xFF, 0x00, 0xFF); //mesh.colors32[i];
                 vert.Colors.Add(new FLVER.Vertex.Color(color.a, color.r, color.g, color.b));
                 /*vert.UVs.Add(new System.Numerics.Vector3(0.0f, 0.0f, 0.0f));
                 vert.UVs.Add(new System.Numerics.Vector3(0.0f, 0.0f, 0.0f));
@@ -781,6 +782,7 @@ class FlverUtilities
                 vert.BoneIndices = new int[4];
                 vert.BoneWeights = new float[4];
                 var bone = mbones[i];
+                //vert.Tangents.Add(new System.Numerics.Vector4(bone.weight0, bone.weight1, bone.weight2, bone.weight3));
                 vert.BoneWeights[0] = bone.weight0;
                 vert.BoneWeights[1] = bone.weight1;
                 vert.BoneWeights[2] = bone.weight2;
@@ -821,17 +823,7 @@ class FlverUtilities
             fmesh.FaceSets.Add(fset3);
             fmesh.FaceSets.Add(fset4);
             fmesh.MaterialIndex = meshIdx;
-
-            targetFlver.Materials[0].MTD = "M[ARNS].mtd";
-            targetFlver.Materials[0].Textures[0].Type = "g_DiffuseTexture";
-            targetFlver.Materials[0].Textures[0].Path = "c5020_shrek_a.dds";
-            targetFlver.Materials[0].Textures[1].Type = "g_BumpmapTexture";
-            targetFlver.Materials[0].Textures[1].Path = "c5020_shrek_n.dds";
-            targetFlver.Materials[1].MTD = "M[ARNS].mtd";
-            targetFlver.Materials[1].Textures[0].Type = "g_DiffuseTexture";
-            targetFlver.Materials[1].Textures[0].Path = "c5020_shrekshirt_a.dds";
-            targetFlver.Materials[1].Textures[1].Type = "g_BumpmapTexture";
-            targetFlver.Materials[1].Textures[1].Path = "c5020_shrekshirt_n.dds";
+            //fmesh.MaterialIndex = 0;
 
             targetFlver.Meshes.Add(fmesh);
             //targetFlver.BufferLayouts
@@ -839,9 +831,29 @@ class FlverUtilities
 
         //targetFlver.Materials[0].MTD = $@"M[ARSN].mtd";
 
+        targetFlver.Materials[0].MTD = "C[ARSN].mtd";
+        targetFlver.Materials[0].Textures[0].Type = "g_DiffuseTexture";
+        targetFlver.Materials[0].Textures[0].Path = "c5020_shrek_a.dds";
+        targetFlver.Materials[0].Textures[1].Path = "";
+        targetFlver.Materials[0].Textures[2].Path = "";
+        targetFlver.Materials[0].Textures[3].Type = "g_BumpmapTexture";
+        targetFlver.Materials[0].Textures[3].Path = "SYSTEX_DummyNormal.tga";
+        targetFlver.Materials.Add(new FLVER.Material("shrek2", "C[ARSN].mtd", targetFlver.Materials[0].Flags, targetFlver.Materials[0].GXBytes));
+        targetFlver.Materials[1].MTD = "C[ARSN].mtd";
+        targetFlver.Materials[1].Textures.Add(new FLVER.Texture(targetFlver.Materials[0].Textures[0]));
+        targetFlver.Materials[1].Textures.Add(new FLVER.Texture(targetFlver.Materials[0].Textures[1]));
+        targetFlver.Materials[1].Textures.Add(new FLVER.Texture(targetFlver.Materials[0].Textures[2]));
+        targetFlver.Materials[1].Textures.Add(new FLVER.Texture(targetFlver.Materials[0].Textures[3]));
+        targetFlver.Materials[1].Textures[0].Type = "g_DiffuseTexture";
+        targetFlver.Materials[1].Textures[0].Path = "c5020_shrekshirt_a.dds";
+        targetFlver.Materials[1].Textures[1].Path = "";
+        targetFlver.Materials[1].Textures[2].Path = "";
+        targetFlver.Materials[1].Textures[3].Type = "g_BumpmapTexture";
+        targetFlver.Materials[1].Textures[3].Path = "SYSTEX_DummyNormal.tga";
+
         // Finally save
         targetBnd.Files.Where(x => x.Name.ToUpper().EndsWith(".FLVER")).First().Bytes = targetFlver.Write();
         //targetBnd.Write($@"{DarkSoulsTools.ModProjectDirectory}\parts\lg_m_9000.partsbnd.dcx", DCX.Type.SekiroDFLT);
-        targetBnd.Write($@"{DarkSoulsTools.ModProjectDirectory}\chr\c5020.chrbnd.dcx", DCX.Type.SekiroDFLT);
+        targetBnd.Write($@"{DarkSoulsTools.ModProjectDirectory}\chr\c4033.chrbnd.dcx", DCX.Type.DarkSouls3);
     }
 }

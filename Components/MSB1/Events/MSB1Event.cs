@@ -48,8 +48,8 @@ public abstract class MSB1Event : MonoBehaviour
     {
         evt.Name = parent.name;
         evt.Index = ID;
-        evt.Part = PartName;
-        evt.Region = PointName;
+        evt.Part = (PartName == "") ? null : PartName;
+        evt.Region = (PointName == "") ? null : PointName;
         evt.EntityID = EventEntityID;
     }
 }

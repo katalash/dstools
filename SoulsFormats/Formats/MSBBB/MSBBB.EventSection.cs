@@ -64,9 +64,9 @@ namespace SoulsFormats
             public List<Event.Environment> Environments;
 
             /// <summary>
-            /// Winds in the MSB.
+            /// Mysteries in the MSB.
             /// </summary>
-            public List<Event.Wind> Winds;
+            public List<Event.Wind> Mysteries;
 
             /// <summary>
             /// Invasions in the MSB.
@@ -109,7 +109,7 @@ namespace SoulsFormats
                 Navimeshes = new List<Event.Navimesh>();
                 Environments = new List<Event.Environment>();
                 Invasions = new List<Event.Invasion>();
-                Winds = new List<Event.Wind>();
+                Mysteries = new List<Event.Wind>();
                 WalkRoutes = new List<Event.WalkRoute>();
                 Unknowns = new List<Event.Unknown>();
                 GroupTours = new List<Event.GroupTour>();
@@ -122,7 +122,7 @@ namespace SoulsFormats
             public override List<Event> GetEntries()
             {
                 return SFUtil.ConcatAll<Event>(
-                    Sounds, SFXs, Treasures, Generators, Messages, ObjActs, SpawnPoints, MapOffsets, Navimeshes, Environments, Invasions, Winds, WalkRoutes, Unknowns, GroupTours, Others);
+                    Sounds, SFXs, Treasures, Generators, Messages, ObjActs, SpawnPoints, MapOffsets, Navimeshes, Environments, Invasions, Mysteries, WalkRoutes, Unknowns, GroupTours, Others);
             }
 
             internal override Event ReadEntry(BinaryReaderEx br)
@@ -188,7 +188,7 @@ namespace SoulsFormats
 
                     case EventType.Wind:
                         var Wind = new Event.Wind(br);
-                        Winds.Add(Wind);
+                        Mysteries.Add(Wind);
                         return Wind;
 
                     case EventType.WalkRoute:
@@ -541,9 +541,20 @@ namespace SoulsFormats
                 /// </summary>
                 public int ItemLot1, ItemLot2, ItemLot3;
 
+                // Mostly chalice related
+                public int Unk0;
                 public int Unk1;
                 public int Unk2;
                 public int Unk3;
+                public int Unk4;
+                public int Unk5;
+                public int Unk6;
+                public int Unk7;
+                public int Unk8;
+                public int Unk9;
+                public int Unk10;
+                public int Unk11;
+                public int Unk12;
 
                 /// <summary>
                 /// Animation to play when taking this treasure.
@@ -605,24 +616,24 @@ namespace SoulsFormats
                     ItemLot1 = br.ReadInt32();
                     ItemLot2 = br.ReadInt32();
                     ItemLot3 = br.ReadInt32();
-                    br.AssertInt32(-1);
+                    Unk0 = br.ReadInt32();
                     Unk1 = br.ReadInt32();
-                    br.AssertInt32(-1);
                     Unk2 = br.ReadInt32();
-                    br.AssertInt32(-1);
-                    br.AssertInt32(-1);
-                    br.AssertInt32(-1);
-                    PickupAnimID = br.ReadInt32();
                     Unk3 = br.ReadInt32();
+                    Unk4 = br.ReadInt32();
+                    Unk5 = br.ReadInt32();
+                    Unk6 = br.ReadInt32();
+                    Unk7 = br.ReadInt32();
+                    PickupAnimID = br.ReadInt32();
 
                     InChest = br.ReadBoolean();
                     StartDisabled = br.ReadBoolean();
-                    br.AssertByte(0);
-                    br.AssertByte(0);
+                    Unk8 = br.ReadInt32();
+                    Unk9 = br.ReadInt32();
 
-                    br.AssertInt32(-1);
-                    br.AssertInt32(-1);
-                    br.AssertInt32(0);
+                    Unk10 = br.ReadInt32();
+                    Unk11 = br.ReadInt32();
+                    Unk12 = br.ReadInt32();
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
@@ -641,8 +652,8 @@ namespace SoulsFormats
                     bw.WriteInt32(-1);
                     bw.WriteInt32(-1);
                     bw.WriteInt32(-1);
-                    bw.WriteInt32(PickupAnimID);
                     bw.WriteInt32(Unk3);
+                    bw.WriteInt32(PickupAnimID);
 
                     bw.WriteBoolean(InChest);
                     bw.WriteBoolean(StartDisabled);
@@ -1021,16 +1032,17 @@ namespace SoulsFormats
                 internal override EventType Type => EventType.SpawnPoint;
 
                 /// <summary>
-                /// Unknown; seems kind of like a region index, but also kind of doesn't.
+                /// Spawn region
                 /// </summary>
-                public int UnkT00;
+                private int SpawnRegionIndex;
+                public string SpawnRegionName;
 
                 /// <summary>
                 /// Creates a new Spawn point with the given ID and name.
                 /// </summary>
                 public SpawnPoint(int id, string name) : base(id, name)
                 {
-                    UnkT00 = -1;
+                    SpawnRegionName = null;
                 }
 
                 /// <summary>
@@ -1038,14 +1050,14 @@ namespace SoulsFormats
                 /// </summary>
                 public SpawnPoint(SpawnPoint clone) : base(clone)
                 {
-                    UnkT00 = clone.UnkT00;
+                    SpawnRegionName = clone.SpawnRegionName;
                 }
 
                 internal SpawnPoint(BinaryReaderEx br) : base(br) { }
 
                 internal override void Read(BinaryReaderEx br)
                 {
-                    UnkT00 = br.ReadInt32();
+                    SpawnRegionIndex = br.ReadInt32();
                     br.AssertInt32(0);
                     br.AssertInt32(0);
                     br.AssertInt32(0);
@@ -1053,10 +1065,29 @@ namespace SoulsFormats
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(UnkT00);
+                    bw.WriteInt32(SpawnRegionIndex);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
+                }
+
+                internal override void GetNames(MSBBB msb, Entries entries)
+                {
+                    base.GetNames(msb, entries);
+                    if (SpawnRegionIndex >= entries.Regions.Count)
+                    {
+                        SpawnRegionName = null;
+                    }
+                    else
+                    {
+                        SpawnRegionName = GetName(entries.Regions, SpawnRegionIndex);
+                    }
+                }
+
+                internal override void GetIndices(MSBBB msb, Entries entries)
+                {
+                    base.GetIndices(msb, entries);
+                    SpawnRegionIndex = GetIndex(entries.Regions, SpawnRegionName);
                 }
             }
 
@@ -1618,10 +1649,22 @@ namespace SoulsFormats
                 internal override EventType Type => EventType.Other;
 
                 /// <summary>
+                /// Unknown.
+                /// </summary>
+                public int SoundTypeMaybe;
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public int SoundIDMaybe;
+
+                /// <summary>
                 /// Creates a new Other with the given ID and name.
                 /// </summary>
                 public Other(int id, string name) : base(id, name)
                 {
+                    SoundTypeMaybe = 0;
+                    SoundIDMaybe = 0;
                 }
 
                 /// <summary>
@@ -1629,16 +1672,28 @@ namespace SoulsFormats
                 /// </summary>
                 public Other(Other clone) : base(clone)
                 {
+                    SoundTypeMaybe = clone.SoundTypeMaybe;
+                    SoundIDMaybe = clone.SoundIDMaybe;
                 }
 
                 internal Other(BinaryReaderEx br) : base(br) { }
 
                 internal override void Read(BinaryReaderEx br)
                 {
+                    /*SoundTypeMaybe = br.ReadInt32();
+                    SoundIDMaybe = br.ReadInt32();
+
+                    for (int i = 0; i < 16; i++)
+                        br.AssertInt32(-1);*/
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
+                    /*bw.WriteInt32(SoundTypeMaybe);
+                    bw.WriteInt32(SoundIDMaybe);
+
+                    for (int i = 0; i < 16; i++)
+                        bw.WriteInt32(-1);*/
                 }
             }
         }

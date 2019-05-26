@@ -18,6 +18,8 @@ public class DarkSoulsTools : EditorWindow
 
     bool PreservePartsPose = true;
 
+    string ChaliceID = "Chalice ID...";
+
     public enum GameType
     {
         Undefined,
@@ -1625,16 +1627,29 @@ public class DarkSoulsTools : EditorWindow
         }
     }
 
-    void onImportBBMap(object o)
+    void onImportBBMap(object o, bool chalice=false)
     {
         try
         {
             string mapname = (string)o;
-            var msb = MSBBB.Read(GetOverridenPath(Interroot + $@"\map\MapStudio\{mapname}.msb.dcx"));
+            MSBBB msb = null;
+            var mapbase = mapname.Substring(0, 9) + "_00";
+            if (chalice)
+            {
+                msb = MSBBB.Read(GetOverridenPath(Interroot + $@"\map\MapStudio\{mapbase}\{mapname}.msb.dcx"));
+            }
+            else
+            {
+                msb = MSBBB.Read(GetOverridenPath(Interroot + $@"\map\MapStudio\{mapname}.msb.dcx"));
+            }
             GameFolder(GameType.Bloodborne);
 
             // Make adjusted mapname because bloodborne is a :fatcat:
             var mapnameAdj = mapname.Substring(0, 6) + "_00_00";
+            if (chalice)
+            {
+                mapnameAdj = "m29_00_00_00";
+            }
 
             if (!AssetDatabase.IsValidFolder("Assets/Bloodborne/" + mapnameAdj))
             {
@@ -1646,7 +1661,14 @@ public class DarkSoulsTools : EditorWindow
             AssetLink.AddComponent<MSBAssetLink>();
             AssetLink.GetComponent<MSBAssetLink>().Interroot = Interroot;
             AssetLink.GetComponent<MSBAssetLink>().MapID = mapname;
-            AssetLink.GetComponent<MSBAssetLink>().MapPath = $@"{Interroot}\map\MapStudio\{mapname}.msb.dcx";
+            if (chalice)
+            {
+                AssetLink.GetComponent<MSBAssetLink>().MapPath = $@"{Interroot}\map\MapStudio\{mapbase}\{mapname}.msb.dcx";
+            }
+            else
+            {
+                AssetLink.GetComponent<MSBAssetLink>().MapPath = $@"{Interroot}\map\MapStudio\{mapname}.msb.dcx";
+            }
 
             //
             // Models section
@@ -1663,7 +1685,7 @@ public class DarkSoulsTools : EditorWindow
                 foreach (var mappiece in msb.Models.MapPieces)
                 {
                     var assetname = mappiece.Name;
-                    if (AssetDatabase.FindAssets($@"Assets/Bloodborne/{mapnameAdj}/{assetname}.prefab").Length == 0 && LoadMapFlvers)
+                    if (AssetDatabase.FindAssets($@"Assets/Bloodborne/{mapnameAdj}/{assetname}.prefab").Length == 0 && LoadMapFlvers && !chalice)
                     {
                         if (File.Exists(Interroot + $@"\map\{mapnameAdj}\{mapnameAdj}_{assetname.Substring(1)}.flver.dcx"))
                             FlverUtilities.ImportFlver(type, Interroot + $@"\map\{mapnameAdj}\{mapnameAdj}_{assetname.Substring(1)}.flver.dcx", $@"Assets/Bloodborne/{mapnameAdj}/{assetname}", $@"Assets/Bloodborne/{mapnameAdj.Substring(0, 3)}");
@@ -1687,14 +1709,14 @@ public class DarkSoulsTools : EditorWindow
             // Load low res hkx assets
             if (LoadHighResCol)
             {
-                if (File.Exists(Interroot + $@"\map\{mapnameAdj}\h{mapnameAdj.Substring(1)}.hkxbhd"))
+                if (File.Exists(Interroot + $@"\map\{mapnameAdj}\h{mapnameAdj.Substring(1)}.hkxbhd") && !chalice)
                 {
                     ImportCollisionHKXBDT(Interroot + $@"\map\{mapnameAdj}\h{mapnameAdj.Substring(1)}.hkxbhd", $@"Assets/Bloodborne/{mapnameAdj}", type);
                 }
             }
             else
             {
-                if (File.Exists(Interroot + $@"\map\{mapnameAdj}\l{mapnameAdj.Substring(1)}.hkxbhd"))
+                if (File.Exists(Interroot + $@"\map\{mapnameAdj}\l{mapnameAdj.Substring(1)}.hkxbhd") && !chalice)
                 {
                     ImportCollisionHKXBDT(Interroot + $@"\map\{mapnameAdj}\l{mapnameAdj.Substring(1)}.hkxbhd", $@"Assets/Bloodborne/{mapnameAdj}", type);
                 }
@@ -2082,7 +2104,7 @@ public class DarkSoulsTools : EditorWindow
 
             GameObject Winds = new GameObject("Winds");
             Winds.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.Winds)
+            foreach (var ev in msb.Events.Mysteries)
             {
                 GameObject evt = new GameObject(ev.Name);
                 evt.AddComponent<MSBBBWindEvent>();
@@ -5224,6 +5246,31 @@ public class DarkSoulsTools : EditorWindow
             }
         }
 
+        if (type == GameType.Bloodborne && GUILayout.Button("Import Chalice Assets"))
+        {
+            if (!AssetDatabase.IsValidFolder("Assets/Bloodborne/m29_00_00_00"))
+            {
+                AssetDatabase.CreateFolder("Assets/Bloodborne", "m29_00_00_00");
+            }
+            // Load low res hkx assets
+            AssetDatabase.StartAssetEditing();
+            if (LoadHighResCol)
+            {
+                if (File.Exists(Interroot + $@"\map\m29_00_00_00\h29_00_00_00.hkxbhd"))
+                {
+                    ImportCollisionHKXBDT(Interroot + $@"\map\m29_00_00_00\h29_00_00_00.hkxbhd", $@"Assets/Bloodborne/m29_00_00_00", type);
+                }
+            }
+            else
+            {
+                if (File.Exists(Interroot + $@"\map\m29_00_00_00\l29_00_00_00.hkxbhd"))
+                {
+                    ImportCollisionHKXBDT(Interroot + $@"\map\m29_00_00_00\l29_00_00_00.hkxbhd", $@"Assets/Bloodborne/m29_00_00_00", type);
+                }
+            }
+            AssetDatabase.StopAssetEditing();
+        }
+
         GUILayout.Label("Map tools", EditorStyles.boldLabel);
 
         LoadMapFlvers = GUILayout.Toggle(LoadMapFlvers, "Load map piece models (slow)");
@@ -5237,6 +5284,15 @@ public class DarkSoulsTools : EditorWindow
                 menu.AddItem(new GUIContent(map), false, onImportMap, map);
             }
             menu.ShowAsContext();
+        }
+
+        if (type == GameType.Bloodborne)
+        {
+            ChaliceID = GUILayout.TextField(ChaliceID);
+            if (GUILayout.Button("Import Chalice Map"))
+            {
+                onImportBBMap(ChaliceID, true);
+            }
         }
 
         if ((type == GameType.DarkSoulsIII || type == GameType.Sekiro) && GameObject.Find("MSBAssetLink") != null)

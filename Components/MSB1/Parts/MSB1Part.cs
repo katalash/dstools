@@ -32,12 +32,12 @@ public abstract class MSB1Part : MonoBehaviour
     /// <summary>
     /// Unknown.
     /// </summary>
-    public int DrawGroup1, DrawGroup2, DrawGroup3, DrawGroup4;
+    public uint DrawGroup1, DrawGroup2, DrawGroup3, DrawGroup4;
 
     /// <summary>
     /// Unknown.
     /// </summary>
-    public int DispGroup1, DispGroup2, DispGroup3, DispGroup4;
+    public uint DispGroup1, DispGroup2, DispGroup3, DispGroup4;
 
     /// <summary>
     /// Used to identify the part in event scripts.
@@ -128,7 +128,7 @@ public abstract class MSB1Part : MonoBehaviour
         part.ScaleY = parent.transform.localScale.y;
         part.ScaleZ = parent.transform.localScale.z;
 
-        part.ModelName = ModelName;
+        part.ModelName = (ModelName == "") ? null : ModelName;
         part.DrawGroup1 = DrawGroup1;
         part.DrawGroup2 = DrawGroup2;
         part.DrawGroup3 = DrawGroup3;

@@ -1860,6 +1860,19 @@ namespace SoulsFormats
                 Unk1C = unk1C;
             }
 
+            public Texture(Texture clone)
+            {
+                Type = clone.Type;
+                Path = clone.Path;
+                ScaleX = clone.ScaleX;
+                ScaleY = clone.ScaleY;
+                Unk10 = clone.Unk10;
+                Unk11 = clone.Unk11;
+                Unk14 = clone.Unk14;
+                Unk18 = clone.Unk18;
+                Unk1C = clone.Unk1C;
+            }
+
             internal Texture(BinaryReaderEx br)
             {
                 int pathOffset = br.ReadInt32();

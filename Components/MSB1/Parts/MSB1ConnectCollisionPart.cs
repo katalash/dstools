@@ -23,7 +23,7 @@ public class MSB1ConnectCollisionPart : MSB1Part
         var part = new MsbPartsConnectHit();
         _Serialize(part, parent);
         part.SubUnk1 = UnkT00;
-        part.MapName = MapName;
+        part.MapName = (MapName == "") ? null : MapName;
         return part;
     }
 }
