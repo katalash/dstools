@@ -43,7 +43,7 @@ public class MSB3ObjActEvent : MSB3Event
 
     public MSB3.Event.ObjAct Serialize(GameObject parent)
     {
-        var evt = new MSB3.Event.ObjAct(ID, parent.name);
+        var evt = new MSB3.Event.ObjAct(parent.name);
         _Serialize(evt, parent);
         evt.ObjActEntityID = ObjActEntityID;
         evt.PartName2 = (PartName2 == "") ? null : PartName2;

@@ -6,6 +6,8 @@ using SoulsFormats;
 [AddComponentMenu("Dark Souls 3/Parts/Enemy")]
 public class MSB3EnemyPart : MSB3Part
 {
+    public MSB3GParamConfig GParamConfig;
+
     /// <summary>
     /// Unknown.
     /// </summary>
@@ -36,24 +38,23 @@ public class MSB3EnemyPart : MSB3Part
     /// </summary>
     public short UnkT04, ChrManipulatorAllocationParameter;
 
+    public string WalkRouteName;
+
     /// <summary>
     /// Unknown.
     /// </summary>
-    public int UnkT20, BackupEventAnimID, UnkT78;
+    public int BackupEventAnimID, UnkT78;
 
     /// <summary>
     /// Unknown.
     /// </summary>
     public float UnkT84;
 
-    /// <summary>
-    /// Unknown.
-    /// </summary>
-    public int UnkT8C, UnkT94, UnkT9C, UnkTA4, UnkTAC, UnkTC0, UnkTC4, UnkTC8, UnkTCC;
-
     public void SetPart(MSB3.Part.Enemy part)
     {
         setBasePart(part);
+        GParamConfig = gameObject.AddComponent<MSB3GParamConfig>();
+        GParamConfig.setStruct(part.Gparam);
         CollisionName = part.CollisionName;
         ThinkParamID = part.ThinkParamID;
         NPCParamID = part.NPCParamID;
@@ -61,26 +62,18 @@ public class MSB3EnemyPart : MSB3Part
         CharaInitID = part.CharaInitID;
         UnkT04 = part.UnkT04;
         ChrManipulatorAllocationParameter = part.ChrManipulatorAllocationParameter;
-        UnkT20 = part.UnkT20;
+        WalkRouteName = part.WalkRouteName;
         BackupEventAnimID = part.BackupEventAnimID;
         UnkT78 = part.UnkT78;
         UnkT84 = part.UnkT84;
-        UnkT8C = part.UnkT8C;
-        UnkT94 = part.UnkT94;
-        UnkT9C = part.UnkT9C;
-        UnkTA4 = part.UnkTA4;
-        UnkTAC = part.UnkTAC;
-        UnkTC0 = part.UnkTC0;
-        UnkTC4 = part.UnkTC4;
-        UnkTC8 = part.UnkTC8;
-        UnkTCC = part.UnkTCC;
     }
 
     public MSB3.Part.Enemy Serialize(GameObject parent)
     {
-        var part = new MSB3.Part.Enemy(ID, parent.name);
+        var part = new MSB3.Part.Enemy(parent.name);
 
         _Serialize(part, parent);
+        part.Gparam = GParamConfig.Serialize();
         part.CollisionName = (CollisionName == "") ? null : CollisionName;
         part.ThinkParamID = ThinkParamID;
         part.NPCParamID = NPCParamID;
@@ -88,19 +81,10 @@ public class MSB3EnemyPart : MSB3Part
         part.CharaInitID = CharaInitID;
         part.UnkT04 = UnkT04;
         part.ChrManipulatorAllocationParameter = ChrManipulatorAllocationParameter;
-        part.UnkT20 = UnkT20;
+        part.WalkRouteName = (WalkRouteName == "") ? null : WalkRouteName;
         part.BackupEventAnimID = BackupEventAnimID;
         part.UnkT78 = UnkT78;
         part.UnkT84 = UnkT84;
-        part.UnkT8C = UnkT8C;
-        part.UnkT94 = UnkT94;
-        part.UnkT9C = UnkT9C;
-        part.UnkTA4 = UnkTA4;
-        part.UnkTAC = UnkTAC;
-        part.UnkTC0 = UnkTC0;
-        part.UnkTC4 = UnkTC4;
-        part.UnkTC8 = UnkTC8;
-        part.UnkTCC = UnkTCC;
         return part;
     }
 }

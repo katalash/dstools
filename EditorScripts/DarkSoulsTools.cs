@@ -3403,7 +3403,7 @@ public class DarkSoulsTools : EditorWindow
             {
                 if (type == GameType.DarkSoulsIII)
                 {
-                    var mo = mapoffset.GetComponentsInChildren<MSB3MapOffsetEvent>().FirstOrDefault(x => (x.ID == 0));
+                    var mo = mapoffset.GetComponentsInChildren<MSB3MapOffsetEvent>().FirstOrDefault();
                     if (mo != null)
                     {
                         btlobject.transform.position = new Vector3(mo.Position.x, mo.Position.y, mo.Position.z);

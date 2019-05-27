@@ -31,7 +31,7 @@ public class MSB3SoundRegion : MSB3Region
 
     public MSB3.Region.Sound Serialize(GameObject parent)
     {
-        var region = new MSB3.Region.Sound(ID, parent.name);
+        var region = new MSB3.Region.Sound(parent.name);
         _Serialize(region, parent);
         region.SoundID = SoundID;
         region.SoundType = SoundType;

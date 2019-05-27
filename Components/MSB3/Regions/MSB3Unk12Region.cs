@@ -13,7 +13,7 @@ public class MSB3Unk12Region : MSB3Region
 
     public MSB3.Region.Unk12 Serialize(GameObject parent)
     {
-        var part = new MSB3.Region.Unk12(ID, parent.name);
+        var part = new MSB3.Region.Unk12(parent.name);
         _Serialize(part, parent);
         return part;
     }

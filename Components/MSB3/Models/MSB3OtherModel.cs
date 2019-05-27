@@ -13,7 +13,7 @@ public class MSB3OtherModel : MSB3Model
 
     public MSB3.Model.Other Serialize(GameObject parent)
     {
-        var model = new MSB3.Model.Other(ID, parent.name);
+        var model = new MSB3.Model.Other(parent.name);
         _Serialize(model, parent);
         return model;
     }

@@ -7,7 +7,7 @@ namespace SoulsFormats
         /// <summary>
         /// A section containing layers, which probably don't actually do anything.
         /// </summary>
-        public class LayerSection : Section<Layer>
+        public class LayerParam : Param<Layer>
         {
             internal override string Type => "LAYER_PARAM_ST";
 
@@ -17,9 +17,9 @@ namespace SoulsFormats
             public List<Layer> Layers;
 
             /// <summary>
-            /// Creates a new LayerSection with no layers.
+            /// Creates a new LayerParam with no layers.
             /// </summary>
-            public LayerSection(int unk1 = 3) : base(unk1)
+            public LayerParam(int unk1 = 3) : base(unk1)
             {
                 Layers = new List<Layer>();
             }
@@ -39,13 +39,9 @@ namespace SoulsFormats
                 return layer;
             }
 
-            internal override void WriteEntries(BinaryWriterEx bw, List<Layer> entries)
+            internal override void WriteEntry(BinaryWriterEx bw, int index, Layer entry)
             {
-                for (int i = 0; i < entries.Count; i++)
-                {
-                    bw.FillInt64($"Offset{i}", bw.Position);
-                    entries[i].Write(bw);
-                }
+                entry.Write(bw);
             }
         }
 
@@ -75,9 +71,6 @@ namespace SoulsFormats
             public Layer()
             {
                 Name = "";
-                Unk08 = 0;
-                Unk0C = 0;
-                Unk10 = 0;
             }
 
             internal Layer(BinaryReaderEx br)

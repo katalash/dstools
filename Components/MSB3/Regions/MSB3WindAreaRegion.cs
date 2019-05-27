@@ -13,7 +13,7 @@ public class MSB3WindAreaRegion : MSB3Region
 
     public MSB3.Region.WindArea Serialize(GameObject parent)
     {
-        var part = new MSB3.Region.WindArea(ID, parent.name);
+        var part = new MSB3.Region.WindArea(parent.name);
         _Serialize(part, parent);
         return part;
     }

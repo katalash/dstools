@@ -6,6 +6,8 @@ using SoulsFormats;
 [AddComponentMenu("Dark Souls 3/Parts/Object")]
 public class MSB3ObjectPart : MSB3Part
 {
+    public MSB3GParamConfig GParamConfig;
+
     /// <summary>
     /// Unknown.
     /// </summary>
@@ -24,6 +26,8 @@ public class MSB3ObjectPart : MSB3Part
     public void SetPart(MSB3.Part.Object part)
     {
         setBasePart(part);
+        GParamConfig = gameObject.AddComponent<MSB3GParamConfig>();
+        GParamConfig.setStruct(part.Gparam);
         CollisionName = part.CollisionName;
         UnkT0C = part.UnkT0C;
         UnkT0E = part.UnkT0E;
@@ -35,16 +39,13 @@ public class MSB3ObjectPart : MSB3Part
         UnkT1A = part.UnkT1A;
         UnkT1C = part.UnkT1C;
         UnkT1E = part.UnkT1E;
-        UnkT20 = part.UnkT20;
-        UnkT24 = part.UnkT24;
-        UnkT28 = part.UnkT28;
-        UnkT2C = part.UnkT2C;
     }
 
     public MSB3.Part.Object Serialize(GameObject parent)
     {
-        var part = new MSB3.Part.Object(ID, parent.name);
+        var part = new MSB3.Part.Object(parent.name);
         _Serialize(part, parent);
+        part.Gparam = GParamConfig.Serialize();
         part.CollisionName = (CollisionName == "") ? null : CollisionName;
         part.UnkT0C = UnkT0C;
         part.UnkT0E = UnkT0E;
@@ -56,10 +57,6 @@ public class MSB3ObjectPart : MSB3Part
         part.UnkT1A = UnkT1A;
         part.UnkT1C = UnkT1C;
         part.UnkT1E = UnkT1E;
-        part.UnkT20 = UnkT20;
-        part.UnkT24 = UnkT24;
-        part.UnkT28 = UnkT28;
-        part.UnkT2C = UnkT2C;
         return part;
     }
 }

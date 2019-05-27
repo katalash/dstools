@@ -4,59 +4,54 @@ using System;
 using UnityEngine;
 using SoulsFormats;
 
-public abstract class MSB3Region : MonoBehaviour
+public abstract class MSBSRegion : MonoBehaviour
 {
+
     /// <summary>
     /// Workaround field until I figure out how DS3 rotations actually work :trashcat:
     /// </summary>
     public UnityEngine.Vector3 Rotation;
 
     /// <summary>
-    /// Whether this region has additional type data. The only region type where this actually varies is Sound.
+    /// Not sure if this is exactly a drawgroup, but it's what makes messages not appear in dark Firelink.
     /// </summary>
-    public bool HasTypeData;
+    public int MapStudioLayer;
+
 
     /// <summary>
     /// Unknown.
     /// </summary>
-    public int Unk2;
+    public int Unk2C;
+    public short[] UnkA;
+    public short[] UnkB;
+    public int UnkC00;
+    public int UnkC04;
 
-    public List<short> UnkA;
-    public List<short> UnkB;
-
-    /// <summary>
-    /// Not sure if this is exactly a drawgroup, but it's what makes messages not appear in dark Firelink.
-    /// </summary>
-    public uint MapStudioLayer;
-
-    /// <summary>
-    /// Region is inactive unless this part is drawn; null for always active.
-    /// </summary>
-    public string ActivationPartName;
-
-    /// <summary>
-    /// An ID used to identify this region in event scripts.
-    /// </summary>
-    public int EventEntityID;
 
     /// <summary>
     /// Used to disambiguate a point from a sphere
     /// </summary>
     public bool IsPoint = false;
 
-    public void setBaseRegion(MSB3.Region region)
+    public void setBaseRegion(MSBS.Region region)
     {
         Rotation = new UnityEngine.Vector3(region.Rotation.X, region.Rotation.Y, region.Rotation.Z);
-
-        HasTypeData = region.HasTypeData;
-        Unk2 = region.Unk2;
-        UnkA = region.UnkA;
-        UnkB = region.UnkB;
         MapStudioLayer = region.MapStudioLayer;
-        ActivationPartName = region.ActivationPartName;
-        EventEntityID = region.EventEntityID;
+        Unk2C = region.Unk2C;
+        UnkA = new short[region.UnkA.Count];
+        for(int i = 0; i < UnkA.Length; i++)
+        {
+            UnkA[i] = region.UnkA[i];
+        }
+        UnkB = new short[region.UnkB.Count];
+        for (int i = 0; i < UnkB.Length; i++)
+        {
+            UnkB[i] = region.UnkB[i];
+        }
+        UnkC00 = region.UnkC00;
+        UnkC04 = region.UnkC04;
 
-        if (region.Shape is MSB3.Shape.Point)
+        if (region.Shape is MSBS.Shape.Point)
         {
             IsPoint = true;
         }
@@ -98,49 +93,66 @@ public abstract class MSB3Region : MonoBehaviour
 
         return new System.Numerics.Vector3(Mathf.Rad2Deg * x, Mathf.Rad2Deg * y, Mathf.Rad2Deg * z);
     }
-
-    internal void _Serialize(MSB3.Region region, GameObject parent)
+    
+    internal void _Serialize(MSBS.Region region, GameObject parent)
     {
         region.Name = parent.name;
 
-        region.Position.X = parent.transform.position.x;
-        region.Position.Y = parent.transform.position.y;
-        region.Position.Z = parent.transform.position.z;
+        region.Position = new System.Numerics.Vector3(parent.transform.position.x, parent.transform.position.y, parent.transform.position.z);
         //region.Rotation.X = parent.transform.eulerAngles.x;
         //region.Rotation.Y = parent.transform.eulerAngles.y;
         //region.Rotation.Z = parent.transform.eulerAngles.z;
-        //region.Rotation = ConvertEuler(parent.transform.rotation.eulerAngles);
-        region.Rotation = new System.Numerics.Vector3(Rotation.x, Rotation.y, Rotation.z);
+        region.Rotation = ConvertEuler(parent.transform.rotation.eulerAngles);
 
-        region.HasTypeData = HasTypeData;
-        region.Unk2 = Unk2;
-        region.UnkA = UnkA;
-        region.UnkB = UnkB;
         region.MapStudioLayer = MapStudioLayer;
-        region.ActivationPartName = (ActivationPartName == "") ? null : ActivationPartName;
-        region.EventEntityID = EventEntityID;
+        region.Unk2C = Unk2C;
+        for (int i = 0; i < UnkA.Length; i++)
+        {
+            region.UnkA.Add(UnkA[i]);
+        }
+        for (int i = 0; i < UnkB.Length; i++)
+        {
+            region.UnkB.Add(UnkB[i]);
+        }
+        region.UnkC00 = UnkC00;
+        region.UnkC04 = UnkC04;
 
         if (parent.GetComponent<SphereCollider>() != null)
         {
             var col = parent.GetComponent<SphereCollider>();
             if (IsPoint)
             {
-                region.Shape = new MSB3.Shape.Point();
+                region.Shape = new MSBS.Shape.Point();
             }
             else
             {
-                region.Shape = new MSB3.Shape.Sphere(col.radius);
+                MSBS.Shape.Sphere shape = new MSBS.Shape.Sphere();
+                shape.Radius = col.radius;
+                region.Shape = shape;
             }
         }
         else if (parent.GetComponent<BoxCollider>() != null)
         {
             var col = parent.GetComponent<BoxCollider>();
-            region.Shape = new MSB3.Shape.Box(col.size.x, col.size.z, col.size.y);
+            MSBS.Shape.Box shape = new MSBS.Shape.Box();
+            shape.Width = col.size.x;
+            shape.Height = col.size.y;
+            shape.Depth = col.size.z;
+            region.Shape = shape;
         }
         else if (parent.GetComponent<CapsuleCollider>() != null)
         {
             var col = parent.GetComponent<CapsuleCollider>();
-            region.Shape = new MSB3.Shape.Cylinder(col.radius, col.height);
+            MSBS.Shape.Cylinder shape = new MSBS.Shape.Cylinder();
+            shape.Radius = col.radius;
+            shape.Height = col.height;
+            region.Shape = shape;
+        }
+        else if (parent.GetComponent<MSBSCompositeShape>() != null)
+        {
+            var col = parent.GetComponent<MSBSCompositeShape>();
+            MSBS.Shape.Composite shape = col.Serialize();
+            region.Shape = shape;
         }
         else
         {

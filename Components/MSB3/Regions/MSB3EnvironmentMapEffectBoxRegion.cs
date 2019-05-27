@@ -43,7 +43,7 @@ public class MSB3EnvironmentEffectBoxRegion : MSB3Region
 
     public MSB3.Region.EnvironmentMapEffectBox Serialize(GameObject parent)
     {
-        var region = new MSB3.Region.EnvironmentMapEffectBox(ID, parent.name);
+        var region = new MSB3.Region.EnvironmentMapEffectBox(parent.name);
         _Serialize(region, parent);
         region.UnkT00 = UnkT00;
         region.Compare = Compare;

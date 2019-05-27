@@ -19,7 +19,7 @@ public class MSB3InvasionPointRegion : MSB3Region
 
     public MSB3.Region.InvasionPoint Serialize(GameObject parent)
     {
-        var region = new MSB3.Region.InvasionPoint(ID, parent.name);
+        var region = new MSB3.Region.InvasionPoint(parent.name);
         _Serialize(region, parent);
         region.Priority = Priority;
         return region;

@@ -6,6 +6,9 @@ using SoulsFormats;
 [AddComponentMenu("Dark Souls 3/Parts/Collision")]
 public class MSB3CollisionPart : MSB3Part
 {
+    public MSB3GParamConfig GParamConfig;
+    public MSB3UnkStruct4 UnkStruct4;
+
     /// <summary>
     /// Unknown.
     /// </summary>
@@ -65,16 +68,13 @@ public class MSB3CollisionPart : MSB3Part
 
     public MSB3.Part.Collision.MapVisiblity MapVisType;
 
-    public int UnkT50, UnkT54, UnkT58, UnkT5C, UnkTC0;
-
-    /// <summary>
-    /// Unknown.
-    /// </summary>
-    public float UnkTC4;
-
     public void SetPart(MSB3.Part.Collision part)
     {
         setBasePart(part);
+        GParamConfig = gameObject.AddComponent<MSB3GParamConfig>();
+        GParamConfig.setStruct(part.Gparam);
+        UnkStruct4 = gameObject.AddComponent<MSB3UnkStruct4>();
+        UnkStruct4.setStruct(part.Unk4);
         HitFilterID = part.HitFilterID;
         SoundSpaceType = part.SoundSpaceType;
         EnvLightMapSpotIndex = part.EnvLightMapSpotIndex;
@@ -91,18 +91,14 @@ public class MSB3CollisionPart : MSB3Part
         UnkT35 = part.UnkT35;
         UnkT36 = part.UnkT36;
         MapVisType = part.MapVisType;
-        UnkT50 = part.UnkT50;
-        UnkT54 = part.UnkT54;
-        UnkT58 = part.UnkT58;
-        UnkT5C = part.UnkT5C;
-        UnkTC0 = part.UnkTC0;
-        UnkTC4 = part.UnkTC4;
     }
 
     public MSB3.Part.Collision Serialize(GameObject parent)
     {
-        var part = new MSB3.Part.Collision(ID, parent.name);
+        var part = new MSB3.Part.Collision(parent.name);
         _Serialize(part, parent);
+        part.Gparam = GParamConfig.Serialize();
+        part.Unk4 = UnkStruct4.Serialize();
         part.HitFilterID = HitFilterID;
         part.SoundSpaceType = SoundSpaceType;
         part.EnvLightMapSpotIndex = EnvLightMapSpotIndex;
@@ -122,12 +118,6 @@ public class MSB3CollisionPart : MSB3Part
         part.UnkT35 = UnkT35;
         part.UnkT36 = UnkT36;
         part.MapVisType = MapVisType;
-        part.UnkT50 = UnkT50;
-        part.UnkT54 = UnkT54;
-        part.UnkT58 = UnkT58;
-        part.UnkT5C = UnkT5C;
-        part.UnkTC0 = UnkTC0;
-        part.UnkTC4 = UnkTC4;
         return part;
     }
 }

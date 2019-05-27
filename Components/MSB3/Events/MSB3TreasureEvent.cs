@@ -44,7 +44,7 @@ public class MSB3TreasureEvent : MSB3Event
 
     public MSB3.Event.Treasure Serialize(GameObject parent)
     {
-        var evt = new MSB3.Event.Treasure(ID, parent.name);
+        var evt = new MSB3.Event.Treasure(parent.name);
         _Serialize(evt, parent);
         evt.PartName2 = (PartName2 == "") ? null : PartName2;
         evt.ItemLot1 = ItemLot1;

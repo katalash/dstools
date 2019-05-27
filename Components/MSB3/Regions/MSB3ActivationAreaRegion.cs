@@ -13,7 +13,7 @@ public class MSB3ActivationAreaRegion : MSB3Region
 
     public MSB3.Region.ActivationArea Serialize(GameObject parent)
     {
-        var part = new MSB3.Region.ActivationArea(ID, parent.name);
+        var part = new MSB3.Region.ActivationArea(parent.name);
         _Serialize(part, parent);
         return part;
     }

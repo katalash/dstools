@@ -13,7 +13,7 @@ public class MSB3EnemyModel : MSB3Model
 
     public MSB3.Model.Enemy Serialize(GameObject parent)
     {
-        var model = new MSB3.Model.Enemy(ID, parent.name);
+        var model = new MSB3.Model.Enemy(parent.name);
         _Serialize(model, parent);
         return model;
     }

@@ -27,7 +27,7 @@ public class MSB3MapPieceModel : MSB3Model
 
     public MSB3.Model.MapPiece Serialize(GameObject parent)
     {
-        var model = new MSB3.Model.MapPiece(ID, parent.name);
+        var model = new MSB3.Model.MapPiece(parent.name);
         _Serialize(model, parent);
         model.UnkT00 = UnkT00;
         model.UnkT01 = UnkT01;

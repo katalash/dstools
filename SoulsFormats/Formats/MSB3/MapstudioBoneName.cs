@@ -7,7 +7,7 @@ namespace SoulsFormats
         /// <summary>
         /// A section containing bone name strings. Purpose unknown.
         /// </summary>
-        public class BoneNameSection : Section<string>
+        public class MapstudioBoneName : Param<string>
         {
             internal override string Type => "MAPSTUDIO_BONE_NAME_STRING";
 
@@ -19,7 +19,7 @@ namespace SoulsFormats
             /// <summary>
             /// Creates a new BoneNameSection with no bone names.
             /// </summary>
-            public BoneNameSection(int unk1 = 0) : base(unk1)
+            public MapstudioBoneName(int unk1 = 0) : base(unk1)
             {
                 Names = new List<string>();
             }
@@ -39,13 +39,10 @@ namespace SoulsFormats
                 return name;
             }
 
-            internal override void WriteEntries(BinaryWriterEx bw, List<string> entries)
+            internal override void WriteEntry(BinaryWriterEx bw, int id, string entry)
             {
-                for (int i = 0; i < entries.Count; i++)
-                {
-                    bw.FillInt64($"Offset{i}", bw.Position);
-                    bw.WriteUTF16(entries[i], true);
-                }
+                bw.WriteUTF16(entry, true);
+                bw.Pad(8);
             }
         }
     }

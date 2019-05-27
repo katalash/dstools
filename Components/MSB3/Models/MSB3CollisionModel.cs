@@ -13,7 +13,7 @@ public class MSB3CollisionModel : MSB3Model
 
     public MSB3.Model.Collision Serialize(GameObject parent)
     {
-        var model = new MSB3.Model.Collision(ID, parent.name);
+        var model = new MSB3.Model.Collision(parent.name);
         _Serialize(model, parent);
         return model;
     }

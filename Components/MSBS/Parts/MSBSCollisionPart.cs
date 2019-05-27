@@ -64,8 +64,7 @@ public class MSBSCollisionPart : MSBSPart
         UnkT54 = part.UnkT54;
         Unk3C = part.Unk6.Unk3C;
         Unk40 = part.Unk6.Unk40;
-
-}
+    }
 
     public MSBS.Part.Collision Serialize(GameObject parent)
     {

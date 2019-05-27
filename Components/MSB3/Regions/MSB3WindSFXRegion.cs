@@ -25,8 +25,10 @@ public class MSB3WindSFXRegion : MSB3Region
 
     public MSB3.Region.WindSFX Serialize(GameObject parent)
     {
-        var part = new MSB3.Region.WindSFX(ID, parent.name);
-        _Serialize(part, parent);
-        return part;
+        var region = new MSB3.Region.WindSFX(parent.name);
+        _Serialize(region, parent);
+        region.FFXID = FFXID;
+        region.WindAreaName = (WindAreaName == "") ? null : WindAreaName;
+        return region;
     }
 }

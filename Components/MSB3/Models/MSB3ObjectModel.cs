@@ -27,7 +27,7 @@ public class MSB3ObjectModel : MSB3Model
 
     public MSB3.Model.Object Serialize(GameObject parent)
     {
-        var model = new MSB3.Model.Object(ID, parent.name);
+        var model = new MSB3.Model.Object(parent.name);
         _Serialize(model, parent);
         model.UnkT00 = UnkT00;
         model.UnkT01 = UnkT01;

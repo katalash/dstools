@@ -19,7 +19,7 @@ public class MSB3SpawnPointRegion : MSB3Region
 
     public MSB3.Region.SpawnPoint Serialize(GameObject parent)
     {
-        var part = new MSB3.Region.SpawnPoint(ID, parent.name);
+        var part = new MSB3.Region.SpawnPoint(parent.name);
         _Serialize(part, parent);
         part.UnkT00 = UnkT00;
         return part;

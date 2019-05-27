@@ -11,6 +11,7 @@ public abstract class MSB3Part : MonoBehaviour
     /// Workaround field until I figure out how DS3 rotations actually work :trashcat:
     /// </summary>
     public UnityEngine.Vector3 Rotation;
+    //public UnityEngine.Vector3 Scale;
 
     /// <summary>
     /// The placeholder model for this part.
@@ -18,19 +19,9 @@ public abstract class MSB3Part : MonoBehaviour
     public string Placeholder;
 
     /// <summary>
-    /// The ID of this part, which should be unique but does not appear to be used otherwise.
-    /// </summary>
-    public int ID;
-
-    /// <summary>
     /// The name of this part's model.
     /// </summary>
     public string ModelName;
-
-    /// <summary>
-    /// Unknown.
-    /// </summary>
-    public uint OldDrawGroup1;
 
     /// <summary>
     /// Unknown; related to which parts do or don't appear in different ceremonies.
@@ -81,9 +72,7 @@ public abstract class MSB3Part : MonoBehaviour
     public void setBasePart(MSB3.Part part)
     {
         Placeholder = part.Placeholder;
-        ID = part.ID;
         ModelName = part.ModelName;
-        OldDrawGroup1 = part.OldDrawGroup1;
         MapStudioLayer = part.MapStudioLayer;
         DrawGroup1 = part.DrawGroups[0];
         DrawGroup2 = part.DrawGroups[1];
@@ -103,6 +92,7 @@ public abstract class MSB3Part : MonoBehaviour
         DispGroup8 = part.DispGroups[7];
 
         Rotation = new UnityEngine.Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
+        //Scale = new UnityEngine.Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
 
         BackreadGroup1 = part.BackreadGroups[0];
         BackreadGroup2 = part.BackreadGroups[1];
@@ -176,7 +166,6 @@ public abstract class MSB3Part : MonoBehaviour
     {
         part.Name = parent.name;
         part.Placeholder = Placeholder;
-        part.ID = ID;
 
         part.Position.X = parent.transform.position.x;
         part.Position.Y = parent.transform.position.y;
@@ -191,9 +180,9 @@ public abstract class MSB3Part : MonoBehaviour
         part.Scale.X = parent.transform.localScale.x;
         part.Scale.Y = parent.transform.localScale.y;
         part.Scale.Z = parent.transform.localScale.z;
+        //part.Scale = new System.Numerics.Vector3(Scale.x, Scale.y, Scale.z);
 
         part.ModelName = ModelName;
-        part.OldDrawGroup1 = OldDrawGroup1;
         part.MapStudioLayer = MapStudioLayer;
         part.DrawGroups[0] = DrawGroup1;
         part.DrawGroups[1] = DrawGroup2;

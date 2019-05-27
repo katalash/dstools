@@ -55,7 +55,7 @@ public class MSB3InvasionEvent : MSB3Event
 
     public MSB3.Event.PseudoMultiplayer Serialize(GameObject parent)
     {
-        var evt = new MSB3.Event.PseudoMultiplayer(ID, parent.name);
+        var evt = new MSB3.Event.PseudoMultiplayer(parent.name);
         _Serialize(evt, parent);
         evt.HostEventEntityID = HostEventEntityID;
         evt.InvasionEventEntityID = InvasionEventEntityID;

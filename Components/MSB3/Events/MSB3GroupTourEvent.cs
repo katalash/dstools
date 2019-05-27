@@ -26,7 +26,7 @@ public class MSB3GroupTourEvent : MSB3Event
 
     public MSB3.Event.GroupTour Serialize(GameObject parent)
     {
-        var evt = new MSB3.Event.GroupTour(ID, parent.name);
+        var evt = new MSB3.Event.GroupTour(parent.name);
         _Serialize(evt, parent);
         evt.PlatoonIDScriptActivate = PlatoonIDScriptActivate;
         evt.State = State;

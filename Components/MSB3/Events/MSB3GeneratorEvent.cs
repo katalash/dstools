@@ -74,7 +74,7 @@ public class MSB3GeneratorEvent : MSB3Event
 
     public MSB3.Event.Generator Serialize(GameObject parent)
     {
-        var evt = new MSB3.Event.Generator(ID, parent.name);
+        var evt = new MSB3.Event.Generator(parent.name);
         _Serialize(evt, parent);
         evt.MaxNum = MaxNum;
         evt.LimitNum = LimitNum;

@@ -25,7 +25,7 @@ public class MSB3OtherEvent : MSB3Event
 
     public MSB3.Event.Other Serialize(GameObject parent)
     {
-        var evt = new MSB3.Event.Other(ID, parent.name);
+        var evt = new MSB3.Event.Other(parent.name);
         _Serialize(evt, parent);
         evt.SoundTypeMaybe = SoundTypeMaybe;
         evt.SoundIDMaybe = SoundIDMaybe;

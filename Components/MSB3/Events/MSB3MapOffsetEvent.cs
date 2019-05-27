@@ -25,7 +25,7 @@ public class MSB3MapOffsetEvent : MSB3Event
 
     public MSB3.Event.MapOffset Serialize(GameObject parent)
     {
-        var evt = new MSB3.Event.MapOffset(ID, parent.name);
+        var evt = new MSB3.Event.MapOffset(parent.name);
         _Serialize(evt, parent);
         evt.Position = new System.Numerics.Vector3(Position.x, Position.y, Position.z);
         evt.Degree = Degree;
