@@ -199,12 +199,12 @@ public class DarkSoulsTools : EditorWindow
         }
         try
         {
-            AssetDatabase.StartAssetEditing();
             string gameFolder = GameFolder(type);
             if (!AssetDatabase.IsValidFolder($@"Assets/{gameFolder}/Obj"))
             {
                 AssetDatabase.CreateFolder($@"Assets/{gameFolder}", "Obj");
             }
+            AssetDatabase.StartAssetEditing();
             foreach (var obj in objFiles)
             {
                 try
@@ -213,7 +213,7 @@ public class DarkSoulsTools : EditorWindow
                 }
                 catch (Exception e)
                 {
-                    Console.Error.WriteLine($"Error loading obj {obj}: {e.Message}");
+                    Console.Error.WriteLine($"Error loading obj {obj} textures: {e.Message}");
                 }
             }
             AssetDatabase.StopAssetEditing();
@@ -413,12 +413,12 @@ public class DarkSoulsTools : EditorWindow
         try
         {
             // Import all textures before the models because they can reference each other
-            AssetDatabase.StartAssetEditing();
             string gameFolder = GameFolder(type);
             if (!AssetDatabase.IsValidFolder($@"Assets/{gameFolder}/Chr"))
             {
                 AssetDatabase.CreateFolder($@"Assets/{gameFolder}", "Chr");
             }
+            AssetDatabase.StartAssetEditing();
             foreach (var chr in texFiles)
             {
                 try
@@ -427,7 +427,7 @@ public class DarkSoulsTools : EditorWindow
                 }
                 catch (Exception e)
                 {
-                    Debug.LogError($"Error loading chr {chr}: {e.Message}, {e.StackTrace}");
+                    Debug.LogError($"Error loading chr {chr} textures: {e.Message}, {e.StackTrace}");
                 }
             }
             AssetDatabase.StopAssetEditing();
@@ -440,7 +440,7 @@ public class DarkSoulsTools : EditorWindow
                 }
                 catch (Exception e)
                 {
-                    Debug.LogError($"Error loading chr {chr}: {e.Message}, {e.StackTrace}");
+                    Debug.LogError($"Error loading chr {chr} textures: {e.Message}, {e.StackTrace}");
                 }
             }
             AssetDatabase.StopAssetEditing();
@@ -577,8 +577,6 @@ public class DarkSoulsTools : EditorWindow
         }
         try
         {
-            // Import all textures before the models because they can reference each other
-            AssetDatabase.StartAssetEditing();
             // Try and import common parts textures
             if (!AssetDatabase.IsValidFolder($@"Assets/{gameFolder}/Parts"))
             {
@@ -588,6 +586,9 @@ public class DarkSoulsTools : EditorWindow
             {
                 AssetDatabase.CreateFolder($@"Assets/{gameFolder}/Parts", "textures");
             }
+
+            // Import all textures before the models because they can reference each other
+            AssetDatabase.StartAssetEditing();
 
             if (File.Exists($@"{partspath}\common_body.tpf.dcx"))
             {
