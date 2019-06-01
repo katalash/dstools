@@ -441,6 +441,8 @@ namespace SoulsFormats
                     unswizzled[i] = Bytes[i];
                 }
 
+                // Recompute the size too bc unity doesn't like extended textures.
+                int actualSize = 0;
                 if (source == TPFPlatform.PS4)
                 {
                     uint blockSize = 16;
@@ -490,6 +492,7 @@ namespace SoulsFormats
                         }
 
                         mipBase += index;
+                        actualSize += index;
                         if (index < 512)
                         {
                             mipBaseSrc += 512;
@@ -502,7 +505,12 @@ namespace SoulsFormats
                 }
 
                 // Append the rest of the original texture and update
-                bw.WriteBytes(unswizzled);
+                var fin = new byte[actualSize];
+                for (int i = 0; i < fin.Length; i++)
+                {
+                    fin[i] = unswizzled[i];
+                }
+                bw.WriteBytes(fin);
                 Bytes = bw.FinishBytes();
             }
 

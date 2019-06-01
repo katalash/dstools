@@ -5254,7 +5254,7 @@ public class DarkSoulsTools : EditorWindow
                 AssetDatabase.CreateFolder("Assets/Bloodborne", "m29_00_00_00");
             }
             // Load low res hkx assets
-            AssetDatabase.StartAssetEditing();
+            /*AssetDatabase.StartAssetEditing();
             if (LoadHighResCol)
             {
                 if (File.Exists(Interroot + $@"\map\m29_00_00_00\h29_00_00_00.hkxbhd"))
@@ -5269,7 +5269,37 @@ public class DarkSoulsTools : EditorWindow
                     ImportCollisionHKXBDT(Interroot + $@"\map\m29_00_00_00\l29_00_00_00.hkxbhd", $@"Assets/Bloodborne/m29_00_00_00", type);
                 }
             }
-            AssetDatabase.StopAssetEditing();
+            AssetDatabase.StopAssetEditing();*/
+
+            // Import all the map piece meshes
+            try
+            {
+                string path = Interroot + $@"\map\m29_00_00_00";
+                var files = Directory.GetFiles(path, "*.flver.dcx");
+                AssetDatabase.StartAssetEditing();
+                foreach (var mappiece in files)
+                {
+                    var assetname = Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(mappiece));
+                    if (AssetDatabase.FindAssets($@"Assets/Bloodborne/m29_00_00_00/{assetname}.prefab").Length == 0 && LoadMapFlvers)
+                    {
+                        if (File.Exists(mappiece))
+                        {
+                            try
+                            {
+                                FlverUtilities.ImportFlver(GameType.Bloodborne, mappiece, $@"Assets/Bloodborne/m29_00_00_00/{assetname}", $@"Assets/Bloodborne/m29");
+                            }
+                            catch
+                            {
+                                Debug.LogError(assetname + " failed model import");
+                            }
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                AssetDatabase.StopAssetEditing();
+            }
         }
 
         GUILayout.Label("Map tools", EditorStyles.boldLabel);
