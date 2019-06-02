@@ -1781,8 +1781,16 @@ public class DarkSoulsTools : EditorWindow
             GameObject MapPieces = new GameObject("MapPieces");
             MapPieces.transform.parent = PartsSection.transform;
             foreach (var part in msb.Parts.MapPieces)
-            { 
-                GameObject src = AssetDatabase.LoadAssetAtPath<GameObject>($@"Assets/Bloodborne/{mapnameAdj}/{part.ModelName}.prefab");
+            {
+                GameObject src = null;
+                if (chalice)
+                {
+                    src = AssetDatabase.LoadAssetAtPath<GameObject>($@"Assets/Bloodborne/m29_00_00_00/m29_00_00_00_{part.ModelName.Substring(1)}.prefab");
+                }
+                else
+                {
+                    src = AssetDatabase.LoadAssetAtPath<GameObject>($@"Assets/Bloodborne/{mapnameAdj}/{part.ModelName}.prefab");
+                }
                 if (src != null)
                 {
                     GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
@@ -2151,6 +2159,16 @@ public class DarkSoulsTools : EditorWindow
                 evt.AddComponent<MSBBBGroupTourEvent>();
                 evt.GetComponent<MSBBBGroupTourEvent>().SetEvent(ev);
                 evt.transform.parent = GroupTours.transform;
+            }
+
+            GameObject MultiSummoningPoints = new GameObject("MultiSummoningPoints");
+            MultiSummoningPoints.transform.parent = Events.transform;
+            foreach (var ev in msb.Events.MultiSummoningPoints)
+            {
+                GameObject evt = new GameObject(ev.Name);
+                evt.AddComponent<MSBBBMultiSummoningPointEvent>();
+                evt.GetComponent<MSBBBMultiSummoningPointEvent>().SetEvent(ev);
+                evt.transform.parent = MultiSummoningPoints.transform;
             }
 
             GameObject Others = new GameObject("Others");
@@ -5254,7 +5272,7 @@ public class DarkSoulsTools : EditorWindow
                 AssetDatabase.CreateFolder("Assets/Bloodborne", "m29_00_00_00");
             }
             // Load low res hkx assets
-            /*AssetDatabase.StartAssetEditing();
+            AssetDatabase.StartAssetEditing();
             if (LoadHighResCol)
             {
                 if (File.Exists(Interroot + $@"\map\m29_00_00_00\h29_00_00_00.hkxbhd"))
@@ -5269,7 +5287,7 @@ public class DarkSoulsTools : EditorWindow
                     ImportCollisionHKXBDT(Interroot + $@"\map\m29_00_00_00\l29_00_00_00.hkxbhd", $@"Assets/Bloodborne/m29_00_00_00", type);
                 }
             }
-            AssetDatabase.StopAssetEditing();*/
+            AssetDatabase.StopAssetEditing();
 
             // Import all the map piece meshes
             try

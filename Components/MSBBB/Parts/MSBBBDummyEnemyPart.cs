@@ -8,7 +8,7 @@ public class MSBBBDummyEnemyPart : MSBBBEnemyPart
 {
     public new MSBBB.Part.DummyEnemy Serialize(GameObject parent)
     {
-        var part = new MSBBB.Part.DummyEnemy(ID, parent.name);
+        var part = new MSBBB.Part.DummyEnemy(parent.name);
         _Serialize(part, parent);
         part.CollisionName = (CollisionName == "") ? null : CollisionName;
         part.ThinkParamID = ThinkParamID;

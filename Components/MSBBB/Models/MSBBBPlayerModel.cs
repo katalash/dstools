@@ -13,7 +13,7 @@ public class MSBBBPlayerModel : MSBBBModel
 
     public MSBBB.Model.Player Serialize(GameObject parent)
     {
-        var model = new MSBBB.Model.Player(ID, parent.name);
+        var model = new MSBBB.Model.Player(parent.name);
         _Serialize(model, parent);
         return model;
     }

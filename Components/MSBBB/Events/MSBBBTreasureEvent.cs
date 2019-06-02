@@ -16,9 +16,15 @@ public class MSBBBTreasureEvent : MSBBBEvent
     /// </summary>
     public int ItemLot1, ItemLot2, ItemLot3;
 
-    public int Unk1;
-    public int Unk2;
-    public int Unk3;
+    // Mostly chalice related
+    public int UnkT1C;
+    public int UnkT20;
+    public int UnkT24;
+    public int UnkT28;
+    public int UnkT2C;
+    public int UnkT30;
+    public int UnkT34;
+    public int UnkT38;
 
     /// <summary>
     /// Animation to play when taking this treasure.
@@ -35,6 +41,11 @@ public class MSBBBTreasureEvent : MSBBBEvent
     /// </summary>
     public bool StartDisabled;
 
+    public short UnkT42;
+    public int UnkT44;
+    public int UnkT48;
+    public int UnkT4C;
+
     public void SetEvent(MSBBB.Event.Treasure evt)
     {
         setBaseEvent(evt);
@@ -42,28 +53,46 @@ public class MSBBBTreasureEvent : MSBBBEvent
         ItemLot1 = evt.ItemLot1;
         ItemLot2 = evt.ItemLot2;
         ItemLot3 = evt.ItemLot3;
-        Unk1 = evt.Unk1;
-        Unk2 = evt.Unk2;
-        Unk3 = evt.Unk3;
+        UnkT1C = evt.UnkT1C;
+        UnkT20 = evt.UnkT20;
+        UnkT24 = evt.UnkT24;
+        UnkT28 = evt.UnkT28;
+        UnkT2C = evt.UnkT2C;
+        UnkT30 = evt.UnkT30;
+        UnkT34 = evt.UnkT34;
+        UnkT38 = evt.UnkT38;
         PickupAnimID = evt.PickupAnimID;
         InChest = evt.InChest;
         StartDisabled = evt.StartDisabled;
+        UnkT42 = evt.UnkT42;
+        UnkT44 = evt.UnkT44;
+        UnkT48 = evt.UnkT48;
+        UnkT4C = evt.UnkT4C;
     }
 
     public MSBBB.Event.Treasure Serialize(GameObject parent)
     {
-        var evt = new MSBBB.Event.Treasure(ID, parent.name);
+        var evt = new MSBBB.Event.Treasure(parent.name);
         _Serialize(evt, parent);
         evt.PartName2 = (PartName2 == "") ? null : PartName2;
         evt.ItemLot1 = ItemLot1;
         evt.ItemLot2 = ItemLot2;
         evt.ItemLot3 = ItemLot3;
-        evt.Unk1 = Unk1;
-        evt.Unk2 = Unk2;
-        evt.Unk3 = Unk3;
+        evt.UnkT1C = UnkT1C;
+        evt.UnkT20 = UnkT20;
+        evt.UnkT24 = UnkT24;
+        evt.UnkT28 = UnkT28;
+        evt.UnkT2C = UnkT2C;
+        evt.UnkT30 = UnkT30;
+        evt.UnkT34 = UnkT34;
+        evt.UnkT38 = UnkT38;
         evt.PickupAnimID = PickupAnimID;
         evt.InChest = InChest;
         evt.StartDisabled = StartDisabled;
+        evt.UnkT42 = UnkT42;
+        evt.UnkT44 = UnkT44;
+        evt.UnkT48 = UnkT48;
+        evt.UnkT4C = UnkT4C;
         return evt;
     }
 }

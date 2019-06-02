@@ -56,7 +56,7 @@ public class MSBBBCollisionPart : MSBBBPart
     /// <summary>
     /// Unknown.
     /// </summary>
-    public int UnkT14, UnkT18, UnkT1C, UnkT20, UnkT24, UnkT38, UnkT40, UnkT44, UnkT48, UnkT4C, UnkT70, UnkT74;
+    public int UnkT14, UnkT18, UnkT1C, UnkT20, UnkT24, UnkT38, UnkT3A, UnkT40, UnkT44, UnkT48, UnkT4C, UnkT70, UnkT74;
 
     public void SetPart(MSBBB.Part.Collision part)
     {
@@ -78,6 +78,7 @@ public class MSBBBCollisionPart : MSBBBPart
         UnkT20 = part.UnkT20;
         UnkT24 = part.UnkT24;
         UnkT38 = part.UnkT38;
+        UnkT3A = part.UnkT3A;
         UnkT40 = part.UnkT40;
         UnkT44 = part.UnkT44;
         UnkT48 = part.UnkT48;
@@ -88,7 +89,7 @@ public class MSBBBCollisionPart : MSBBBPart
 
     public MSBBB.Part.Collision Serialize(GameObject parent)
     {
-        var part = new MSBBB.Part.Collision(ID, parent.name);
+        var part = new MSBBB.Part.Collision(parent.name);
         _Serialize(part, parent);
         part.HitFilterID = HitFilterID;
         part.SoundSpaceType = SoundSpaceType;
@@ -110,6 +111,7 @@ public class MSBBBCollisionPart : MSBBBPart
         part.UnkT20 = UnkT20;
         part.UnkT24 = UnkT24;
         part.UnkT38 = UnkT38;
+        part.UnkT3A = UnkT3A;
         part.UnkT40 = UnkT40;
         part.UnkT44 = UnkT44;
         part.UnkT48 = UnkT48;

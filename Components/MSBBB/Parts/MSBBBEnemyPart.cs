@@ -68,7 +68,7 @@ public class MSBBBEnemyPart : MSBBBPart
 
     public MSBBB.Part.Enemy Serialize(GameObject parent)
     {
-        var part = new MSBBB.Part.Enemy(ID, parent.name);
+        var part = new MSBBB.Part.Enemy(parent.name);
 
         _Serialize(part, parent);
         part.CollisionName = (CollisionName == "") ? null : CollisionName;

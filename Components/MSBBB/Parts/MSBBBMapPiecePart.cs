@@ -32,7 +32,7 @@ public class MSBBBMapPiecePart : MSBBBPart
 
     public MSBBB.Part.MapPiece Serialize(GameObject parent)
     {
-        var part = new MSBBB.Part.MapPiece(ID, parent.name);
+        var part = new MSBBB.Part.MapPiece(parent.name);
         _Serialize(part, parent);
         part.LightParamID = LightParamID;
         part.FogParamID = FogParamID;

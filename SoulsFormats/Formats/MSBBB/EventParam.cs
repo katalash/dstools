@@ -9,7 +9,7 @@ namespace SoulsFormats
         /// <summary>
         /// Events controlling various interactive or dynamic features in the map.
         /// </summary>
-        public class EventSection : Section<Event>
+        public class EventParam : Section<Event>
         {
             internal override string Type => "EVENT_PARAM_ST";
 
@@ -89,6 +89,11 @@ namespace SoulsFormats
             public List<Event.GroupTour> GroupTours;
 
             /// <summary>
+            /// Multi Summoning Points in the MSB.
+            /// </summary>
+            public List<Event.MultiSummoningPoint> MultiSummoningPoints;
+
+            /// <summary>
             /// Other events in the MSB.
             /// </summary>
             public List<Event.Other> Others;
@@ -96,7 +101,7 @@ namespace SoulsFormats
             /// <summary>
             /// Creates a new EventSection with no events.
             /// </summary>
-            public EventSection(int unk1 = 3) : base(unk1)
+            public EventParam(int unk1 = 3) : base(unk1)
             {
                 Sounds = new List<Event.Sound>();
                 SFXs = new List<Event.SFX>();
@@ -113,6 +118,7 @@ namespace SoulsFormats
                 WalkRoutes = new List<Event.WalkRoute>();
                 Unknowns = new List<Event.Unknown>();
                 GroupTours = new List<Event.GroupTour>();
+                MultiSummoningPoints = new List<Event.MultiSummoningPoint>();
                 Others = new List<Event.Other>();
             }
 
@@ -122,7 +128,7 @@ namespace SoulsFormats
             public override List<Event> GetEntries()
             {
                 return SFUtil.ConcatAll<Event>(
-                    Sounds, SFXs, Treasures, Generators, Messages, ObjActs, SpawnPoints, MapOffsets, Navimeshes, Environments, Invasions, Mysteries, WalkRoutes, Unknowns, GroupTours, Others);
+                    Sounds, SFXs, Treasures, Generators, Messages, ObjActs, SpawnPoints, MapOffsets, Navimeshes, Environments, Invasions, Mysteries, WalkRoutes, Unknowns, GroupTours, MultiSummoningPoints, Others);
             }
 
             internal override Event ReadEntry(BinaryReaderEx br)
@@ -206,6 +212,11 @@ namespace SoulsFormats
                         GroupTours.Add(groupTour);
                         return groupTour;
 
+                    case EventType.MultiSummoningPoint:
+                        var sp = new Event.MultiSummoningPoint(br);
+                        MultiSummoningPoints.Add(sp);
+                        return sp;
+
                     case EventType.Other:
                         var other = new Event.Other(br);
                         Others.Add(other);
@@ -216,25 +227,9 @@ namespace SoulsFormats
                 }
             }
 
-            internal override void WriteEntries(BinaryWriterEx bw, List<Event> entries)
+            internal override void WriteEntry(BinaryWriterEx bw, int id, Event entry)
             {
-                for (int i = 0; i < entries.Count; i++)
-                {
-                    bw.FillInt64($"Offset{i}", bw.Position);
-                    entries[i].Write(bw);
-                }
-            }
-
-            internal void GetNames(MSBBB msb, Entries entries)
-            {
-                foreach (Event ev in entries.Events)
-                    ev.GetNames(msb, entries);
-            }
-
-            internal void GetIndices(MSBBB msb, Entries entries)
-            {
-                foreach (Event ev in entries.Events)
-                    ev.GetIndices(msb, entries);
+                entry.Write(bw, id);
             }
         }
 
@@ -257,6 +252,7 @@ namespace SoulsFormats
             WalkRoute = 0xE,
             Unknown = 0xF, // Called "Dark Range" or something in the MSB
             GroupTour = 0x10,
+            MultiSummoningPoint = 0x11, // Used only in chalices
             Other = 0xFFFFFFFF,
         }
 
@@ -272,15 +268,7 @@ namespace SoulsFormats
             /// </summary>
             public override string Name { get; set; }
 
-            /// <summary>
-            /// Unknown.
-            /// </summary>
-            public int EventIndex;
-
-            /// <summary>
-            /// The ID of this event.
-            /// </summary>
-            public int ID;
+            public int EventID;
 
             private int partIndex;
             /// <summary>
@@ -301,11 +289,10 @@ namespace SoulsFormats
 
             public int Unk01;
 
-            internal Event(int id, string name)
+            internal Event(string name)
             {
-                ID = id;
                 Name = name;
-                EventIndex = -1;
+                EventID = -1;
                 PartName = null;
                 PointName = null;
                 EventEntityID = -1;
@@ -315,8 +302,7 @@ namespace SoulsFormats
             internal Event(Event clone)
             {
                 Name = clone.Name;
-                EventIndex = clone.EventIndex;
-                ID = clone.ID;
+                EventID = clone.EventID;
                 PartName = clone.PartName;
                 PointName = clone.PointName;
                 EventEntityID = clone.EventEntityID;
@@ -328,9 +314,9 @@ namespace SoulsFormats
                 long start = br.Position;
 
                 long nameOffset = br.ReadInt64();
-                EventIndex = br.ReadInt32();
+                EventID = br.ReadInt32();
                 br.AssertUInt32((uint)Type);
-                ID = br.ReadInt32();
+                br.ReadInt32(); // ID
                 br.AssertInt32(0);
                 long baseDataOffset = br.ReadInt64();
                 long typeDataOffset = br.ReadInt64();
@@ -351,14 +337,14 @@ namespace SoulsFormats
 
             internal abstract void Read(BinaryReaderEx br);
 
-            internal void Write(BinaryWriterEx bw)
+            internal void Write(BinaryWriterEx bw, int id)
             {
                 long start = bw.Position;
 
                 bw.ReserveInt64("NameOffset");
-                bw.WriteInt32(EventIndex);
+                bw.WriteInt32(EventID);
                 bw.WriteUInt32((uint)Type);
-                bw.WriteInt32(ID);
+                bw.WriteInt32(id);
                 bw.WriteInt32(0);
                 bw.ReserveInt64("BaseDataOffset");
                 bw.ReserveInt64("TypeDataOffset");
@@ -396,7 +382,7 @@ namespace SoulsFormats
             /// </summary>
             public override string ToString()
             {
-                return $"{Type} {ID} : {Name}";
+                return $"{Type} : {Name}";
             }
 
             /// <summary>
@@ -444,7 +430,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a new MapOffset with the given ID and name.
                 /// </summary>
-                public Sound(int id, string name) : base(id, name)
+                public Sound(string name) : base(name)
                 {
                     SoundType = SndType.Environment;
                     SoundID = 0;
@@ -493,7 +479,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a new MapOffset with the given ID and name.
                 /// </summary>
-                public SFX(int id, string name) : base(id, name)
+                public SFX(string name) : base(name)
                 {
                     FFXID = -1;
                     StartDisabled = false;
@@ -542,19 +528,14 @@ namespace SoulsFormats
                 public int ItemLot1, ItemLot2, ItemLot3;
 
                 // Mostly chalice related
-                public int Unk0;
-                public int Unk1;
-                public int Unk2;
-                public int Unk3;
-                public int Unk4;
-                public int Unk5;
-                public int Unk6;
-                public int Unk7;
-                public int Unk8;
-                public int Unk9;
-                public int Unk10;
-                public int Unk11;
-                public int Unk12;
+                public int UnkT1C;
+                public int UnkT20;
+                public int UnkT24;
+                public int UnkT28;
+                public int UnkT2C;
+                public int UnkT30;
+                public int UnkT34;
+                public int UnkT38;
 
                 /// <summary>
                 /// Animation to play when taking this treasure.
@@ -571,21 +552,35 @@ namespace SoulsFormats
                 /// </summary>
                 public bool StartDisabled;
 
+                public short UnkT42;
+                public int UnkT44;
+                public int UnkT48;
+                public int UnkT4C;
+
                 /// <summary>
                 /// Creates a new Treasure with the given ID and name.
                 /// </summary>
-                public Treasure(int id, string name) : base(id, name)
+                public Treasure(string name) : base(name)
                 {
                     PartName2 = null;
                     ItemLot1 = -1;
                     ItemLot2 = -1;
                     ItemLot3 = -1;
-                    Unk1 = -1;
-                    Unk2 = -1;
-                    Unk3 = -1;
+                    UnkT1C = -1;
+                    UnkT20 = -1;
+                    UnkT24 = -1;
+                    UnkT28 = -1;
+                    UnkT2C = -1;
+                    UnkT30 = -1;
+                    UnkT34 = -1;
+                    UnkT38 = -1;
                     PickupAnimID = -1;
                     InChest = false;
                     StartDisabled = false;
+                    UnkT42 = 0;
+                    UnkT44 = -1;
+                    UnkT48 = -1;
+                    UnkT4C = -1;
                 }
 
                 /// <summary>
@@ -597,12 +592,21 @@ namespace SoulsFormats
                     ItemLot1 = clone.ItemLot1;
                     ItemLot2 = clone.ItemLot2;
                     ItemLot3 = clone.ItemLot3;
-                    Unk1 = clone.Unk1;
-                    Unk2 = clone.Unk2;
-                    Unk3 = clone.Unk3;
+                    UnkT1C = clone.UnkT1C;
+                    UnkT20 = clone.UnkT20;
+                    UnkT24 = clone.UnkT24;
+                    UnkT28 = clone.UnkT28;
+                    UnkT2C = clone.UnkT2C;
+                    UnkT30 = clone.UnkT30;
+                    UnkT34 = clone.UnkT34;
+                    UnkT38 = clone.UnkT38;
                     PickupAnimID = clone.PickupAnimID;
                     InChest = clone.InChest;
                     StartDisabled = clone.StartDisabled;
+                    UnkT42 = clone.UnkT42;
+                    UnkT44 = clone.UnkT44;
+                    UnkT48 = clone.UnkT48;
+                    UnkT4C = clone.UnkT4C;
                 }
 
                 internal Treasure(BinaryReaderEx br) : base(br) { }
@@ -616,24 +620,23 @@ namespace SoulsFormats
                     ItemLot1 = br.ReadInt32();
                     ItemLot2 = br.ReadInt32();
                     ItemLot3 = br.ReadInt32();
-                    Unk0 = br.ReadInt32();
-                    Unk1 = br.ReadInt32();
-                    Unk2 = br.ReadInt32();
-                    Unk3 = br.ReadInt32();
-                    Unk4 = br.ReadInt32();
-                    Unk5 = br.ReadInt32();
-                    Unk6 = br.ReadInt32();
-                    Unk7 = br.ReadInt32();
+                    UnkT1C = br.ReadInt32();
+                    UnkT20 = br.ReadInt32();
+                    UnkT24 = br.ReadInt32();
+                    UnkT28 = br.ReadInt32();
+                    UnkT2C = br.ReadInt32();
+                    UnkT30 = br.ReadInt32();
+                    UnkT34 = br.ReadInt32();
+                    UnkT38 = br.ReadInt32();
                     PickupAnimID = br.ReadInt32();
 
                     InChest = br.ReadBoolean();
                     StartDisabled = br.ReadBoolean();
-                    Unk8 = br.ReadInt32();
-                    Unk9 = br.ReadInt32();
+                    UnkT42 = br.ReadInt16();
 
-                    Unk10 = br.ReadInt32();
-                    Unk11 = br.ReadInt32();
-                    Unk12 = br.ReadInt32();
+                    UnkT44 = br.ReadInt32();
+                    UnkT48 = br.ReadInt32();
+                    UnkT4C = br.ReadInt32();
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
@@ -645,24 +648,23 @@ namespace SoulsFormats
                     bw.WriteInt32(ItemLot1);
                     bw.WriteInt32(ItemLot2);
                     bw.WriteInt32(ItemLot3);
-                    bw.WriteInt32(-1);
-                    bw.WriteInt32(Unk1);
-                    bw.WriteInt32(-1);
-                    bw.WriteInt32(Unk2);
-                    bw.WriteInt32(-1);
-                    bw.WriteInt32(-1);
-                    bw.WriteInt32(-1);
-                    bw.WriteInt32(Unk3);
+                    bw.WriteInt32(UnkT1C);
+                    bw.WriteInt32(UnkT20);
+                    bw.WriteInt32(UnkT24);
+                    bw.WriteInt32(UnkT28);
+                    bw.WriteInt32(UnkT2C);
+                    bw.WriteInt32(UnkT30);
+                    bw.WriteInt32(UnkT34);
+                    bw.WriteInt32(UnkT38);
                     bw.WriteInt32(PickupAnimID);
 
                     bw.WriteBoolean(InChest);
                     bw.WriteBoolean(StartDisabled);
-                    bw.WriteByte(0);
-                    bw.WriteByte(0);
+                    bw.WriteInt16(UnkT42);
 
-                    bw.WriteInt32(-1);
-                    bw.WriteInt32(-1);
-                    bw.WriteInt32(0);
+                    bw.WriteInt32(UnkT44);
+                    bw.WriteInt32(UnkT48);
+                    bw.WriteInt32(UnkT4C);
                 }
 
                 internal override void GetNames(MSBBB msb, Entries entries)
@@ -743,7 +745,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a new Generator with the given ID and name.
                 /// </summary>
-                public Generator(int id, string name) : base(id, name)
+                public Generator(string name) : base(name)
                 {
                     MaxNum = 0;
                     LimitNum = 0;
@@ -891,7 +893,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a new Message with the given ID and name.
                 /// </summary>
-                public Message(int id, string name) : base(id, name)
+                public Message(string name) : base(name)
                 {
                     MessageID = -1;
                     UnkT02 = 0;
@@ -961,7 +963,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a new ObjAct with the given ID and name.
                 /// </summary>
-                public ObjAct(int id, string name) : base(id, name)
+                public ObjAct(string name) : base(name)
                 {
                     ObjActEntityID = -1;
                     PartName2 = null;
@@ -1040,7 +1042,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a new Spawn point with the given ID and name.
                 /// </summary>
-                public SpawnPoint(int id, string name) : base(id, name)
+                public SpawnPoint(string name) : base(name)
                 {
                     SpawnRegionName = null;
                 }
@@ -1111,7 +1113,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a new MapOffset with the given ID and name.
                 /// </summary>
-                public MapOffset(int id, string name) : base(id, name)
+                public MapOffset(string name) : base(name)
                 {
                     Position = Vector3.Zero;
                     Degree = 0;
@@ -1156,7 +1158,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a new Navimesh with the given ID and name.
                 /// </summary>
-                public Navimesh(int id, string name) : base(id, name)
+                public Navimesh(string name) : base(name)
                 {
                     regionIndex = -1;
                     RegionName = null;
@@ -1218,7 +1220,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a new MapOffset with the given ID and name.
                 /// </summary>
-                public Environment(int id, string name) : base(id, name)
+                public Environment(string name) : base(name)
                 {
                     UnkT00 = 0;
                     UnkT04 = 0.0f;
@@ -1291,7 +1293,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a new Wind with the given ID and name.
                 /// </summary>
-                public Wind(int id, string name) : base(id, name)
+                public Wind(string name) : base(name)
                 {
                     FFXID = -1;
                     WindAreaName = null;
@@ -1384,7 +1386,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a new Invasion with the given ID and name.
                 /// </summary>
-                public Invasion(int id, string name) : base(id, name)
+                public Invasion(string name) : base(name)
                 {
                     HostEventEntityID = -1;
                     InvasionEventEntityID = -1;
@@ -1457,7 +1459,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a new WalkRoute with the given ID and name.
                 /// </summary>
-                public WalkRoute(int id, string name) : base(id, name)
+                public WalkRoute(string name) : base(name)
                 {
                     UnkT00 = 0;
                     WalkPointNames = new string[32];
@@ -1520,7 +1522,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a new WalkRoute with the given ID and name.
                 /// </summary>
-                public Unknown(int id, string name) : base(id, name)
+                public Unknown(string name) : base(name)
                 {
                 }
 
@@ -1581,7 +1583,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a new GroupTour with the given ID and name.
                 /// </summary>
-                public GroupTour(int id, string name) : base(id, name)
+                public GroupTour(string name) : base(name)
                 {
                     UnkT00 = 0;
                     UnkT04 = 0;
@@ -1642,6 +1644,76 @@ namespace SoulsFormats
             }
 
             /// <summary>
+            /// Unknown event
+            /// </summary>
+            public class MultiSummoningPoint : Event
+            {
+                internal override EventType Type => EventType.MultiSummoningPoint;
+
+                public int UnkT00;
+                public short UnkT04;
+                public short UnkT06;
+                public short UnkT08;
+                public short UnkT0A;
+
+                /// <summary>
+                /// Creates a new WalkRoute with the given ID and name.
+                /// </summary>
+                public MultiSummoningPoint(string name) : base(name)
+                {
+                    UnkT00 = 0;
+                    UnkT04 = -1;
+                    UnkT06 = -1;
+                    UnkT08 = -1;
+                    UnkT0A = -1;
+                }
+
+                /// <summary>
+                /// Creates a new WalkRoute with values copied from another.
+                /// </summary>
+                public MultiSummoningPoint(MultiSummoningPoint clone) : base(clone)
+                {
+                    UnkT00 = clone.UnkT00;
+                    UnkT04 = clone.UnkT04;
+                    UnkT06 = clone.UnkT06;
+                    UnkT08 = clone.UnkT08;
+                    UnkT0A = clone.UnkT0A;
+                }
+
+                internal MultiSummoningPoint(BinaryReaderEx br) : base(br) { }
+
+                internal override void Read(BinaryReaderEx br)
+                {
+                    UnkT00 = br.ReadInt32();
+                    UnkT04 = br.ReadInt16();
+                    UnkT06 = br.ReadInt16();
+                    UnkT08 = br.ReadInt16();
+                    UnkT0A = br.ReadInt16();
+                    br.AssertInt32(0);
+                }
+
+                internal override void WriteSpecific(BinaryWriterEx bw)
+                {
+                    bw.WriteInt32(UnkT00);
+                    bw.WriteInt16(UnkT04);
+                    bw.WriteInt16(UnkT06);
+                    bw.WriteInt16(UnkT08);
+                    bw.WriteInt16(UnkT0A);
+                    bw.WriteInt32(0);
+                }
+
+                internal override void GetNames(MSBBB msb, Entries entries)
+                {
+                    base.GetNames(msb, entries);
+                }
+
+                internal override void GetIndices(MSBBB msb, Entries entries)
+                {
+                    base.GetIndices(msb, entries);
+                }
+            }
+
+            /// <summary>
             /// Unknown. Only appears once in one unused MSB so it's hard to draw too many conclusions from it.
             /// </summary>
             public class Other : Event
@@ -1649,22 +1721,10 @@ namespace SoulsFormats
                 internal override EventType Type => EventType.Other;
 
                 /// <summary>
-                /// Unknown.
-                /// </summary>
-                public int SoundTypeMaybe;
-
-                /// <summary>
-                /// Unknown.
-                /// </summary>
-                public int SoundIDMaybe;
-
-                /// <summary>
                 /// Creates a new Other with the given ID and name.
                 /// </summary>
-                public Other(int id, string name) : base(id, name)
+                public Other(string name) : base(name)
                 {
-                    SoundTypeMaybe = 0;
-                    SoundIDMaybe = 0;
                 }
 
                 /// <summary>
@@ -1672,28 +1732,16 @@ namespace SoulsFormats
                 /// </summary>
                 public Other(Other clone) : base(clone)
                 {
-                    SoundTypeMaybe = clone.SoundTypeMaybe;
-                    SoundIDMaybe = clone.SoundIDMaybe;
                 }
 
                 internal Other(BinaryReaderEx br) : base(br) { }
 
                 internal override void Read(BinaryReaderEx br)
                 {
-                    /*SoundTypeMaybe = br.ReadInt32();
-                    SoundIDMaybe = br.ReadInt32();
-
-                    for (int i = 0; i < 16; i++)
-                        br.AssertInt32(-1);*/
                 }
 
                 internal override void WriteSpecific(BinaryWriterEx bw)
                 {
-                    /*bw.WriteInt32(SoundTypeMaybe);
-                    bw.WriteInt32(SoundIDMaybe);
-
-                    for (int i = 0; i < 16; i++)
-                        bw.WriteInt32(-1);*/
                 }
             }
         }

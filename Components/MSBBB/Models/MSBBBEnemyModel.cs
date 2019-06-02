@@ -13,7 +13,7 @@ public class MSBBBEnemyModel : MSBBBModel
 
     public MSBBB.Model.Enemy Serialize(GameObject parent)
     {
-        var model = new MSBBB.Model.Enemy(ID, parent.name);
+        var model = new MSBBB.Model.Enemy(parent.name);
         _Serialize(model, parent);
         return model;
     }

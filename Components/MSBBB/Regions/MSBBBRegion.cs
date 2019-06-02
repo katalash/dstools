@@ -10,11 +10,6 @@ using MeowDSIO.DataTypes.MSB;
 public class MSBBBRegion : MonoBehaviour
 {
     /// <summary>
-    /// The ID of this region.
-    /// </summary>
-    public int ID;
-
-    /// <summary>
     /// Unknown.
     /// </summary>
     public int Unk2, Unk3, Unk4;
@@ -31,7 +26,6 @@ public class MSBBBRegion : MonoBehaviour
 
     public void setBaseRegion(MSBBB.Region region)
     {
-        ID = region.ID;
         Unk2 = region.Unk2;
         Unk3 = region.Unk3;
         Unk4 = region.Unk4;
@@ -82,7 +76,6 @@ public class MSBBBRegion : MonoBehaviour
     public void Serialize(MSBBB.Region region, GameObject parent)
     {
         region.Name = parent.name;
-        region.ID = ID;
 
         region.Position.X = parent.transform.position.x;
         region.Position.Y = parent.transform.position.y;

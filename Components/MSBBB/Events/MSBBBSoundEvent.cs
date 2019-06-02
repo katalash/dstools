@@ -25,7 +25,7 @@ public class MSBBBSoundEvent : MSBBBEvent
 
     public MSBBB.Event.Sound Serialize(GameObject parent)
     {
-        var evt = new MSBBB.Event.Sound(ID, parent.name);
+        var evt = new MSBBB.Event.Sound(parent.name);
         _Serialize(evt, parent);
         evt.SoundType = SoundType;
         evt.SoundID = SoundID;

@@ -55,7 +55,7 @@ public class MSBBBInvasionEvent : MSBBBEvent
 
     public MSBBB.Event.Invasion Serialize(GameObject parent)
     {
-        var evt = new MSBBB.Event.Invasion(ID, parent.name);
+        var evt = new MSBBB.Event.Invasion(parent.name);
         _Serialize(evt, parent);
         evt.HostEventEntityID = HostEventEntityID;
         evt.InvasionEventEntityID = InvasionEventEntityID;

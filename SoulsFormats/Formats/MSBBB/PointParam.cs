@@ -9,7 +9,7 @@ namespace SoulsFormats
         /// <summary>
         /// A section containing points and volumes for various purposes.
         /// </summary>
-        public class PointSection : Section<Region>
+        public class PointParam : Section<Region>
         {
             internal override string Type => "POINT_PARAM_ST";
 
@@ -43,14 +43,9 @@ namespace SoulsFormats
             /// <summary>
             /// Creates a new PointSection with no regions.
             /// </summary>
-            public PointSection(int unk1 = 3) : base(unk1)
+            public PointParam(int unk1 = 3) : base(unk1)
             {
                 Regions = new List<Region>();
-                /*Points = new List<Region.Point>();
-                Circles = new List<Region.Circle>();
-                Spheres = new List<Region.Sphere>();
-                Cylinders = new List<Region.Cylinder>();
-                Boxes = new List<Region.Box>();*/
             }
 
             /// <summary>
@@ -104,25 +99,9 @@ namespace SoulsFormats
                 }
             }
 
-            internal override void WriteEntries(BinaryWriterEx bw, List<Region> entries)
+            internal override void WriteEntry(BinaryWriterEx bw, int id, Region entry)
             {
-                for (int i = 0; i < entries.Count; i++)
-                {
-                    bw.FillInt64($"Offset{i}", bw.Position);
-                    entries[i].Write(bw);
-                }
-            }
-
-            internal void GetNames(MSBBB msb, Entries entries)
-            {
-                foreach (Region region in entries.Regions)
-                    region.GetNames(msb, entries);
-            }
-
-            internal void GetIndices(MSBBB msb, Entries entries)
-            {
-                foreach (Region region in entries.Regions)
-                    region.GetIndices(msb, entries);
+                entry.Write(bw, id);
             }
         }
 
@@ -152,11 +131,6 @@ namespace SoulsFormats
             /// Whether this region has additional type data. The only region type where this actually varies is Sound.
             /// </summary>
             public bool HasTypeData;
-
-            /// <summary>
-            /// The ID of this region.
-            /// </summary>
-            public int ID;
 
             /// <summary>
             /// Unknown.
@@ -189,9 +163,8 @@ namespace SoulsFormats
             /// </summary>
             public int EventEntityID;
 
-            public Region(int id, string name, bool hasTypeData)
+            public Region(string name, bool hasTypeData)
             {
-                ID = id;
                 Name = name;
                 Position = Vector3.Zero;
                 Rotation = Vector3.Zero;
@@ -207,7 +180,6 @@ namespace SoulsFormats
             public Region(Region clone)
             {
                 Name = clone.Name;
-                ID = clone.ID;
                 Position = clone.Position;
                 Rotation = clone.Rotation;
                 ActivationPartName = clone.ActivationPartName;
@@ -225,7 +197,7 @@ namespace SoulsFormats
 
                 long nameOffset = br.ReadInt64();
                 br.AssertInt32(0);
-                ID = br.ReadInt32();
+                br.ReadInt32(); // ID
                 br.AssertUInt32((uint)Type);
                 Position = br.ReadVector3();
                 Rotation = br.ReadVector3();
@@ -266,13 +238,13 @@ namespace SoulsFormats
 
             internal abstract void ReadSpecific(BinaryReaderEx br);
 
-            internal void Write(BinaryWriterEx bw)
+            internal void Write(BinaryWriterEx bw, int id)
             {
                 long start = bw.Position;
 
                 bw.ReserveInt64("NameOffset");
                 bw.WriteInt32(0);
-                bw.WriteInt32(ID);
+                bw.WriteInt32(id);
                 bw.WriteUInt32((uint)Type);
                 bw.WriteVector3(Position);
                 bw.WriteVector3(Rotation);
@@ -321,7 +293,7 @@ namespace SoulsFormats
             /// </summary>
             public override string ToString()
             {
-                return $"{Type} {ID} : {Name}";
+                return $"{Type} : {Name}";
             }
 
             public class Point : Region

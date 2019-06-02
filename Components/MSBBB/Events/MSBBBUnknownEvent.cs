@@ -13,7 +13,7 @@ public class MSBBBUnknownEvent : MSBBBEvent
 
     public MSBBB.Event.Unknown Serialize(GameObject parent)
     {
-        var evt = new MSBBB.Event.Unknown(ID, parent.name);
+        var evt = new MSBBB.Event.Unknown(parent.name);
         _Serialize(evt, parent);
         return evt;
     }

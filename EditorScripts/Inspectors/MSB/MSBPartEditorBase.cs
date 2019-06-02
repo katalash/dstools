@@ -141,6 +141,19 @@ public abstract class MSBPartEditorBase : Editor
                                ((drawgroups[7] & comp.DrawGroup8) != 0);
                 mapPiece.SetActive(visible);
             }
+            else if (type == MSBType.MSBBB)
+            {
+                var comp = mapPiece.GetComponent<MSBBBMapPiecePart>();
+                bool visible = ((drawgroups[0] & comp.DrawGroup1) != 0) ||
+                               ((drawgroups[1] & comp.DrawGroup2) != 0) ||
+                               ((drawgroups[2] & comp.DrawGroup3) != 0) ||
+                               ((drawgroups[3] & comp.DrawGroup4) != 0) ||
+                               ((drawgroups[4] & comp.DrawGroup5) != 0) ||
+                               ((drawgroups[5] & comp.DrawGroup6) != 0) ||
+                               ((drawgroups[6] & comp.DrawGroup7) != 0) ||
+                               ((drawgroups[7] & comp.DrawGroup8) != 0);
+                mapPiece.SetActive(visible);
+            }
             else if (type == MSBType.MSB1)
             {
                 var comp = mapPiece.GetComponent<MSB1MapPiecePart>();
@@ -163,6 +176,19 @@ public abstract class MSBPartEditorBase : Editor
             if (type == MSBType.MSB3)
             {
                 var comp = mapPiece.GetComponent<MSB3MapPiecePart>();
+                bool visible = ((dispgroups[0] & comp.DispGroup1) != 0) ||
+                               ((dispgroups[1] & comp.DispGroup2) != 0) ||
+                               ((dispgroups[2] & comp.DispGroup3) != 0) ||
+                               ((dispgroups[3] & comp.DispGroup4) != 0) ||
+                               ((dispgroups[4] & comp.DispGroup5) != 0) ||
+                               ((dispgroups[5] & comp.DispGroup6) != 0) ||
+                               ((dispgroups[6] & comp.DispGroup7) != 0) ||
+                               ((dispgroups[7] & comp.DispGroup8) != 0);
+                mapPiece.SetActive(visible);
+            }
+            else if (type == MSBType.MSBBB)
+            {
+                var comp = mapPiece.GetComponent<MSBBBMapPiecePart>();
                 bool visible = ((dispgroups[0] & comp.DispGroup1) != 0) ||
                                ((dispgroups[1] & comp.DispGroup2) != 0) ||
                                ((dispgroups[2] & comp.DispGroup3) != 0) ||

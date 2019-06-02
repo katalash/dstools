@@ -13,7 +13,7 @@ public class MSBBBCollisionModel : MSBBBModel
 
     public MSBBB.Model.Collision Serialize(GameObject parent)
     {
-        var model = new MSBBB.Model.Collision(ID, parent.name);
+        var model = new MSBBB.Model.Collision(parent.name);
         _Serialize(model, parent);
         return model;
     }

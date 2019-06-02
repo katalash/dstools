@@ -9,12 +9,7 @@ public abstract class MSBBBEvent : MonoBehaviour
     /// <summary>
     /// Unknown.
     /// </summary>
-    public int EventIndex;
-
-    /// <summary>
-    /// The ID of this event.
-    /// </summary>
-    public int ID;
+    public int EventID;
 
     /// <summary>
     /// The name of a part the event is attached to.
@@ -35,8 +30,7 @@ public abstract class MSBBBEvent : MonoBehaviour
 
     public void setBaseEvent(MSBBB.Event evt)
     {
-        EventIndex = evt.EventIndex;
-        ID = evt.ID;
+        EventID = evt.EventID;
         PartName = evt.PartName;
         PointName = evt.PointName;
         EventEntityID = evt.EventEntityID;
@@ -46,8 +40,7 @@ public abstract class MSBBBEvent : MonoBehaviour
     internal void _Serialize(MSBBB.Event evt, GameObject parent)
     {
         evt.Name = parent.name;
-        evt.EventIndex = EventIndex;
-        evt.ID = ID;
+        evt.EventID = EventID;
         evt.PartName = (PartName == "") ? null : PartName;
         evt.PointName = (PointName == "") ? null : PointName;
         evt.EventEntityID = EventEntityID;

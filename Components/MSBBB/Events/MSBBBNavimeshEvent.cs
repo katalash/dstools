@@ -19,7 +19,7 @@ public class MSBBBNavimeshEvent : MSBBBEvent
 
     public MSBBB.Event.Navimesh Serialize(GameObject parent)
     {
-        var evt = new MSBBB.Event.Navimesh(ID, parent.name);
+        var evt = new MSBBB.Event.Navimesh(parent.name);
         _Serialize(evt, parent);
         evt.RegionName = (RegionName == "") ? null : RegionName;
         return evt;

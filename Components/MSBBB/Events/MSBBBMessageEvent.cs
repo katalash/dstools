@@ -31,7 +31,7 @@ public class MSBBBMessageEvent : MSBBBEvent
 
     public MSBBB.Event.Message Serialize(GameObject parent)
     {
-        var evt = new MSBBB.Event.Message(ID, parent.name);
+        var evt = new MSBBB.Event.Message(parent.name);
         _Serialize(evt, parent);
         evt.MessageID = MessageID;
         evt.UnkT02 = UnkT02;

@@ -25,7 +25,7 @@ public class MSBBBWalkRouteEvent : MSBBBEvent
 
     public MSBBB.Event.WalkRoute Serialize(GameObject parent)
     {
-        var evt = new MSBBB.Event.WalkRoute(ID, parent.name);
+        var evt = new MSBBB.Event.WalkRoute(parent.name);
         _Serialize(evt, parent);
         evt.UnkT00 = UnkT00;
         for (int i = 0; i < 32; i++)

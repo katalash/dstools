@@ -74,7 +74,7 @@ public class MSBBBGeneratorEvent : MSBBBEvent
 
     public MSBBB.Event.Generator Serialize(GameObject parent)
     {
-        var evt = new MSBBB.Event.Generator(ID, parent.name);
+        var evt = new MSBBB.Event.Generator(parent.name);
         _Serialize(evt, parent);
         evt.MaxNum = MaxNum;
         evt.LimitNum = LimitNum;

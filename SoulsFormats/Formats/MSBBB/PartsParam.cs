@@ -9,7 +9,7 @@ namespace SoulsFormats
         /// <summary>
         /// Instances of various "things" in this MSB.
         /// </summary>
-        public class PartsSection : Section<Part>
+        public class PartsParam : Section<Part>
         {
             internal override string Type => "PARTS_PARAM_ST";
 
@@ -56,7 +56,7 @@ namespace SoulsFormats
             /// <summary>
             /// Creates a new PartsSection with no parts.
             /// </summary>
-            public PartsSection(int unk1 = 3) : base(unk1)
+            public PartsParam(int unk1 = 3) : base(unk1)
             {
                 MapPieces = new List<Part.MapPiece>();
                 Objects = new List<Part.Object>();
@@ -129,25 +129,9 @@ namespace SoulsFormats
                 }
             }
 
-            internal override void WriteEntries(BinaryWriterEx bw, List<Part> entries)
+            internal override void WriteEntry(BinaryWriterEx bw, int id, Part entry)
             {
-                for (int i = 0; i < entries.Count; i++)
-                {
-                    bw.FillInt64($"Offset{i}", bw.Position);
-                    entries[i].Write(bw);
-                }
-            }
-
-            internal void GetNames(MSBBB msb, Entries entries)
-            {
-                foreach (Part part in entries.Parts)
-                    part.GetNames(msb, entries);
-            }
-
-            internal void GetIndices(MSBBB msb, Entries entries)
-            {
-                foreach (Part part in entries.Parts)
-                    part.GetIndices(msb, entries);
+                entry.Write(bw, id);
             }
         }
 
@@ -189,11 +173,6 @@ namespace SoulsFormats
             /// The placeholder model for this part.
             /// </summary>
             public string Placeholder;
-
-            /// <summary>
-            /// The ID of this part, which should be unique but does not appear to be used otherwise.
-            /// </summary>
-            public int ID;
 
             /// <summary>
             /// Seems to be a local id for the parts of this model type
@@ -263,9 +242,8 @@ namespace SoulsFormats
 
             private long UnkOffset1Delta, UnkOffset2Delta;
 
-            internal Part(int id, string name, long unkOffset1Delta, long unkOffset2Delta)
+            internal Part(string name, long unkOffset1Delta, long unkOffset2Delta)
             {
-                ID = id;
                 Name = name;
                 ModelName = null;
                 Position = Vector3.Zero;
@@ -296,7 +274,6 @@ namespace SoulsFormats
                 Name = clone.Name;
                 Description = clone.Description;
                 Placeholder = clone.Placeholder;
-                ID = clone.ID;
                 ModelLocalID = clone.ModelLocalID;
                 ModelName = clone.ModelName;
                 Position = clone.Position;
@@ -329,7 +306,7 @@ namespace SoulsFormats
                 ModelLocalID = br.ReadInt32();
                 br.AssertUInt32((uint)Type);
 
-                ID = br.ReadInt32();
+                br.ReadInt32(); // ID
 
                 modelIndex = br.ReadInt32();
 
@@ -384,7 +361,7 @@ namespace SoulsFormats
 
             internal abstract void Read(BinaryReaderEx br);
 
-            internal void Write(BinaryWriterEx bw)
+            internal void Write(BinaryWriterEx bw, int id)
             {
                 long start = bw.Position;
 
@@ -392,7 +369,7 @@ namespace SoulsFormats
                 bw.ReserveInt64("NameOffset");
                 bw.WriteInt32(ModelLocalID);
                 bw.WriteUInt32((uint)Type);
-                bw.WriteInt32(ID);
+                bw.WriteInt32(id);
                 bw.WriteInt32(modelIndex);
                 bw.ReserveInt64("PlaceholderOffset");
                 bw.WriteVector3(Position);
@@ -468,7 +445,7 @@ namespace SoulsFormats
             /// </summary>
             public override string ToString()
             {
-                return $"{Type} {ID} : {Name}";
+                return $"{Type} : {Name}";
             }
 
             /// <summary>
@@ -496,7 +473,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a new MapPiece with the given ID and name.
                 /// </summary>
-                public MapPiece(int id, string name) : base(id, name, 8, 0)
+                public MapPiece(string name) : base(name, 8, 0)
                 {
                     LightParamID = 0;
                     FogParamID = 0;
@@ -574,7 +551,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a new Object with the given ID and name.
                 /// </summary>
-                public Object(int id, string name) : base(id, name, 32, 0)
+                public Object(string name) : base(name, 32, 0)
                 {
                     CollisionName = null;
                     UnkT02a = 0;
@@ -724,7 +701,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a new Enemy with the given ID and name.
                 /// </summary>
-                public Enemy(int id, string name) : base(id, name, 192, 0)
+                public Enemy(string name) : base(name, 192, 0)
                 {
                     ThinkParamID = 0;
                     NPCParamID = 0;
@@ -846,7 +823,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a new Player with the given ID and name.
                 /// </summary>
-                public Player(int id, string name) : base(id, name, 0, 0) { }
+                public Player(string name) : base(name, 0, 0) { }
 
                 /// <summary>
                 /// Creates a new Player with values copied from another.
@@ -953,13 +930,13 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int UnkT14, UnkT18, UnkT1C, UnkT20, UnkT24, UnkT38, UnkT40, UnkT44, UnkT48, UnkT4C, UnkT70, UnkT74;
+                public int UnkT14, UnkT18, UnkT1C, UnkT20, UnkT24, UnkT38, UnkT3A, UnkT40, UnkT44, UnkT48, UnkT4C, UnkT70, UnkT74;
 
 
                 /// <summary>
                 /// Creates a new Collision with the given ID and name.
                 /// </summary>
-                public Collision(int id, string name) : base(id, name, 80, 112)
+                public Collision(string name) : base(name, 80, 112)
                 {
                     HitFilterID = 0;
                     SoundSpaceType = SoundSpace.NoReverb;
@@ -978,6 +955,7 @@ namespace SoulsFormats
                     UnkT20 = 0;
                     UnkT24 = 0;
                     UnkT38 = 0;
+                    UnkT3A = 0;
                     UnkT40 = 0;
                     UnkT44 = 0;
                     UnkT48 = 0;
@@ -1008,6 +986,7 @@ namespace SoulsFormats
                     UnkT20 = clone.UnkT20;
                     UnkT24 = clone.UnkT24;
                     UnkT38 = clone.UnkT38;
+                    UnkT3A = clone.UnkT3A;
                     UnkT40 = clone.UnkT40;
                     UnkT44 = clone.UnkT44;
                     UnkT48 = clone.UnkT48;
@@ -1040,7 +1019,8 @@ namespace SoulsFormats
                     br.AssertInt32(0);
                     br.AssertInt32(0);
                     UnkT38 = br.ReadInt32();
-                    br.AssertInt32(0);
+                    // Something to do with multispawn points?
+                    UnkT3A = br.ReadInt32();
                     UnkT40 = br.ReadInt32();
                     UnkT44 = br.ReadInt32();
                     UnkT48 = br.ReadInt32();
@@ -1084,7 +1064,7 @@ namespace SoulsFormats
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
                     bw.WriteInt32(UnkT38);
-                    bw.WriteInt32(0);
+                    bw.WriteInt32(UnkT3A);
                     bw.WriteInt32(UnkT40);
                     bw.WriteInt32(UnkT44);
                     bw.WriteInt32(UnkT48);
@@ -1129,7 +1109,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a new DummyObject with the given ID and name.
                 /// </summary>
-                public DummyObject(int id, string name) : base(id, name) { }
+                public DummyObject(string name) : base(name) { }
 
                 /// <summary>
                 /// Creates a new DummyObject with values copied from another.
@@ -1149,7 +1129,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a new DummyEnemy with the given ID and name.
                 /// </summary>
-                public DummyEnemy(int id, string name) : base(id, name) { }
+                public DummyEnemy(string name) : base(name) { }
 
                 /// <summary>
                 /// Creates a new DummyEnemy with values copied from another.
@@ -1180,7 +1160,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a new ConnectCollision with the given ID and name.
                 /// </summary>
-                public ConnectCollision(int id, string name) : base(id, name, 0, 0)
+                public ConnectCollision(string name) : base(name, 0, 0)
                 {
                     CollisionName = null;
                     MapID1 = 0;

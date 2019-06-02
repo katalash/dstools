@@ -26,7 +26,7 @@ public class MSBBBGroupTourEvent : MSBBBEvent
 
     public MSBBB.Event.GroupTour Serialize(GameObject parent)
     {
-        var evt = new MSBBB.Event.GroupTour(ID, parent.name);
+        var evt = new MSBBB.Event.GroupTour(parent.name);
         _Serialize(evt, parent);
         evt.UnkT00 = UnkT00;
         evt.UnkT04 = UnkT04;

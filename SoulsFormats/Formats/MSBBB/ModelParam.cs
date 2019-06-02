@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace SoulsFormats
 {
@@ -8,7 +9,7 @@ namespace SoulsFormats
         /// <summary>
         /// A section containing all the models available to parts in this map.
         /// </summary>
-        public class ModelSection : Section<Model>
+        public class ModelParam : Section<Model>
         {
             internal override string Type => "MODEL_PARAM_ST";
 
@@ -55,7 +56,7 @@ namespace SoulsFormats
             /// <summary>
             /// Creates a new ModelSection with no models.
             /// </summary>
-            public ModelSection(int unk1 = 3) : base(unk1)
+            public ModelParam(int unk1 = 3) : base(unk1)
             {
                 MapPieces = new List<Model.MapPiece>();
                 Objects = new List<Model.Object>();
@@ -128,29 +129,9 @@ namespace SoulsFormats
                 }
             }
 
-            internal override void WriteEntries(BinaryWriterEx bw, List<Model> entries)
+            internal override void WriteEntry(BinaryWriterEx bw, int id, Model entry)
             {
-                for (int i = 0; i < entries.Count; i++)
-                {
-                    bw.FillInt64($"Offset{i}", bw.Position);
-                    entries[i].Write(bw);
-                }
-            }
-
-            internal void CountInstances(Entries entries)
-            {
-                var models = new Dictionary<string, Model>();
-                foreach (var model in entries.Models)
-                {
-                    model.InstanceCount = 0;
-                    models[model.Name] = model;
-                }
-
-                foreach (var part in entries.Parts)
-                {
-                    if (models.ContainsKey(part.ModelName))
-                        models[part.ModelName].InstanceCount++;
-                }
+                entry.Write(bw, id);
             }
         }
 
@@ -185,30 +166,18 @@ namespace SoulsFormats
             /// </summary>
             public string Placeholder;
 
-            /// <summary>
-            /// The ID of this model.
-            /// </summary>
-            public int ID;
+            private int InstanceCount;
 
-            /// <summary>
-            /// The number of parts using this model; recalculated whenever the MSB is written.
-            /// </summary>
-            public int InstanceCount { get; internal set; }
-
-            internal Model(int id, string name)
+            internal Model(string name)
             {
-                ID = id;
                 Name = name;
                 Placeholder = "";
-                InstanceCount = 0;
             }
 
             internal Model(Model clone)
             {
                 Name = clone.Name;
                 Placeholder = clone.Placeholder;
-                ID = clone.ID;
-                InstanceCount = clone.InstanceCount;
             }
 
             internal Model(BinaryReaderEx br)
@@ -217,7 +186,7 @@ namespace SoulsFormats
 
                 long nameOffset = br.ReadInt64();
                 br.AssertUInt32((uint)Type);
-                ID = br.ReadInt32();
+                br.ReadInt32(); // ID
                 long placeholderOffset = br.ReadInt64();
                 InstanceCount = br.ReadInt32();
                 br.AssertInt32(0);
@@ -226,43 +195,39 @@ namespace SoulsFormats
 
                 Name = br.GetUTF16(start + nameOffset);
                 Placeholder = br.GetUTF16(start + placeholderOffset);
-
-                //ReadSpecific(br, start);
             }
 
-            internal abstract void ReadSpecific(BinaryReaderEx br, long start);
-
-            internal void Write(BinaryWriterEx bw)
+            internal void Write(BinaryWriterEx bw, int id)
             {
                 long start = bw.Position;
 
                 bw.ReserveInt64("NameOffset");
                 bw.WriteUInt32((uint)Type);
-                bw.WriteInt32(ID);
+                bw.WriteInt32(id);
                 bw.ReserveInt64("PlaceholderOffset");
                 bw.WriteInt32(InstanceCount);
                 bw.WriteInt32(0);
                 bw.WriteInt32(0);
                 bw.WriteInt32(0);
-                //bw.ReserveInt64("UnkOffset");
 
                 bw.FillInt64("NameOffset", bw.Position - start);
                 bw.WriteUTF16(Name, true);
                 bw.FillInt64("PlaceholderOffset", bw.Position - start);
                 bw.WriteUTF16(Placeholder, true);
                 bw.Pad(8);
-
-                //WriteSpecific(bw, start);
             }
 
-            internal abstract void WriteSpecific(BinaryWriterEx bw, long start);
+            internal void CountInstances(List<Part> parts)
+            {
+                InstanceCount = parts.Count(p => p.ModelName == Name);
+            }
 
             /// <summary>
             /// Returns the model type, ID and name of this model.
             /// </summary>
             public override string ToString()
             {
-                return $"{Type} {ID} : {Name}";
+                return $"{Type} : {Name}";
             }
 
             /// <summary>
@@ -273,27 +238,10 @@ namespace SoulsFormats
                 internal override ModelType Type => ModelType.MapPiece;
 
                 /// <summary>
-                /// Unknown.
-                /// </summary>
-                public byte UnkT00, UnkT01;
-
-                /// <summary>
-                /// Unknown.
-                /// </summary>
-                public bool UnkT02, UnkT03;
-
-                public int Unk02;
-                public int Unk03;
-
-                /// <summary>
                 /// Creates a new MapPiece with the given ID and name.
                 /// </summary>
-                public MapPiece(int id, string name) : base(id, name)
+                public MapPiece(string name) : base(name)
                 {
-                    UnkT00 = 0;
-                    UnkT01 = 0;
-                    UnkT02 = true;
-                    UnkT03 = true;
                 }
 
                 /// <summary>
@@ -301,42 +249,9 @@ namespace SoulsFormats
                 /// </summary>
                 public MapPiece(MapPiece clone) : base(clone)
                 {
-                    UnkT00 = clone.UnkT00;
-                    UnkT01 = clone.UnkT01;
-                    UnkT02 = clone.UnkT02;
-                    UnkT03 = clone.UnkT03;
                 }
 
                 internal MapPiece(BinaryReaderEx br) : base(br) { }
-
-                internal override void ReadSpecific(BinaryReaderEx br, long start)
-                {
-                    long unkOffset = br.ReadInt64();
-                    br.Position = start + unkOffset;
-
-                    UnkT00 = br.ReadByte();
-                    UnkT01 = br.ReadByte();
-                    UnkT02 = br.ReadBoolean();
-                    UnkT03 = br.ReadBoolean();
-
-                    br.AssertInt32(0);
-                    Unk02 = br.ReadInt32();
-                    Unk03 = br.ReadInt32();
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw, long start)
-                {
-                    bw.FillInt64("UnkOffset", bw.Position - start);
-
-                    bw.WriteByte(UnkT00);
-                    bw.WriteByte(UnkT01);
-                    bw.WriteBoolean(UnkT02);
-                    bw.WriteBoolean(UnkT03);
-
-                    bw.WriteInt32(0);
-                    bw.WriteInt32(Unk02);
-                    bw.WriteInt32(Unk03);
-                }
             }
 
             /// <summary>
@@ -347,24 +262,10 @@ namespace SoulsFormats
                 internal override ModelType Type => ModelType.Object;
 
                 /// <summary>
-                /// Unknown.
-                /// </summary>
-                public byte UnkT00, UnkT01;
-
-                /// <summary>
-                /// Unknown.
-                /// </summary>
-                public bool UnkT02, UnkT03;
-
-                /// <summary>
                 /// Creates a new Object with the given ID and name.
                 /// </summary>
-                public Object(int id, string name) : base(id, name)
+                public Object(string name) : base(name)
                 {
-                    UnkT00 = 0;
-                    UnkT01 = 0;
-                    UnkT02 = true;
-                    UnkT03 = true;
                 }
 
                 /// <summary>
@@ -372,34 +273,9 @@ namespace SoulsFormats
                 /// </summary>
                 public Object(Object clone) : base(clone)
                 {
-                    UnkT00 = clone.UnkT00;
-                    UnkT01 = clone.UnkT01;
-                    UnkT02 = clone.UnkT02;
-                    UnkT03 = clone.UnkT03;
                 }
 
                 internal Object(BinaryReaderEx br) : base(br) { }
-
-                internal override void ReadSpecific(BinaryReaderEx br, long start)
-                {
-                    long unkOffset = br.ReadInt64();
-                    br.Position = start + unkOffset;
-
-                    UnkT00 = br.ReadByte();
-                    UnkT01 = br.ReadByte();
-                    UnkT02 = br.ReadBoolean();
-                    UnkT03 = br.ReadBoolean();
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw, long start)
-                {
-                    bw.FillInt64("UnkOffset", bw.Position - start);
-
-                    bw.WriteByte(UnkT00);
-                    bw.WriteByte(UnkT01);
-                    bw.WriteBoolean(UnkT02);
-                    bw.WriteBoolean(UnkT03);
-                }
             }
 
             /// <summary>
@@ -412,7 +288,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a new Enemy with the given ID and name.
                 /// </summary>
-                public Enemy(int id, string name) : base(id, name) { }
+                public Enemy(string name) : base(name) { }
 
                 /// <summary>
                 /// Creates a new Enemy with values copied from another.
@@ -420,16 +296,6 @@ namespace SoulsFormats
                 public Enemy(Enemy clone) : base(clone) { }
 
                 internal Enemy(BinaryReaderEx br) : base(br) { }
-
-                internal override void ReadSpecific(BinaryReaderEx br, long start)
-                {
-                    br.AssertInt64(0);
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw, long start)
-                {
-                    bw.FillInt64("UnkOffset", 0);
-                }
             }
 
             /// <summary>
@@ -442,7 +308,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a new Item with the given ID and name.
                 /// </summary>
-                public Item(int id, string name) : base(id, name) { }
+                public Item(string name) : base(name) { }
 
                 /// <summary>
                 /// Creates a new Item with values copied from another.
@@ -450,16 +316,6 @@ namespace SoulsFormats
                 public Item(Item clone) : base(clone) { }
 
                 internal Item(BinaryReaderEx br) : base(br) { }
-
-                internal override void ReadSpecific(BinaryReaderEx br, long start)
-                {
-                    br.AssertInt64(0);
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw, long start)
-                {
-                    bw.FillInt64("UnkOffset", 0);
-                }
             }
 
             /// <summary>
@@ -472,7 +328,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a new Player with the given ID and name.
                 /// </summary>
-                public Player(int id, string name) : base(id, name) { }
+                public Player(string name) : base(name) { }
 
                 /// <summary>
                 /// Creates a new Player with values copied from another.
@@ -480,16 +336,6 @@ namespace SoulsFormats
                 public Player(Player clone) : base(clone) { }
 
                 internal Player(BinaryReaderEx br) : base(br) { }
-
-                internal override void ReadSpecific(BinaryReaderEx br, long start)
-                {
-                    br.AssertInt64(0);
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw, long start)
-                {
-                    bw.FillInt64("UnkOffset", 0);
-                }
             }
 
             /// <summary>
@@ -502,7 +348,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a new Collision with the given ID and name.
                 /// </summary>
-                public Collision(int id, string name) : base(id, name) { }
+                public Collision(string name) : base(name) { }
 
                 /// <summary>
                 /// Creates a new Collision with values copied from another.
@@ -510,16 +356,6 @@ namespace SoulsFormats
                 public Collision(Collision clone) : base(clone) { }
 
                 internal Collision(BinaryReaderEx br) : base(br) { }
-
-                internal override void ReadSpecific(BinaryReaderEx br, long start)
-                {
-                    br.AssertInt64(0);
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw, long start)
-                {
-                    bw.FillInt64("UnkOffset", 0);
-                }
             }
 
             /// <summary>
@@ -532,7 +368,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a new Navmesh with the given ID and name.
                 /// </summary>
-                public Navmesh(int id, string name) : base(id, name) { }
+                public Navmesh(string name) : base(name) { }
 
                 /// <summary>
                 /// Creates a new Navmesh with values copied from another.
@@ -540,16 +376,6 @@ namespace SoulsFormats
                 public Navmesh(Navmesh clone) : base(clone) { }
 
                 internal Navmesh(BinaryReaderEx br) : base(br) { }
-
-                internal override void ReadSpecific(BinaryReaderEx br, long start)
-                {
-                    br.AssertInt64(0);
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw, long start)
-                {
-                    bw.FillInt64("UnkOffset", 0);
-                }
             }
 
             /// <summary>
@@ -562,7 +388,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Creates a new Other with the given ID and name.
                 /// </summary>
-                public Other(int id, string name) : base(id, name) { }
+                public Other(string name) : base(name) { }
 
                 /// <summary>
                 /// Creates a new Other with values copied from another.
@@ -570,16 +396,6 @@ namespace SoulsFormats
                 public Other(Other clone) : base(clone) { }
 
                 internal Other(BinaryReaderEx br) : base(br) { }
-
-                internal override void ReadSpecific(BinaryReaderEx br, long start)
-                {
-                    br.AssertInt64(0);
-                }
-
-                internal override void WriteSpecific(BinaryWriterEx bw, long start)
-                {
-                    bw.FillInt64("UnkOffset", 0);
-                }
             }
         }
     }

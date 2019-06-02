@@ -28,7 +28,7 @@ public class MSBBBConnectCollisionPart : MSBBBPart
 
     public MSBBB.Part.ConnectCollision Serialize(GameObject parent)
     {
-        var part = new MSBBB.Part.ConnectCollision(ID, parent.name);
+        var part = new MSBBB.Part.ConnectCollision(parent.name);
         _Serialize(part, parent);
         part.CollisionName = (CollisionName == "") ? null : CollisionName;
         part.MapID1 = MapID1;

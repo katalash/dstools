@@ -13,7 +13,7 @@ public class MSBBBOtherEvent : MSBBBEvent
 
     public MSBBB.Event.Other Serialize(GameObject parent)
     {
-        var evt = new MSBBB.Event.Other(ID, parent.name);
+        var evt = new MSBBB.Event.Other(parent.name);
         _Serialize(evt, parent);
         return evt;
     }

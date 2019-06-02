@@ -11,22 +11,15 @@ public abstract class MSBBBModel : MonoBehaviour
     /// </summary>
     public string Placeholder;
 
-    /// <summary>
-    /// The ID of this model.
-    /// </summary>
-    public int ID;
-
     public void setBaseModel(MSBBB.Model model)
     {
         Placeholder = model.Placeholder;
-        ID = model.ID;
     }
 
     internal void _Serialize(MSBBB.Model model, GameObject parent)
     {
         model.Name = parent.name;
         model.Placeholder = Placeholder;
-        model.ID = ID;
     }
 
     void Start()

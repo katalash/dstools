@@ -28,7 +28,7 @@ public class MSBBBWindEvent : MSBBBEvent
 
     public MSBBB.Event.Wind Serialize(GameObject parent)
     {
-        var evt = new MSBBB.Event.Wind(ID, parent.name);
+        var evt = new MSBBB.Event.Wind(parent.name);
         _Serialize(evt, parent);
         evt.FFXID = FFXID;
         evt.WindAreaName = (WindAreaName == "") ? null : WindAreaName;

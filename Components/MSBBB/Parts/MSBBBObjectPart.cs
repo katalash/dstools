@@ -41,7 +41,7 @@ public class MSBBBObjectPart : MSBBBPart
 
     public MSBBB.Part.Object Serialize(GameObject parent)
     {
-        var part = new MSBBB.Part.Object(ID, parent.name);
+        var part = new MSBBB.Part.Object(parent.name);
         _Serialize(part, parent);
         part.CollisionName = (CollisionName == "") ? null : CollisionName;
         part.UnkT04 = UnkT04;

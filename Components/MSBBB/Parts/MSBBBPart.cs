@@ -13,11 +13,6 @@ public abstract class MSBBBPart : MonoBehaviour
     public string Placeholder;
 
     /// <summary>
-    /// The ID of this part, which should be unique but does not appear to be used otherwise.
-    /// </summary>
-    public int ID;
-
-    /// <summary>
     /// The name of this part's model.
     /// </summary>
     public string ModelName;
@@ -59,7 +54,6 @@ public abstract class MSBBBPart : MonoBehaviour
     public void setBasePart(MSBBB.Part part)
     {
         Placeholder = part.Placeholder;
-        ID = part.ID;
         ModelName = part.ModelName;
         DrawGroup1 = part.DrawGroups[0];
         DrawGroup2 = part.DrawGroups[1];
@@ -139,7 +133,6 @@ public abstract class MSBBBPart : MonoBehaviour
     {
         part.Name = parent.name;
         part.Placeholder = Placeholder;
-        part.ID = ID;
 
         part.Position.X = parent.transform.position.x;
         part.Position.Y = parent.transform.position.y;

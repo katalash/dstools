@@ -8,7 +8,7 @@ public class MSBBBDummyObjectPart : MSBBBObjectPart
 {
     public new MSBBB.Part.DummyObject Serialize(GameObject parent)
     {
-        var part = new MSBBB.Part.DummyObject(ID, parent.name);
+        var part = new MSBBB.Part.DummyObject(parent.name);
         _Serialize(part, parent);
         part.CollisionName = (CollisionName == "") ? null : CollisionName;
         part.UnkT04 = UnkT04;

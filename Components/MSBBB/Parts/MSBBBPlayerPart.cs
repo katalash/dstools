@@ -13,7 +13,7 @@ public class MSBBBPlayerPart : MSBBBPart
 
     public MSBBB.Part.Player Serialize(GameObject parent)
     {
-        var part = new MSBBB.Part.Player(ID, parent.name);
+        var part = new MSBBB.Part.Player(parent.name);
         _Serialize(part, parent);
         return part;
     }
