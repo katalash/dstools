@@ -25,7 +25,7 @@ public class MSBBBGroupTourEvent : MSBBBEvent
         GroupPartsNames = evt.GroupPartsNames;
     }
 
-    public MSBBB.Event.GroupTour Serialize(GameObject parent)
+    public override MSBBB.Event Serialize(GameObject parent)
     {
         var evt = new MSBBB.Event.GroupTour(parent.name);
         _Serialize(evt, parent);

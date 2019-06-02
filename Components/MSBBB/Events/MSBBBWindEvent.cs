@@ -27,7 +27,7 @@ public class MSBBBWindEvent : MSBBBEvent
         UnkF0C = evt.UnkF0C;
     }
 
-    public MSBBB.Event.Wind Serialize(GameObject parent)
+    public override MSBBB.Event Serialize(GameObject parent)
     {
         var evt = new MSBBB.Event.Wind(parent.name);
         _Serialize(evt, parent);

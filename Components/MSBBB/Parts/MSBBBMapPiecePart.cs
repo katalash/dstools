@@ -31,7 +31,7 @@ public class MSBBBMapPiecePart : MSBBBPart
         UnkT14 = part.UnkT14;
     }
 
-    public MSBBB.Part.MapPiece Serialize(GameObject parent)
+    public override MSBBB.Part Serialize(GameObject parent)
     {
         var part = new MSBBB.Part.MapPiece(parent.name);
         _Serialize(part, parent);

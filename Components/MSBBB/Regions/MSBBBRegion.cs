@@ -73,7 +73,7 @@ public class MSBBBRegion : MonoBehaviour
         return new System.Numerics.Vector3(Mathf.Rad2Deg * x, Mathf.Rad2Deg * y, Mathf.Rad2Deg * z);
     }
 
-    public void Serialize(MSBBB.Region region, GameObject parent)
+    public MSBBB.Region Serialize(MSBBB.Region region, GameObject parent)
     {
         region.Name = parent.name;
 
@@ -114,5 +114,7 @@ public class MSBBBRegion : MonoBehaviour
         else if (region is MSBBB.Region.Point)
         {
         }
+
+        return region;
     }
 }

@@ -18,7 +18,7 @@ public class MSBBBSpawnPointEvent : MSBBBEvent
         SpawnRegionName = evt.SpawnRegionName;
     }
 
-    public MSBBB.Event.SpawnPoint Serialize(GameObject parent)
+    public override MSBBB.Event Serialize(GameObject parent)
     {
         var evt = new MSBBB.Event.SpawnPoint(parent.name);
         _Serialize(evt, parent);

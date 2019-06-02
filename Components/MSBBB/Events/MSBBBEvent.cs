@@ -48,4 +48,5 @@ public abstract class MSBBBEvent : MonoBehaviour
     }
 
     public abstract void SetEvent(MSBBB.Event evt);
+    public abstract MSBBB.Event Serialize(GameObject obj);
 }

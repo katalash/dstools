@@ -24,7 +24,7 @@ public class MSBBBSFXEvent : MSBBBEvent
         StartDisabled = evt.StartDisabled;
     }
 
-    public MSBBB.Event.SFX Serialize(GameObject parent)
+    public override MSBBB.Event Serialize(GameObject parent)
     {
         var evt = new MSBBB.Event.SFX(parent.name);
         _Serialize(evt, parent);

@@ -71,7 +71,7 @@ public class MSBBBTreasureEvent : MSBBBEvent
         UnkT4C = evt.UnkT4C;
     }
 
-    public MSBBB.Event.Treasure Serialize(GameObject parent)
+    public override MSBBB.Event Serialize(GameObject parent)
     {
         var evt = new MSBBB.Event.Treasure(parent.name);
         _Serialize(evt, parent);

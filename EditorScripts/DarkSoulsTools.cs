@@ -1641,6 +1641,18 @@ public class DarkSoulsTools : EditorWindow
         }
     }
 
+    public static void InitializeBBPart<T>(GameObject obj, MSBBB.Part part, int layer, GameObject parent) where T : MSBBBPart
+    {
+        obj.AddComponent<T>();
+        obj.GetComponent<T>().SetPart(part);
+        obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
+        //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
+        EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
+        obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
+        obj.layer = layer;
+        obj.transform.parent = parent.transform;
+    }
+
     public static void InstantiateBBEvent<T, U>(string evtName, GameObject eventsRoot, List<U> events) where T : MSBBBEvent where U : MSBBB.Event
     {
         GameObject obj = new GameObject(evtName);
@@ -1772,14 +1784,7 @@ public class DarkSoulsTools : EditorWindow
                 {
                     obj = new GameObject(part.Name);
                 }
-                obj.AddComponent<MSBBBMapPiecePart>();
-                obj.GetComponent<MSBBBMapPiecePart>().SetPart(part);
-                obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
-                //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
-                EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
-                obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
-                obj.layer = 9;
-                obj.transform.parent = MapPieces.transform;
+                InitializeBBPart<MSBBBMapPiecePart>(obj, part, 9, MapPieces);
             }
 
             GameObject Objects = new GameObject("Objects");
@@ -1797,14 +1802,7 @@ public class DarkSoulsTools : EditorWindow
                 {
                     obj = new GameObject(part.Name);
                 }
-                obj.AddComponent<MSBBBObjectPart>();
-                obj.GetComponent<MSBBBObjectPart>().SetPart(part);
-                obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
-                //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
-                EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
-                obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
-                obj.layer = 10;
-                obj.transform.parent = Objects.transform;
+                InitializeBBPart<MSBBBObjectPart>(obj, part, 10, Objects);
             }
 
             GameObject Collisions = new GameObject("Collisions");
@@ -1823,14 +1821,7 @@ public class DarkSoulsTools : EditorWindow
                 {
                     obj = new GameObject(part.Name);
                 }
-                obj.AddComponent<MSBBBCollisionPart>();
-                obj.GetComponent<MSBBBCollisionPart>().SetPart(part);
-                obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
-                //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
-                EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
-                obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
-                obj.layer = 12;
-                obj.transform.parent = Collisions.transform;
+                InitializeBBPart<MSBBBCollisionPart>(obj, part, 12, Collisions);
             }
 
             GameObject ConnectCollisions = new GameObject("ConnectCollisions");
@@ -1838,13 +1829,7 @@ public class DarkSoulsTools : EditorWindow
             foreach (var part in msb.Parts.ConnectCollisions)
             {
                 GameObject obj = new GameObject(part.Name);
-                obj.AddComponent<MSBBBConnectCollisionPart>();
-                obj.GetComponent<MSBBBConnectCollisionPart>().SetPart(part);
-                obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
-                //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
-                EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
-                obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
-                obj.transform.parent = ConnectCollisions.transform;
+                InitializeBBPart<MSBBBConnectCollisionPart>(obj, part, 12, ConnectCollisions);
             }
 
             GameObject Enemies = new GameObject("Enemies");
@@ -1862,14 +1847,7 @@ public class DarkSoulsTools : EditorWindow
                 {
                     obj = new GameObject(part.Name);
                 }
-                obj.AddComponent<MSBBBEnemyPart>();
-                obj.GetComponent<MSBBBEnemyPart>().SetPart(part);
-                obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
-                //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
-                EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
-                obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
-                obj.layer = 11;
-                obj.transform.parent = Enemies.transform;
+                InitializeBBPart<MSBBBEnemyPart>(obj, part, 11, Enemies);
             }
 
             GameObject Players = new GameObject("Players");
@@ -1877,13 +1855,7 @@ public class DarkSoulsTools : EditorWindow
             foreach (var part in msb.Parts.Players)
             {
                 GameObject obj = new GameObject(part.Name);
-                obj.AddComponent<MSBBBPlayerPart>();
-                obj.GetComponent<MSBBBPlayerPart>().SetPart(part);
-                obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
-                //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
-                EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
-                obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
-                obj.transform.parent = Players.transform;
+                InitializeBBPart<MSBBBPlayerPart>(obj, part, 11, Players);
             }
 
             GameObject DummyObjects = new GameObject("DummyObjects");
@@ -1901,14 +1873,7 @@ public class DarkSoulsTools : EditorWindow
                 {
                     obj = new GameObject(part.Name);
                 }
-                obj.AddComponent<MSBBBObjectPart>();
-                obj.GetComponent<MSBBBObjectPart>().SetPart(part);
-                obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
-                //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
-                EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
-                obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
-                obj.layer = 12;
-                obj.transform.parent = DummyObjects.transform;
+                InitializeBBPart<MSBBBDummyObjectPart>(obj, part, 10, DummyObjects);
             }
 
             GameObject DummyEnemies = new GameObject("DummyEnemies");
@@ -1926,14 +1891,7 @@ public class DarkSoulsTools : EditorWindow
                 {
                     obj = new GameObject(part.Name);
                 }
-                obj.AddComponent<MSBBBEnemyPart>();
-                obj.GetComponent<MSBBBEnemyPart>().SetPart(part);
-                obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
-                //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
-                EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
-                obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
-                obj.layer = 13;
-                obj.transform.parent = DummyEnemies.transform;
+                InitializeBBPart<MSBBBDummyEnemyPart>(obj, part, 11, DummyEnemies);
             }
 
             //
@@ -3781,6 +3739,160 @@ public class DarkSoulsTools : EditorWindow
         File.Move(mapPath + ".temp", mapPath);
     }
 
+    static void SerializeBBModels<T, U>(List<U> exportList) where T : MSBBBModel where U : MSBBB.Model
+    {
+        var models = FindObjectsOfType<T>();
+        if (models != null)
+        {
+            foreach (var obj in models)
+            {
+                exportList.Add((U)obj.Serialize(obj.gameObject));
+            }
+        }
+    }
+
+    static void SerializeBBParts<T, U>(List<U> exportList) where T : MSBBBPart where U : MSBBB.Part
+    {
+        var parts = FindObjectsOfType<T>();
+        if (parts != null)
+        {
+            foreach (var obj in parts)
+            {
+                exportList.Add((U)obj.Serialize(obj.gameObject));
+            }
+        }
+    }
+
+    static void SerializeBBEvents<T, U>(List<U> exportList) where T : MSBBBEvent where U : MSBBB.Event
+    {
+        var parts = FindObjectsOfType<T>();
+        if (parts != null)
+        {
+            foreach (var obj in parts)
+            {
+                exportList.Add((U)obj.Serialize(obj.gameObject));
+            }
+        }
+    }
+
+    void ExportMapBB()
+    {
+        var AssetLink = GameObject.Find("MSBAssetLink");
+        if (AssetLink == null || AssetLink.GetComponent<MSBAssetLink>() == null)
+        {
+            throw new Exception("Could not find a valid MSB asset link to a BB asset");
+        }
+
+        MSBBB export = new MSBBB();
+
+        // Models
+        SerializeBBModels<MSBBBMapPieceModel, MSBBB.Model.MapPiece>(export.Models.MapPieces);
+        SerializeBBModels<MSBBBCollisionModel, MSBBB.Model.Collision>(export.Models.Collisions);
+        SerializeBBModels<MSBBBEnemyModel, MSBBB.Model.Enemy>(export.Models.Enemies);
+        SerializeBBModels<MSBBBObjectModel, MSBBB.Model.Object>(export.Models.Objects);
+        SerializeBBModels<MSBBBOtherModel, MSBBB.Model.Other>(export.Models.Others);
+        SerializeBBModels<MSBBBPlayerModel, MSBBB.Model.Player>(export.Models.Players);
+
+        // Parts
+        SerializeBBParts<MSBBBMapPiecePart, MSBBB.Part.MapPiece>(export.Parts.MapPieces);
+        SerializeBBParts<MSBBBCollisionPart, MSBBB.Part.Collision>(export.Parts.Collisions);
+        SerializeBBParts<MSBBBConnectCollisionPart, MSBBB.Part.ConnectCollision>(export.Parts.ConnectCollisions);
+        SerializeBBParts<MSBBBDummyEnemyPart, MSBBB.Part.DummyEnemy>(export.Parts.DummyEnemies);
+        SerializeBBParts<MSBBBDummyObjectPart, MSBBB.Part.DummyObject>(export.Parts.DummyObjects);
+        SerializeBBParts<MSBBBEnemyPart, MSBBB.Part.Enemy>(export.Parts.Enemies);
+        SerializeBBParts<MSBBBObjectPart, MSBBB.Part.Object>(export.Parts.Objects);
+        SerializeBBParts<MSBBBPlayerPart, MSBBB.Part.Player>(export.Parts.Players);
+
+        // Regions
+        var regions = FindObjectsOfType<MSBBBRegion>();
+        if (regions != null)
+        {
+            foreach (var obj in regions)
+            {
+                if (obj.GetComponent<SphereCollider>() != null && obj.IsPoint)
+                {
+                    export.Regions.Regions.Add(obj.Serialize(new MSBBB.Region.Point(obj.name), obj.gameObject));
+                }
+                else if (obj.GetComponent<BoxCollider>() != null)
+                {
+                    export.Regions.Regions.Add(obj.Serialize(new MSBBB.Region.Box(obj.name), obj.gameObject));
+                }
+                else if (obj.GetComponent<SphereCollider>() != null)
+                {
+                    export.Regions.Regions.Add(obj.Serialize(new MSBBB.Region.Sphere(obj.name), obj.gameObject));
+                }
+                else if (obj.GetComponent<CapsuleCollider>() != null)
+                {
+                    export.Regions.Regions.Add(obj.Serialize(new MSBBB.Region.Cylinder(obj.name), obj.gameObject));
+                }
+            }
+        }
+
+        // Events
+        SerializeBBEvents<MSBBBSoundEvent, MSBBB.Event.Sound>(export.Events.Sounds);
+        SerializeBBEvents<MSBBBSFXEvent, MSBBB.Event.SFX>(export.Events.SFXs);
+        SerializeBBEvents<MSBBBTreasureEvent, MSBBB.Event.Treasure>(export.Events.Treasures);
+        SerializeBBEvents<MSBBBGeneratorEvent, MSBBB.Event.Generator>(export.Events.Generators);
+        SerializeBBEvents<MSBBBMessageEvent, MSBBB.Event.Message>(export.Events.Messages);
+        SerializeBBEvents<MSBBBObjActEvent, MSBBB.Event.ObjAct>(export.Events.ObjActs);
+        SerializeBBEvents<MSBBBSpawnPointEvent, MSBBB.Event.SpawnPoint>(export.Events.SpawnPoints);
+        SerializeBBEvents<MSBBBMapOffsetEvent, MSBBB.Event.MapOffset>(export.Events.MapOffsets);
+        SerializeBBEvents<MSBBBNavimeshEvent, MSBBB.Event.Navimesh>(export.Events.Navimeshes);
+        SerializeBBEvents<MSBBBEnvironmentEvent, MSBBB.Event.Environment>(export.Events.Environments);
+        SerializeBBEvents<MSBBBInvasionEvent, MSBBB.Event.Invasion>(export.Events.Invasions);
+        SerializeBBEvents<MSBBBWindEvent, MSBBB.Event.Wind>(export.Events.Mysteries);
+        SerializeBBEvents<MSBBBWalkRouteEvent, MSBBB.Event.WalkRoute>(export.Events.WalkRoutes);
+        SerializeBBEvents<MSBBBUnknownEvent, MSBBB.Event.Unknown>(export.Events.Unknowns);
+        SerializeBBEvents<MSBBBGroupTourEvent, MSBBB.Event.GroupTour>(export.Events.GroupTours);
+        SerializeBBEvents<MSBBBMultiSummoningPointEvent, MSBBB.Event.MultiSummoningPoint>(export.Events.MultiSummoningPoints);
+        SerializeBBEvents<MSBBBOtherEvent, MSBBB.Event.Other>(export.Events.Others);
+
+        // Directory setup for overrides
+        if (ModProjectDirectory != null)
+        {
+            if (!Directory.Exists($@"{ModProjectDirectory}\map\mapstudio"))
+            {
+                Directory.CreateDirectory($@"{ModProjectDirectory}\map\mapstudio");
+            }
+        }
+
+        // Save a backup if one doesn't exist
+        if (ModProjectDirectory == null && !File.Exists(AssetLink.GetComponent<MSBAssetLink>().MapPath + ".backup"))
+        {
+            File.Copy(AssetLink.GetComponent<MSBAssetLink>().MapPath, AssetLink.GetComponent<MSBAssetLink>().MapPath + ".backup");
+        }
+
+        // Write as a temporary file to make sure there are no errors before overwriting current file 
+        string mapPath = AssetLink.GetComponent<MSBAssetLink>().MapPath;
+        if (GetModProjectPathForFile(mapPath) != null)
+        {
+            mapPath = GetModProjectPathForFile(mapPath);
+            if (!Directory.Exists(Path.GetDirectoryName(mapPath)))
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(mapPath));
+            }
+        }
+
+        if (File.Exists(mapPath + ".temp"))
+        {
+            File.Delete(mapPath + ".temp");
+        }
+        export.Write(mapPath + ".temp", SoulsFormats.DCX.Type.DarkSouls3);
+
+        // Make a copy of the previous map
+        if (File.Exists(mapPath))
+        {
+            File.Copy(mapPath, mapPath + ".prev", true);
+        }
+
+        // Move temp file as new map file
+        if (File.Exists(mapPath))
+        {
+            File.Delete(mapPath);
+        }
+        File.Move(mapPath + ".temp", mapPath);
+    }
+
     void ExportMapDS3()
     {
         var AssetLink = GameObject.Find("MSBAssetLink");
@@ -4809,7 +4921,7 @@ public class DarkSoulsTools : EditorWindow
         }
         else if (type == GameType.Bloodborne)
         {
-
+            ExportMapBB();
         }
         else if (type == GameType.DarkSoulsIII)
         {

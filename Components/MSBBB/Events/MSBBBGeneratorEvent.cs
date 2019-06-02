@@ -73,7 +73,7 @@ public class MSBBBGeneratorEvent : MSBBBEvent
         UnkT18 = evt.UnkT18;
     }
 
-    public MSBBB.Event.Generator Serialize(GameObject parent)
+    public override MSBBB.Event Serialize(GameObject parent)
     {
         var evt = new MSBBB.Event.Generator(parent.name);
         _Serialize(evt, parent);

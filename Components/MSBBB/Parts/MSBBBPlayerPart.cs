@@ -11,7 +11,7 @@ public class MSBBBPlayerPart : MSBBBPart
         setBasePart(part);
     }
 
-    public MSBBB.Part.Player Serialize(GameObject parent)
+    public override MSBBB.Part Serialize(GameObject parent)
     {
         var part = new MSBBB.Part.Player(parent.name);
         _Serialize(part, parent);

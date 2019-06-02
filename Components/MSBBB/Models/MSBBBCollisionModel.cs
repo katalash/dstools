@@ -11,7 +11,7 @@ public class MSBBBCollisionModel : MSBBBModel
         setBaseModel(model);
     }
 
-    public MSBBB.Model.Collision Serialize(GameObject parent)
+    public override MSBBB.Model Serialize(GameObject parent)
     {
         var model = new MSBBB.Model.Collision(parent.name);
         _Serialize(model, parent);

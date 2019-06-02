@@ -30,7 +30,7 @@ public class MSBBBMessageEvent : MSBBBEvent
         Hidden = evt.Hidden;
     }
 
-    public MSBBB.Event.Message Serialize(GameObject parent)
+    public override MSBBB.Event Serialize(GameObject parent)
     {
         var evt = new MSBBB.Event.Message(parent.name);
         _Serialize(evt, parent);

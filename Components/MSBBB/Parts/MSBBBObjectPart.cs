@@ -40,7 +40,7 @@ public class MSBBBObjectPart : MSBBBPart
         UnkT05b = part.UnkT05b;
     }
 
-    public MSBBB.Part.Object Serialize(GameObject parent)
+    public override MSBBB.Part Serialize(GameObject parent)
     {
         var part = new MSBBB.Part.Object(parent.name);
         _Serialize(part, parent);

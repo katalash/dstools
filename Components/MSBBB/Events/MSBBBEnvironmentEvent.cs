@@ -25,7 +25,7 @@ public class MSBBBEnvironmentEvent : MSBBBEvent
         UnkT14 = evt.UnkT14;
     }
 
-    public MSBBB.Event.Environment Serialize(GameObject parent)
+    public override MSBBB.Event Serialize(GameObject parent)
     {
         var evt = new MSBBB.Event.Environment(parent.name);
         _Serialize(evt, parent);

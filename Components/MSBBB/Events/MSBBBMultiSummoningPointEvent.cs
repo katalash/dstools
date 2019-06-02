@@ -23,7 +23,7 @@ public class MSBBBMultiSummoningPointEvent : MSBBBEvent
         UnkT0A = evt.UnkT0A;
     }
 
-    public MSBBB.Event.MultiSummoningPoint Serialize(GameObject parent)
+    public override MSBBB.Event Serialize(GameObject parent)
     {
         var evt = new MSBBB.Event.MultiSummoningPoint(parent.name);
         _Serialize(evt, parent);

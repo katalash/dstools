@@ -11,7 +11,7 @@ public class MSBBBEnemyModel : MSBBBModel
         setBaseModel(model);
     }
 
-    public MSBBB.Model.Enemy Serialize(GameObject parent)
+    public override MSBBB.Model Serialize(GameObject parent)
     {
         var model = new MSBBB.Model.Enemy(parent.name);
         _Serialize(model, parent);

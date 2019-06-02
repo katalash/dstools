@@ -23,4 +23,5 @@ public abstract class MSBBBModel : MonoBehaviour
     }
 
     public abstract void SetModel(MSBBB.Model model);
+    public abstract MSBBB.Model Serialize(GameObject obj);
 }

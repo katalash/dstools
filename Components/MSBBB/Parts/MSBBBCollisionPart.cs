@@ -88,7 +88,7 @@ public class MSBBBCollisionPart : MSBBBPart
         UnkT74 = part.UnkT74;
     }
 
-    public MSBBB.Part.Collision Serialize(GameObject parent)
+    public override MSBBB.Part Serialize(GameObject parent)
     {
         var part = new MSBBB.Part.Collision(parent.name);
         _Serialize(part, parent);

@@ -188,4 +188,5 @@ public abstract class MSBBBPart : MonoBehaviour
     }
 
     public abstract void SetPart(MSBBB.Part part);
+    public abstract MSBBB.Part Serialize(GameObject obj);
 }

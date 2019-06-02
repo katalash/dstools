@@ -11,7 +11,7 @@ public class MSBBBObjectModel : MSBBBModel
         setBaseModel(model);
     }
 
-    public MSBBB.Model.Object Serialize(GameObject parent)
+    public override MSBBB.Model Serialize(GameObject parent)
     {
         var model = new MSBBB.Model.Object(parent.name);
         _Serialize(model, parent);

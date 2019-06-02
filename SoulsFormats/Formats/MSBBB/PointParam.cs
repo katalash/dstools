@@ -304,6 +304,8 @@ namespace SoulsFormats
 
                 public Point(Point clone) : base(clone) { }
 
+                public Point(string name) : base(name, false) { }
+
                 internal override void ReadSpecific(BinaryReaderEx br) { }
 
                 internal override void WriteSpecific(BinaryWriterEx bw, long start)
@@ -326,6 +328,11 @@ namespace SoulsFormats
                 public Circle(Circle clone) : base(clone)
                 {
                     Radius = clone.Radius;
+                }
+
+                public Circle(string name) : base(name, false)
+                {
+                    Radius = 1.0f;
                 }
 
                 internal override void ReadSpecific(BinaryReaderEx br)
@@ -354,6 +361,11 @@ namespace SoulsFormats
                 public Sphere(Sphere clone) : base(clone)
                 {
                     Radius = clone.Radius;
+                }
+
+                public Sphere(string name) : base(name, false)
+                {
+                    Radius = 1.0f;
                 }
 
                 internal override void ReadSpecific(BinaryReaderEx br)
@@ -388,6 +400,12 @@ namespace SoulsFormats
                 {
                     Radius = clone.Radius;
                     Height = clone.Height;
+                }
+
+                public Cylinder(string name) : base(name, false)
+                {
+                    Radius = 1.0f;
+                    Height = 1.0f;
                 }
 
                 internal override void ReadSpecific(BinaryReaderEx br)
@@ -430,6 +448,13 @@ namespace SoulsFormats
                     Length = clone.Length;
                     Width = clone.Width;
                     Height = clone.Height;
+                }
+
+                public Box(string name) : base(name, false)
+                {
+                    Length = 1.0f;
+                    Width = 1.0f;
+                    Height = 1.0f;
                 }
 
                 internal override void ReadSpecific(BinaryReaderEx br)

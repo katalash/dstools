@@ -67,7 +67,7 @@ public class MSBBBEnemyPart : MSBBBPart
         UnkT16 = part.UnkT16;
     }
 
-    public MSBBB.Part.Enemy Serialize(GameObject parent)
+    public override MSBBB.Part Serialize(GameObject parent)
     {
         var part = new MSBBB.Part.Enemy(parent.name);
 

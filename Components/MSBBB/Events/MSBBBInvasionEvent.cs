@@ -54,7 +54,7 @@ public class MSBBBInvasionEvent : MSBBBEvent
         UnkT18 = evt.UnkT18;
     }
 
-    public MSBBB.Event.Invasion Serialize(GameObject parent)
+    public override MSBBB.Event Serialize(GameObject parent)
     {
         var evt = new MSBBB.Event.Invasion(parent.name);
         _Serialize(evt, parent);

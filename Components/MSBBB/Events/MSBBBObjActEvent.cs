@@ -42,7 +42,7 @@ public class MSBBBObjActEvent : MSBBBEvent
         EventFlagID = evt.EventFlagID;
     }
 
-    public MSBBB.Event.ObjAct Serialize(GameObject parent)
+    public override MSBBB.Event Serialize(GameObject parent)
     {
         var evt = new MSBBB.Event.ObjAct(parent.name);
         _Serialize(evt, parent);

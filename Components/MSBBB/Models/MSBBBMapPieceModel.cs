@@ -11,7 +11,7 @@ public class MSBBBMapPieceModel : MSBBBModel
         setBaseModel(model);
     }
 
-    public MSBBB.Model.MapPiece Serialize(GameObject parent)
+    public override MSBBB.Model Serialize(GameObject parent)
     {
         var model = new MSBBB.Model.MapPiece(parent.name);
         _Serialize(model, parent);

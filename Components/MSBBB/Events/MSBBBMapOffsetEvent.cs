@@ -24,7 +24,7 @@ public class MSBBBMapOffsetEvent : MSBBBEvent
         Degree = evt.Degree;
     }
 
-    public MSBBB.Event.MapOffset Serialize(GameObject parent)
+    public override MSBBB.Event Serialize(GameObject parent)
     {
         var evt = new MSBBB.Event.MapOffset(parent.name);
         _Serialize(evt, parent);

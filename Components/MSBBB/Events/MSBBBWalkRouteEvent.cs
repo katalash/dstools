@@ -24,7 +24,7 @@ public class MSBBBWalkRouteEvent : MSBBBEvent
         WalkPointNames = evt.WalkPointNames;
     }
 
-    public MSBBB.Event.WalkRoute Serialize(GameObject parent)
+    public override MSBBB.Event Serialize(GameObject parent)
     {
         var evt = new MSBBB.Event.WalkRoute(parent.name);
         _Serialize(evt, parent);

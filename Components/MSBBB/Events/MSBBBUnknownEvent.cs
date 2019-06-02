@@ -11,7 +11,7 @@ public class MSBBBUnknownEvent : MSBBBEvent
         setBaseEvent(evt);
     }
 
-    public MSBBB.Event.Unknown Serialize(GameObject parent)
+    public override MSBBB.Event Serialize(GameObject parent)
     {
         var evt = new MSBBB.Event.Unknown(parent.name);
         _Serialize(evt, parent);
