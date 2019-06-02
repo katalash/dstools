@@ -187,13 +187,5 @@ public abstract class MSBBBPart : MonoBehaviour
         part.OldIsShadowDest = OldIsShadowDest;
     }
 
-    void Start()
-    {
-        
-    }
-
-    void Update()
-    {
-        
-    }
+    public abstract void SetPart(MSBBB.Part part);
 }

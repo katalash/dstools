@@ -22,13 +22,5 @@ public abstract class MSBBBModel : MonoBehaviour
         model.Placeholder = Placeholder;
     }
 
-    void Start()
-    {
-        
-    }
-
-    void Update()
-    {
-        
-    }
+    public abstract void SetModel(MSBBB.Model model);
 }

@@ -13,9 +13,10 @@ public class MSBBBEnvironmentEvent : MSBBBEvent
     public float UnkT10;
     public float UnkT14;
 
-    public void SetEvent(MSBBB.Event.Environment evt)
+    public override void SetEvent(MSBBB.Event bevt)
     {
-        setBaseEvent(evt);
+        setBaseEvent(bevt);
+        var evt = (MSBBB.Event.Environment)bevt;
         UnkT00 = evt.UnkT00;
         UnkT04 = evt.UnkT04;
         UnkT08 = evt.UnkT08;

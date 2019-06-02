@@ -16,9 +16,10 @@ public class MSBBBGroupTourEvent : MSBBBEvent
     /// </summary>
     public string[] GroupPartsNames;
 
-    public void SetEvent(MSBBB.Event.GroupTour evt)
+    public override void SetEvent(MSBBB.Event bevt)
     {
-        setBaseEvent(evt);
+        setBaseEvent(bevt);
+        var evt = (MSBBB.Event.GroupTour)bevt;
         UnkT00 = evt.UnkT00;
         UnkT04 = evt.UnkT04;
         GroupPartsNames = evt.GroupPartsNames;

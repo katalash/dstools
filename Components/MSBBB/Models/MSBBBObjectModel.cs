@@ -6,7 +6,7 @@ using SoulsFormats;
 [AddComponentMenu("Bloodborne/Model Declarations/Object")]
 public class MSBBBObjectModel : MSBBBModel
 {
-    public void SetModel(MSBBB.Model.Object model)
+    public override void SetModel(MSBBB.Model model)
     {
         setBaseModel(model);
     }

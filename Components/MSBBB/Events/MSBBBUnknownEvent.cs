@@ -6,7 +6,7 @@ using SoulsFormats;
 [AddComponentMenu("Bloodborne/Events/Unknown")]
 public class MSBBBUnknownEvent : MSBBBEvent
 {
-    public void SetEvent(MSBBB.Event.Unknown evt)
+    public override void SetEvent(MSBBB.Event evt)
     {
         setBaseEvent(evt);
     }

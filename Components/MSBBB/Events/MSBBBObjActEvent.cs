@@ -31,9 +31,10 @@ public class MSBBBObjActEvent : MSBBBEvent
     /// </summary>
     public int EventFlagID;
 
-    public void SetEvent(MSBBB.Event.ObjAct evt)
+    public override void SetEvent(MSBBB.Event bevt)
     {
-        setBaseEvent(evt);
+        setBaseEvent(bevt);
+        var evt = (MSBBB.Event.ObjAct)bevt;
         ObjActEntityID = evt.ObjActEntityID;
         PartName2 = evt.PartName2;
         ParameterID = evt.ParameterID;

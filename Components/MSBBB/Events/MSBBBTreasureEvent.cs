@@ -46,9 +46,10 @@ public class MSBBBTreasureEvent : MSBBBEvent
     public int UnkT48;
     public int UnkT4C;
 
-    public void SetEvent(MSBBB.Event.Treasure evt)
+    public override void SetEvent(MSBBB.Event bevt)
     {
-        setBaseEvent(evt);
+        setBaseEvent(bevt);
+        var evt = (MSBBB.Event.Treasure)bevt;
         PartName2 = evt.PartName2;
         ItemLot1 = evt.ItemLot1;
         ItemLot2 = evt.ItemLot2;

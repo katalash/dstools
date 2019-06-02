@@ -18,9 +18,10 @@ public class MSBBBWindEvent : MSBBBEvent
 
     public float UnkF0C;
 
-    public void SetEvent(MSBBB.Event.Wind evt)
+    public override void SetEvent(MSBBB.Event bevt)
     {
-        setBaseEvent(evt);
+        setBaseEvent(bevt);
+        var evt = (MSBBB.Event.Wind)bevt;
         FFXID = evt.FFXID;
         WindAreaName = evt.WindAreaName;
         UnkF0C = evt.UnkF0C;

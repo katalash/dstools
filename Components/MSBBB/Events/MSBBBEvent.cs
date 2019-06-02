@@ -46,4 +46,6 @@ public abstract class MSBBBEvent : MonoBehaviour
         evt.EventEntityID = EventEntityID;
         evt.Unk01 = Unk01;
     }
+
+    public abstract void SetEvent(MSBBB.Event evt);
 }

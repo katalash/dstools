@@ -56,9 +56,10 @@ public class MSBBBGeneratorEvent : MSBBBEvent
     /// </summary>
     public float UnkT14, UnkT18;
 
-    public void SetEvent(MSBBB.Event.Generator evt)
+    public override void SetEvent(MSBBB.Event bevt)
     {
-        setBaseEvent(evt);
+        setBaseEvent(bevt);
+        var evt = (MSBBB.Event.Generator)bevt;
         MaxNum = evt.MaxNum;
         LimitNum = evt.LimitNum;
         MinGenNum = evt.MinGenNum;

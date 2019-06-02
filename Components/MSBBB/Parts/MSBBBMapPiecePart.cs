@@ -21,8 +21,9 @@ public class MSBBBMapPiecePart : MSBBBPart
     /// </summary>
     public int UnkT10, UnkT14;
 
-    public void SetPart(MSBBB.Part.MapPiece part)
+    public override void SetPart(MSBBB.Part bpart)
     {
+        var part = (MSBBB.Part.MapPiece)bpart;
         setBasePart(part);
         LightParamID = part.LightParamID;
         FogParamID = part.FogParamID;

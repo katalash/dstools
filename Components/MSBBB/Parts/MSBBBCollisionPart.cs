@@ -58,8 +58,9 @@ public class MSBBBCollisionPart : MSBBBPart
     /// </summary>
     public int UnkT14, UnkT18, UnkT1C, UnkT20, UnkT24, UnkT38, UnkT3A, UnkT40, UnkT44, UnkT48, UnkT4C, UnkT70, UnkT74;
 
-    public void SetPart(MSBBB.Part.Collision part)
+    public override void SetPart(MSBBB.Part bpart)
     {
+        var part = (MSBBB.Part.Collision)bpart;
         setBasePart(part);
         HitFilterID = part.HitFilterID;
         SoundSpaceType = part.SoundSpaceType;

@@ -16,9 +16,10 @@ public class MSBBBWalkRouteEvent : MSBBBEvent
     /// </summary>
     public string[] WalkPointNames;
 
-    public void SetEvent(MSBBB.Event.WalkRoute evt)
+    public override void SetEvent(MSBBB.Event bevt)
     {
-        setBaseEvent(evt);
+        setBaseEvent(bevt);
+        var evt = (MSBBB.Event.WalkRoute)bevt;
         UnkT00 = evt.UnkT00;
         WalkPointNames = evt.WalkPointNames;
     }

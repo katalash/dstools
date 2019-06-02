@@ -6,7 +6,7 @@ using SoulsFormats;
 [AddComponentMenu("Bloodborne/Events/Other")]
 public class MSBBBOtherEvent : MSBBBEvent
 {
-    public void SetEvent(MSBBB.Event.Other evt)
+    public override void SetEvent(MSBBB.Event evt)
     {
         setBaseEvent(evt);
     }

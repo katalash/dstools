@@ -6,7 +6,7 @@ using SoulsFormats;
 [AddComponentMenu("Bloodborne/Model Declarations/Enemy")]
 public class MSBBBEnemyModel : MSBBBModel
 {
-    public void SetModel(MSBBB.Model.Enemy model)
+    public override void SetModel(MSBBB.Model model)
     {
         setBaseModel(model);
     }

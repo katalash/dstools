@@ -11,9 +11,10 @@ public class MSBBBSpawnPointEvent : MSBBBEvent
     /// </summary>
     public string SpawnRegionName;
 
-    public void SetEvent(MSBBB.Event.SpawnPoint evt)
+    public override void SetEvent(MSBBB.Event bevt)
     {
-        setBaseEvent(evt);
+        setBaseEvent(bevt);
+        var evt = (MSBBB.Event.SpawnPoint)bevt;
         SpawnRegionName = evt.SpawnRegionName;
     }
 

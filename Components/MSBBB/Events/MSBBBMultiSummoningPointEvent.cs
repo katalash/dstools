@@ -12,9 +12,10 @@ public class MSBBBMultiSummoningPointEvent : MSBBBEvent
     public short UnkT08;
     public short UnkT0A;
 
-    public void SetEvent(MSBBB.Event.MultiSummoningPoint evt)
+    public override void SetEvent(MSBBB.Event bevt)
     {
-        setBaseEvent(evt);
+        setBaseEvent(bevt);
+        var evt = (MSBBB.Event.MultiSummoningPoint)bevt;
         UnkT00 = evt.UnkT00;
         UnkT04 = evt.UnkT04;
         UnkT06 = evt.UnkT06;

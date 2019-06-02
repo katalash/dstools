@@ -6,7 +6,7 @@ using SoulsFormats;
 [AddComponentMenu("Bloodborne/Parts/Player")]
 public class MSBBBPlayerPart : MSBBBPart
 {
-    public void SetPart(MSBBB.Part.Player part)
+    public override void SetPart(MSBBB.Part part)
     {
         setBasePart(part);
     }

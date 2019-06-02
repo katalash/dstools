@@ -6,7 +6,7 @@ using SoulsFormats;
 [AddComponentMenu("Bloodborne/Model Declarations/Map Piece")]
 public class MSBBBMapPieceModel : MSBBBModel
 {
-    public void SetModel(MSBBB.Model.MapPiece model)
+    public override void SetModel(MSBBB.Model model)
     {
         setBaseModel(model);
     }

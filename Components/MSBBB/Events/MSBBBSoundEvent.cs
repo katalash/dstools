@@ -16,9 +16,10 @@ public class MSBBBSoundEvent : MSBBBEvent
     /// </summary>
     public int SoundID;
 
-    public void SetEvent(MSBBB.Event.Sound evt)
+    public override void SetEvent(MSBBB.Event bevt)
     {
-        setBaseEvent(evt);
+        setBaseEvent(bevt);
+        var evt = (MSBBB.Event.Sound)bevt;
         SoundType = evt.SoundType;
         SoundID = evt.SoundID;
     }

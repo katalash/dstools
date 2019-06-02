@@ -11,9 +11,10 @@ public class MSBBBNavimeshEvent : MSBBBEvent
     /// </summary>
     public string RegionName;
 
-    public void SetEvent(MSBBB.Event.Navimesh evt)
+    public override void SetEvent(MSBBB.Event bevt)
     {
-        setBaseEvent(evt);
+        setBaseEvent(bevt);
+        var evt = (MSBBB.Event.Navimesh)bevt;
         RegionName = evt.RegionName;
     }
 

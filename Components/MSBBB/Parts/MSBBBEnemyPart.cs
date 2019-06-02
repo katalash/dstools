@@ -46,8 +46,9 @@ public class MSBBBEnemyPart : MSBBBPart
     /// </summary>
     public int UnkT11, UnkT12, UnkT13, UnkT14, UnkT15, UnkT16;
 
-    public void SetPart(MSBBB.Part.Enemy part)
+    public override void SetPart(MSBBB.Part bpart)
     {
+        var part = (MSBBB.Part.Enemy)bpart;
         setBasePart(part);
         CollisionName = part.CollisionName;
         ThinkParamID = part.ThinkParamID;

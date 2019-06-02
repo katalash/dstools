@@ -41,9 +41,10 @@ public class MSBBBInvasionEvent : MSBBBEvent
     /// </summary>
     public int UnkT18;
 
-    public void SetEvent(MSBBB.Event.Invasion evt)
+    public override void SetEvent(MSBBB.Event bevt)
     {
-        setBaseEvent(evt);
+        setBaseEvent(bevt);
+        var evt = (MSBBB.Event.Invasion)bevt;
         HostEventEntityID = evt.HostEventEntityID;
         InvasionEventEntityID = evt.InvasionEventEntityID;
         InvasionRegionIndex = evt.InvasionRegionIndex;

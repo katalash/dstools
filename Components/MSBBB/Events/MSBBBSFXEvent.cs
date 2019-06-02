@@ -16,9 +16,10 @@ public class MSBBBSFXEvent : MSBBBEvent
     /// </summary>
     public bool StartDisabled;
 
-    public void SetEvent(MSBBB.Event.SFX evt)
+    public override void SetEvent(MSBBB.Event bevt)
     {
-        setBaseEvent(evt);
+        setBaseEvent(bevt);
+        var evt = (MSBBB.Event.SFX)bevt;
         FFXID = evt.FFXID;
         StartDisabled = evt.StartDisabled;
     }

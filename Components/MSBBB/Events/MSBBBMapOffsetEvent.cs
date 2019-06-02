@@ -16,9 +16,10 @@ public class MSBBBMapOffsetEvent : MSBBBEvent
     /// </summary>
     public float Degree;
 
-    public void SetEvent(MSBBB.Event.MapOffset evt)
+    public override void SetEvent(MSBBB.Event bevt)
     {
-        setBaseEvent(evt);
+        setBaseEvent(bevt);
+        var evt = (MSBBB.Event.MapOffset)bevt;
         Position = new Vector3(evt.Position.X, evt.Position.Y, evt.Position.Z);
         Degree = evt.Degree;
     }

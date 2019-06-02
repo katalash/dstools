@@ -16,8 +16,9 @@ public class MSBBBConnectCollisionPart : MSBBBPart
     /// </summary>
     public byte MapID1, MapID2, MapID3, MapID4;
 
-    public void SetPart(MSBBB.Part.ConnectCollision part)
+    public override void SetPart(MSBBB.Part bpart)
     {
+        var part = (MSBBB.Part.ConnectCollision)bpart;
         setBasePart(part);
         CollisionName = part.CollisionName;
         MapID1 = part.MapID1;

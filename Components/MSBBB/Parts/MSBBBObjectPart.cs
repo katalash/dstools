@@ -21,8 +21,9 @@ public class MSBBBObjectPart : MSBBBPart
     /// </summary>
     public short UnkT02a, UnkT02b, UnkT03a, UnkT03b, UnkT05a, UnkT05b;
 
-    public void SetPart(MSBBB.Part.Object part)
+    public override void SetPart(MSBBB.Part bpart)
     {
+        var part = (MSBBB.Part.Object)bpart;
         setBasePart(part);
         CollisionName = part.CollisionName;
         UnkT04 = part.UnkT04;

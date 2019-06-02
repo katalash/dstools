@@ -21,9 +21,10 @@ public class MSBBBMessageEvent : MSBBBEvent
     /// </summary>
     public bool Hidden;
 
-    public void SetEvent(MSBBB.Event.Message evt)
+    public override void SetEvent(MSBBB.Event bevt)
     {
-        setBaseEvent(evt);
+        setBaseEvent(bevt);
+        var evt = (MSBBB.Event.Message)bevt;
         MessageID = evt.MessageID;
         UnkT02 = evt.UnkT02;
         Hidden = evt.Hidden;
