@@ -30,7 +30,7 @@ public class MSBBBRegion : MonoBehaviour
         Unk3 = region.Unk3;
         Unk4 = region.Unk4;
         EventEntityID = region.EventEntityID;
-        if (region is MSBBB.Region.Point)
+        if (region.Shape is MSBBB.Shape.Point)
         {
             IsPoint = true;
         }
@@ -90,28 +90,28 @@ public class MSBBBRegion : MonoBehaviour
         region.Unk4 = Unk4;
         region.EventEntityID = EventEntityID;
 
-        if (region is MSBBB.Region.Box)
+        if (region.Shape.Type == MSBBB.ShapeType.Box)
         {
-            var shape = (MSBBB.Region.Box)region;
+            var shape = (MSBBB.Shape.Box)region.Shape;
             var col = parent.GetComponent<BoxCollider>();
             shape.Width = col.size.x;
             shape.Height = col.size.y;
-            shape.Length = col.size.z;
+            shape.Depth = col.size.z;
         }
-        else if (region is MSBBB.Region.Cylinder)
+        else if (region.Shape.Type == MSBBB.ShapeType.Cylinder)
         {
-            var shape = (MSBBB.Region.Cylinder)region;
+            var shape = (MSBBB.Shape.Cylinder)region.Shape;
             var col = parent.GetComponent<CapsuleCollider>();
             shape.Radius = col.radius;
             shape.Height = col.height;
         }
-        else if (region is MSBBB.Region.Sphere)
+        else if (region.Shape.Type == MSBBB.ShapeType.Sphere)
         {
-            var shape = (MSBBB.Region.Sphere)region;
+            var shape = (MSBBB.Shape.Sphere)region.Shape;
             var col = parent.GetComponent<SphereCollider>();
             shape.Radius = col.radius;
         }
-        else if (region is MSBBB.Region.Point)
+        else if (region.Shape.Type == MSBBB.ShapeType.Point)
         {
         }
 

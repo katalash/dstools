@@ -344,13 +344,17 @@ namespace SoulsFormats
                 bw.ReserveInt64("NameOffset");
                 bw.WriteInt32(EventID);
                 bw.WriteUInt32((uint)Type);
-                bw.WriteInt32(id);
+                // Yet another disgusting meme in the name of byte perfect writes
+                if (Type == EventType.Other)
+                    bw.WriteInt32(id + 1);
+                else
+                    bw.WriteInt32(id);
                 bw.WriteInt32(0);
                 bw.ReserveInt64("BaseDataOffset");
                 bw.ReserveInt64("TypeDataOffset");
 
                 bw.FillInt64("NameOffset", bw.Position - start);
-                bw.WriteUTF16(Name, true);
+                bw.WriteUTF16(ReambiguateName(Name), true);
                 bw.Pad(8);
 
                 bw.FillInt64("BaseDataOffset", bw.Position - start);
@@ -359,8 +363,15 @@ namespace SoulsFormats
                 bw.WriteInt32(EventEntityID);
                 bw.WriteInt32(Unk01);
 
-                bw.FillInt64("TypeDataOffset", bw.Position - start);
-                WriteSpecific(bw);
+                if (Type == EventType.Other)
+                {
+                    bw.FillInt64("TypeDataOffset", 0);
+                }
+                else
+                {
+                    bw.FillInt64("TypeDataOffset", bw.Position - start);
+                    WriteSpecific(bw);
+                }
             }
 
             internal abstract void WriteSpecific(BinaryWriterEx bw);

@@ -945,33 +945,33 @@ public class DarkSoulsTools : EditorWindow
         obj.transform.position = new Vector3(region.Position.X, region.Position.Y, region.Position.Z);
         //obj.transform.rotation = Quaternion.Euler(region.Rotation.X, region.Rotation.Y, region.Rotation.Z);
         EulerToTransform(new Vector3(region.Rotation.X, region.Rotation.Y, region.Rotation.Z), obj.transform);
-        if (region is MSBBB.Region.Box)
+        if (region.Shape.Type == MSBBB.ShapeType.Box)
         {
-            var shape = (MSBBB.Region.Box)region;
+            var shape = (MSBBB.Shape.Box)region.Shape;
             obj.AddComponent<BoxCollider>();
             var col = obj.GetComponent<BoxCollider>();
             col.isTrigger = true;
-            col.size = new Vector3(shape.Width, shape.Height, shape.Length);
+            col.size = new Vector3(shape.Width, shape.Height, shape.Depth);
         }
-        else if (region is MSBBB.Region.Sphere)
+        else if (region.Shape.Type == MSBBB.ShapeType.Sphere)
         {
-            var shape = (MSBBB.Region.Sphere)region;
+            var shape = (MSBBB.Shape.Sphere)region.Shape;
             obj.AddComponent<SphereCollider>();
             var col = obj.GetComponent<SphereCollider>();
             col.isTrigger = true;
             col.radius = shape.Radius;
         }
-        else if (region is MSBBB.Region.Point)
+        else if (region.Shape.Type == MSBBB.ShapeType.Point)
         {
-            var shape = (MSBBB.Region.Point)region;
+            var shape = (MSBBB.Shape.Point)region.Shape;
             obj.AddComponent<SphereCollider>();
             var col = obj.GetComponent<SphereCollider>();
             col.isTrigger = true;
             col.radius = 1.0f;
         }
-        else if (region is MSBBB.Region.Cylinder)
+        else if (region.Shape.Type == MSBBB.ShapeType.Cylinder)
         {
-            var shape = (MSBBB.Region.Cylinder)region;
+            var shape = (MSBBB.Shape.Cylinder)region.Shape;
             obj.AddComponent<CapsuleCollider>();
             var col = obj.GetComponent<CapsuleCollider>();
             col.isTrigger = true;
@@ -3811,19 +3811,19 @@ public class DarkSoulsTools : EditorWindow
             {
                 if (obj.GetComponent<SphereCollider>() != null && obj.IsPoint)
                 {
-                    export.Regions.Regions.Add(obj.Serialize(new MSBBB.Region.Point(obj.name), obj.gameObject));
+                    export.Regions.Regions.Add(obj.Serialize(new MSBBB.Region(obj.name), obj.gameObject));
                 }
                 else if (obj.GetComponent<BoxCollider>() != null)
                 {
-                    export.Regions.Regions.Add(obj.Serialize(new MSBBB.Region.Box(obj.name), obj.gameObject));
+                    export.Regions.Regions.Add(obj.Serialize(new MSBBB.Region(obj.name), obj.gameObject));
                 }
                 else if (obj.GetComponent<SphereCollider>() != null)
                 {
-                    export.Regions.Regions.Add(obj.Serialize(new MSBBB.Region.Sphere(obj.name), obj.gameObject));
+                    export.Regions.Regions.Add(obj.Serialize(new MSBBB.Region(obj.name), obj.gameObject));
                 }
                 else if (obj.GetComponent<CapsuleCollider>() != null)
                 {
-                    export.Regions.Regions.Add(obj.Serialize(new MSBBB.Region.Cylinder(obj.name), obj.gameObject));
+                    export.Regions.Regions.Add(obj.Serialize(new MSBBB.Region(obj.name), obj.gameObject));
                 }
             }
         }

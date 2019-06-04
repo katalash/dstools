@@ -153,11 +153,16 @@ namespace SoulsFormats
                     {
                         ambiguous = true;
                         nameCounts[name]++;
-                        entry.Name = $"{name} ({nameCounts[name]})";
+                        entry.Name = $"{name} {{{nameCounts[name]}}}";
                     }
                 }
             }
             while (ambiguous);
+        }
+
+        private static string ReambiguateName(string name)
+        {
+            return Regex.Replace(name, @" \{\d+\}", "");
         }
 
         private static string GetName<T>(List<T> list, int index) where T : Entry
