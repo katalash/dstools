@@ -6,6 +6,8 @@ using SoulsFormats;
 [AddComponentMenu("Bloodborne/Parts/Object")]
 public class MSBBBObjectPart : MSBBBPart
 {
+    public MSBBBGParamConfig GParamConfig;
+
     /// <summary>
     /// Unknown.
     /// </summary>
@@ -14,7 +16,7 @@ public class MSBBBObjectPart : MSBBBPart
     /// <summary>
     /// Unknown.
     /// </summary>
-    public int UnkT04, UnkT06, UnkT07, UnkT08, UnkT09, UnkT10;
+    public int UnkT04, UnkT06;
 
     /// <summary>
     /// Unknown.
@@ -25,13 +27,11 @@ public class MSBBBObjectPart : MSBBBPart
     {
         var part = (MSBBB.Part.Object)bpart;
         setBasePart(part);
+        GParamConfig = gameObject.AddComponent<MSBBBGParamConfig>();
+        GParamConfig.setStruct(part.Gparam);
         CollisionName = part.CollisionName;
         UnkT04 = part.UnkT04;
         UnkT06 = part.UnkT06;
-        UnkT07 = part.UnkT07;
-        UnkT08 = part.UnkT08;
-        UnkT09 = part.UnkT09;
-        UnkT10 = part.UnkT10;
         UnkT02a = part.UnkT02a;
         UnkT02b = part.UnkT02b;
         UnkT03a = part.UnkT03a;
@@ -44,13 +44,10 @@ public class MSBBBObjectPart : MSBBBPart
     {
         var part = new MSBBB.Part.Object(parent.name);
         _Serialize(part, parent);
+        part.Gparam = GParamConfig.Serialize();
         part.CollisionName = (CollisionName == "") ? null : CollisionName;
         part.UnkT04 = UnkT04;
         part.UnkT06 = UnkT06;
-        part.UnkT07 = UnkT07;
-        part.UnkT08 = UnkT08;
-        part.UnkT09 = UnkT09;
-        part.UnkT10 = UnkT10;
         part.UnkT02a = UnkT02a;
         part.UnkT02b = UnkT02b;
         part.UnkT03a = UnkT03a;

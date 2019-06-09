@@ -978,6 +978,15 @@ public class DarkSoulsTools : EditorWindow
             col.radius = shape.Radius;
             col.height = shape.Height;
         }
+        else if (region.Shape.Type == MSBBB.ShapeType.Circle)
+        {
+            var shape = (MSBBB.Shape.Circle)region.Shape;
+            obj.AddComponent<CapsuleCollider>();
+            var col = obj.GetComponent<CapsuleCollider>();
+            col.isTrigger = true;
+            col.radius = shape.Radius;
+            col.height = shape.Radius;
+        }
         else
         {
             Debug.Log("Unsupported region type encountered");
@@ -1053,9 +1062,9 @@ public class DarkSoulsTools : EditorWindow
                               cy * cp * cr + sy * sp * sr);*/
 
         // Apply in XZY order
-        t.Rotate(new Vector3(1, 0, 0), e.x, Space.World); 
         t.Rotate(new Vector3(0, 1, 0), e.y, Space.World);
         t.Rotate(new Vector3(0, 0, 1), e.z, Space.World);
+        t.Rotate(new Vector3(1, 0, 0), e.x, Space.World);
     }
 
     void onImportDS3Map(object o)
@@ -1695,7 +1704,7 @@ public class DarkSoulsTools : EditorWindow
                 AssetDatabase.CreateFolder("Assets/Bloodborne", mapnameAdj);
             }
 
-            // Create an MSB asset link to the DS3 asset
+            // Create an MSB asset link to the BB asset
             GameObject AssetLink = new GameObject("MSBAssetLink");
             AssetLink.AddComponent<MSBAssetLink>();
             AssetLink.GetComponent<MSBAssetLink>().Interroot = Interroot;
@@ -3809,22 +3818,7 @@ public class DarkSoulsTools : EditorWindow
         {
             foreach (var obj in regions)
             {
-                if (obj.GetComponent<SphereCollider>() != null && obj.IsPoint)
-                {
-                    export.Regions.Regions.Add(obj.Serialize(new MSBBB.Region(obj.name), obj.gameObject));
-                }
-                else if (obj.GetComponent<BoxCollider>() != null)
-                {
-                    export.Regions.Regions.Add(obj.Serialize(new MSBBB.Region(obj.name), obj.gameObject));
-                }
-                else if (obj.GetComponent<SphereCollider>() != null)
-                {
-                    export.Regions.Regions.Add(obj.Serialize(new MSBBB.Region(obj.name), obj.gameObject));
-                }
-                else if (obj.GetComponent<CapsuleCollider>() != null)
-                {
-                    export.Regions.Regions.Add(obj.Serialize(new MSBBB.Region(obj.name), obj.gameObject));
-                }
+                export.Regions.Regions.Add(obj.Serialize(new MSBBB.Region(obj.name), obj.gameObject));
             }
         }
 

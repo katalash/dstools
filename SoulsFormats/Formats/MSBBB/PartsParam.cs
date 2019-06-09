@@ -766,7 +766,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int UnkT04, UnkT06, UnkT07, UnkT08, UnkT09, UnkT10;
+                public int UnkT04, UnkT06;
 
                 /// <summary>
                 /// Unknown.
@@ -787,10 +787,6 @@ namespace SoulsFormats
                     UnkT05a = 0;
                     UnkT05b = 0;
                     UnkT06 = 0;
-                    UnkT07 = 0;
-                    UnkT08 = 0;
-                    UnkT09 = 0;
-                    UnkT10 = 0;
                 }
 
                 /// <summary>
@@ -807,10 +803,6 @@ namespace SoulsFormats
                     UnkT05a = clone.UnkT05a;
                     UnkT05b = clone.UnkT05b;
                     UnkT06 = clone.UnkT06;
-                    UnkT07 = clone.UnkT07;
-                    UnkT08 = clone.UnkT08;
-                    UnkT09 = clone.UnkT09;
-                    UnkT10 = clone.UnkT10;
                 }
 
                 internal Object(BinaryReaderEx br) : base(br) { }
@@ -916,7 +908,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int UnkT11, UnkT12, UnkT13, UnkT14, UnkT15, UnkT16;
+                public int UnkT11, UnkT12, UnkT13, UnkT14, UnkT15;
 
                 /// <summary>
                 /// Creates a new Enemy with the given ID and name.
@@ -937,7 +929,6 @@ namespace SoulsFormats
                     UnkT13 = 0;
                     UnkT14 = 0;
                     UnkT15 = 0;
-                    UnkT16 = 0;
                 }
 
                 /// <summary>
@@ -958,7 +949,6 @@ namespace SoulsFormats
                     UnkT13 = clone.UnkT13;
                     UnkT14 = clone.UnkT14;
                     UnkT15 = clone.UnkT15;
-                    UnkT16 = clone.UnkT16;
                 }
 
                 internal Enemy(BinaryReaderEx br) : base(br) { }
@@ -1151,7 +1141,7 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int UnkT14, UnkT18, UnkT1C, UnkT20, UnkT24, UnkT38, UnkT3A, UnkT40, UnkT44, UnkT48, UnkT4C, UnkT70, UnkT74;
+                public int UnkT14;
 
 
                 /// <summary>
@@ -1171,18 +1161,6 @@ namespace SoulsFormats
                     LockCamID1 = 0;
                     LockCamID2 = 0;
                     UnkT14 = 0;
-                    UnkT18 = 0;
-                    UnkT1C = 0;
-                    UnkT20 = 0;
-                    UnkT24 = 0;
-                    UnkT38 = 0;
-                    UnkT3A = 0;
-                    UnkT40 = 0;
-                    UnkT44 = 0;
-                    UnkT48 = 0;
-                    UnkT4C = 0;
-                    UnkT70 = 0;
-                    UnkT74 = 0;
                 }
 
                 /// <summary>
@@ -1202,18 +1180,6 @@ namespace SoulsFormats
                     LockCamID1 = clone.LockCamID1;
                     LockCamID2 = clone.LockCamID2;
                     UnkT14 = clone.UnkT14;
-                    UnkT18 = clone.UnkT18;
-                    UnkT1C = clone.UnkT1C;
-                    UnkT20 = clone.UnkT20;
-                    UnkT24 = clone.UnkT24;
-                    UnkT38 = clone.UnkT38;
-                    UnkT3A = clone.UnkT3A;
-                    UnkT40 = clone.UnkT40;
-                    UnkT44 = clone.UnkT44;
-                    UnkT48 = clone.UnkT48;
-                    UnkT4C = clone.UnkT4C;
-                    UnkT70 = clone.UnkT70;
-                    UnkT74 = clone.UnkT74;
                 }
 
                 internal Collision(BinaryReaderEx br) : base(br) { }

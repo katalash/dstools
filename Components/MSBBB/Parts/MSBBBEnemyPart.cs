@@ -6,6 +6,8 @@ using SoulsFormats;
 [AddComponentMenu("Bloodborne/Parts/Enemy")]
 public class MSBBBEnemyPart : MSBBBPart
 {
+    public MSBBBGParamConfig GParamConfig;
+
     /// <summary>
     /// Unknown.
     /// </summary>
@@ -44,12 +46,14 @@ public class MSBBBEnemyPart : MSBBBPart
     /// <summary>
     /// Unknown.
     /// </summary>
-    public int UnkT11, UnkT12, UnkT13, UnkT14, UnkT15, UnkT16;
+    public int UnkT11, UnkT12, UnkT13, UnkT14, UnkT15;
 
     public override void SetPart(MSBBB.Part bpart)
     {
         var part = (MSBBB.Part.Enemy)bpart;
         setBasePart(part);
+        GParamConfig = gameObject.AddComponent<MSBBBGParamConfig>();
+        GParamConfig.setStruct(part.Gparam);
         CollisionName = part.CollisionName;
         ThinkParamID = part.ThinkParamID;
         NPCParamID = part.NPCParamID;
@@ -64,7 +68,6 @@ public class MSBBBEnemyPart : MSBBBPart
         UnkT13 = part.UnkT13;
         UnkT14 = part.UnkT14;
         UnkT15 = part.UnkT15;
-        UnkT16 = part.UnkT16;
     }
 
     public override MSBBB.Part Serialize(GameObject parent)
@@ -72,6 +75,7 @@ public class MSBBBEnemyPart : MSBBBPart
         var part = new MSBBB.Part.Enemy(parent.name);
 
         _Serialize(part, parent);
+        part.Gparam = GParamConfig.Serialize();
         part.CollisionName = (CollisionName == "") ? null : CollisionName;
         part.ThinkParamID = ThinkParamID;
         part.NPCParamID = NPCParamID;
@@ -86,7 +90,6 @@ public class MSBBBEnemyPart : MSBBBPart
         part.UnkT13 = UnkT13;
         part.UnkT14 = UnkT14;
         part.UnkT15 = UnkT15;
-        part.UnkT16 = UnkT16;
         return part;
     }
 }

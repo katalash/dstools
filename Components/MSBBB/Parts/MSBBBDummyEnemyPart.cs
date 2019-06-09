@@ -6,10 +6,11 @@ using SoulsFormats;
 [AddComponentMenu("Bloodborne/Parts/Dummy Enemy")]
 public class MSBBBDummyEnemyPart : MSBBBEnemyPart
 {
-    public new MSBBB.Part.DummyEnemy Serialize(GameObject parent)
+    public override MSBBB.Part Serialize(GameObject parent)
     {
         var part = new MSBBB.Part.DummyEnemy(parent.name);
         _Serialize(part, parent);
+        part.Gparam = GParamConfig.Serialize();
         part.CollisionName = (CollisionName == "") ? null : CollisionName;
         part.ThinkParamID = ThinkParamID;
         part.NPCParamID = NPCParamID;
@@ -24,7 +25,6 @@ public class MSBBBDummyEnemyPart : MSBBBEnemyPart
         part.UnkT13 = UnkT13;
         part.UnkT14 = UnkT14;
         part.UnkT15 = UnkT15;
-        part.UnkT16 = UnkT16;
         return part;
     }
 }

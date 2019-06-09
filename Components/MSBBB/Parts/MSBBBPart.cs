@@ -8,6 +8,11 @@ using System.Numerics;
 public abstract class MSBBBPart : MonoBehaviour
 {
     /// <summary>
+    /// Workaround field until I figure out how DS3 rotations actually work :trashcat:
+    /// </summary>
+    public UnityEngine.Vector3 Rotation;
+
+    /// <summary>
     /// The placeholder model for this part.
     /// </summary>
     public string Placeholder;
@@ -81,6 +86,8 @@ public abstract class MSBBBPart : MonoBehaviour
         BackreadGroup8 = part.BackreadGroups[7];
         UnkFA4 = part.UnkFA4;
 
+        Rotation = new UnityEngine.Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
+
         EventEntityID = part.EventEntityID;
         OldLightID = part.OldLightID;
         OldFogID = part.OldFogID;
@@ -141,7 +148,8 @@ public abstract class MSBBBPart : MonoBehaviour
         //part.Rotation.X = parent.transform.rotation.eulerAngles.x;
         //part.Rotation.Y = parent.transform.rotation.eulerAngles.z;
         //part.Rotation.Z = -parent.transform.rotation.eulerAngles.y;
-        part.Rotation = ConvertEuler(parent.transform.eulerAngles);
+        //part.Rotation = ConvertEuler(parent.transform.eulerAngles);
+        part.Rotation = new System.Numerics.Vector3(Rotation.x, Rotation.y, Rotation.z);
         //print($@"{part.Name}: {parent.transform.eulerAngles}, {parent.transform.localEulerAngles} -> {part.Rotation}");
         part.Scale.X = parent.transform.localScale.x;
         part.Scale.Y = parent.transform.localScale.y;

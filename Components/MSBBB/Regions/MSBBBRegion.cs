@@ -22,7 +22,7 @@ public class MSBBBRegion : MonoBehaviour
     /// <summary>
     /// Used to disambiguate a point from a sphere
     /// </summary>
-    public bool IsPoint = false;
+    public bool IsPointOrCircle = false;
 
     public void setBaseRegion(MSBBB.Region region)
     {
@@ -30,9 +30,9 @@ public class MSBBBRegion : MonoBehaviour
         Unk3 = region.Unk3;
         Unk4 = region.Unk4;
         EventEntityID = region.EventEntityID;
-        if (region.Shape is MSBBB.Shape.Point)
+        if (region.Shape is MSBBB.Shape.Point || region.Shape is MSBBB.Shape.Circle)
         {
-            IsPoint = true;
+            IsPointOrCircle = true;
         }
     }
 
@@ -90,31 +90,41 @@ public class MSBBBRegion : MonoBehaviour
         region.Unk4 = Unk4;
         region.EventEntityID = EventEntityID;
 
-        if (region.Shape.Type == MSBBB.ShapeType.Box)
+        if (parent.GetComponent<SphereCollider>() != null && IsPointOrCircle)
         {
-            var shape = (MSBBB.Shape.Box)region.Shape;
+            region.Shape = new MSBBB.Shape.Point();
+        }
+        else if (parent.GetComponent<CapsuleCollider>() != null && IsPointOrCircle)
+        {
+            var shape = new MSBBB.Shape.Circle();
+            var col = parent.GetComponent<CapsuleCollider>();
+            shape.Radius = col.radius;
+            region.Shape = shape;
+        }
+        else if (parent.GetComponent<BoxCollider>() != null)
+        {
+            var shape = new MSBBB.Shape.Box();
             var col = parent.GetComponent<BoxCollider>();
             shape.Width = col.size.x;
             shape.Height = col.size.y;
             shape.Depth = col.size.z;
+            region.Shape = shape;
         }
-        else if (region.Shape.Type == MSBBB.ShapeType.Cylinder)
+        else if (parent.GetComponent<CapsuleCollider>() != null)
         {
-            var shape = (MSBBB.Shape.Cylinder)region.Shape;
+            var shape = new MSBBB.Shape.Cylinder();
             var col = parent.GetComponent<CapsuleCollider>();
             shape.Radius = col.radius;
             shape.Height = col.height;
+            region.Shape = shape;
         }
-        else if (region.Shape.Type == MSBBB.ShapeType.Sphere)
+        else if (parent.GetComponent<SphereCollider>() != null)
         {
-            var shape = (MSBBB.Shape.Sphere)region.Shape;
+            var shape = new MSBBB.Shape.Sphere();
             var col = parent.GetComponent<SphereCollider>();
             shape.Radius = col.radius;
+            region.Shape = shape;
         }
-        else if (region.Shape.Type == MSBBB.ShapeType.Point)
-        {
-        }
-
         return region;
     }
 }
