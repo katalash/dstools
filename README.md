@@ -16,6 +16,7 @@ DSTools is a Unity Editor plugin that aims to create an integrated modding solut
 5. In the new project go to Window->Package Manager and update High Definition RP to the latest version. Older versions cause massive stuttering with complex maps loaded.
 6. Go to Edit->Project settings and in the Editor section set the Asset Serialization Mode to Force Binary. This saves a massive amount of disk space and makes reading and writing assets much faster.
 7. Download the latest release from the releases section (should be a unity package). Import the package with Assets->Import Package.
+7.5. IF YOU ARE MODDING SEKIRO: DSTools requires an Oodle DLL to decompress Sekiro assets. This isn't distributed for legal reasons but the DLL can be found in the Sekiro game directory. Drag and drop the oocore6 dll file in the Sekiro directory into your Unity asset browser in the editor (any location should be fine) before attempting to import any assets.
 8. Open the tools with Window->Dark Souls Tools. Click on Set Game Root Directory and select the exe of your desired game.
 9. If modding DS1:PTDE, click on Import DS1 UDSFM Textures. This may take some time, and only needs to be done once.
 10. Click on Import Objs, and then Import Chrs. This imports all the models for enemies and objects. Both may take a long time, but only need to be done once per game.
