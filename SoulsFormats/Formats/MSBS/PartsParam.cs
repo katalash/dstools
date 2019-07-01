@@ -20,27 +20,55 @@ namespace SoulsFormats
         }
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
 
+        /// <summary>
+        /// Instances of actual things in the map.
+        /// </summary>
         public class PartsParam : Param<Part>
         {
+            /// <summary>
+            /// All of the fixed visual geometry of the map.
+            /// </summary>
             public List<Part.MapPiece> MapPieces { get; set; }
 
+            /// <summary>
+            /// Dynamic props and interactive things.
+            /// </summary>
             public List<Part.Object> Objects { get; set; }
 
+            /// <summary>
+            /// All non-player characters.
+            /// </summary>
             public List<Part.Enemy> Enemies { get; set; }
 
+            /// <summary>
+            /// These have something to do with player spawn points.
+            /// </summary>
             public List<Part.Player> Players { get; set; }
 
+            /// <summary>
+            /// Invisible physical geometry of the map.
+            /// </summary>
             public List<Part.Collision> Collisions { get; set; }
 
+            /// <summary>
+            /// Objects that don't appear normally; either unused, or used for cutscenes.
+            /// </summary>
             public List<Part.DummyObject> DummyObjects { get; set; }
 
+            /// <summary>
+            /// Enemies that don't appear normally; either unused, or used for cutscenes.
+            /// </summary>
             public List<Part.DummyEnemy> DummyEnemies { get; set; }
 
+            /// <summary>
+            /// Dummy parts that reference an actual collision and cause it to load another map.
+            /// </summary>
             public List<Part.ConnectCollision> ConnectCollisions { get; set; }
 
-            public PartsParam() : this(0x23) { }
-
-            public PartsParam(int unk00) : base(unk00, "PARTS_PARAM_ST")
+            /// <summary>
+            /// Creates an empty PartsParam with the given version.
+            /// </summary>
+            public PartsParam(int unk00 = 0x23) : base(unk00, "PARTS_PARAM_ST")
             {
                 MapPieces = new List<Part.MapPiece>();
                 Objects = new List<Part.Object>();
@@ -102,6 +130,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Returns every Part in the order they'll be written.
+            /// </summary>
             public override List<Part> GetEntries()
             {
                 return SFUtil.ConcatAll<Part>(
@@ -110,75 +141,171 @@ namespace SoulsFormats
             }
         }
 
+        /// <summary>
+        /// Common data for all types of part.
+        /// </summary>
         public abstract class Part : Entry
         {
+            /// <summary>
+            /// The specific type of this part.
+            /// </summary>
             public abstract PartType Type { get; }
 
             internal abstract bool HasUnk1 { get; }
             internal abstract bool HasUnk2 { get; }
-            internal abstract bool HasUnk5 { get; }
+            internal abstract bool HasGparamConfig { get; }
             internal abstract bool HasUnk6 { get; }
             internal abstract bool HasUnk7 { get; }
 
+            /// <summary>
+            /// The model used by this part; requires an entry in ModelParam.
+            /// </summary>
             public string ModelName { get; set; }
             private int ModelIndex;
 
+            /// <summary>
+            /// A path to a .sib file, presumably some kind of editor placeholder.
+            /// </summary>
             public string Placeholder { get; set; }
 
+            /// <summary>
+            /// Location of the part.
+            /// </summary>
             public Vector3 Position { get; set; }
 
+            /// <summary>
+            /// Rotation of the part.
+            /// </summary>
             public Vector3 Rotation { get; set; }
 
+            /// <summary>
+            /// Scale of the part; only works for map pieces and objects.
+            /// </summary>
             public Vector3 Scale { get; set; }
 
+            /// <summary>
+            /// Identifies the part in event scripts.
+            /// </summary>
             public int EntityID { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public byte UnkE04 { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public byte UnkE05 { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public byte UnkE06 { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public byte LanternID { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public byte LodParamID { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public byte UnkE09 { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public bool IsPointLightShadowSrc { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public byte UnkE0B { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public bool IsShadowSrc { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public byte IsStaticShadowSrc { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public byte IsCascade3ShadowSrc { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public byte UnkE0F { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public byte UnkE10 { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public bool IsShadowDest { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public bool IsShadowOnly { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public bool DrawByReflectCam { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public bool DrawOnlyReflectCam { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public byte EnableOnAboveShadow { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public bool DisablePointLightEffect { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public byte UnkE17 { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public int UnkE18 { get; set; }
 
+            /// <summary>
+            /// Allows multiple parts to be identified by the same entity ID.
+            /// </summary>
             public int[] EntityGroupIDs { get; private set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public int UnkE3C { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public int UnkE40 { get; set; }
 
             internal Part()
@@ -192,7 +319,7 @@ namespace SoulsFormats
                     EntityGroupIDs[i] = -1;
             }
 
-            public Part(Part clone)
+            internal Part(Part clone)
             {
                 Name = clone.Name;
                 ModelName = clone.ModelName;
@@ -246,7 +373,7 @@ namespace SoulsFormats
                 long unkOffset2 = br.ReadInt64();
                 long entityDataOffset = br.ReadInt64();
                 long typeDataOffset = br.ReadInt64();
-                long unkOffset5 = br.ReadInt64();
+                long gparamOffset = br.ReadInt64();
                 long unkOffset6 = br.ReadInt64();
                 long unkOffset7 = br.ReadInt64();
                 br.AssertInt64(0);
@@ -292,12 +419,12 @@ namespace SoulsFormats
                 EntityGroupIDs = br.ReadInt32s(8);
                 UnkE3C = br.ReadInt32();
                 UnkE40 = br.ReadInt32();
-                br.AssertNull(0x10, false);
+                br.AssertPattern(0x10, 0x00);
 
-                if (HasUnk5)
+                if (HasGparamConfig)
                 {
-                    br.Position = start + unkOffset5;
-                    ReadUnk5(br);
+                    br.Position = start + gparamOffset;
+                    ReadGparamConfig(br);
                 }
                 if (HasUnk6)
                 {
@@ -322,7 +449,7 @@ namespace SoulsFormats
                 throw new InvalidOperationException("Unk struct 2 should not be read for parts with no unk struct 2.");
             }
 
-            internal virtual void ReadUnk5(BinaryReaderEx br)
+            internal virtual void ReadGparamConfig(BinaryReaderEx br)
             {
                 throw new InvalidOperationException("Unk struct 5 should not be read for parts with no unk struct 5.");
             }
@@ -356,7 +483,7 @@ namespace SoulsFormats
                 bw.ReserveInt64("UnkOffset2");
                 bw.ReserveInt64("EntityDataOffset");
                 bw.ReserveInt64("TypeDataOffset");
-                bw.ReserveInt64("UnkOffset5");
+                bw.ReserveInt64("GparamOffset");
                 bw.ReserveInt64("UnkOffset6");
                 bw.ReserveInt64("UnkOffset7");
                 bw.WriteInt64(0);
@@ -364,7 +491,7 @@ namespace SoulsFormats
                 bw.WriteInt64(0);
 
                 bw.FillInt64("NameOffset", bw.Position - start);
-                bw.WriteUTF16(Name, true);
+                bw.WriteUTF16(ReambiguateName(Name), true);
                 bw.FillInt64("SibOffset", bw.Position - start);
                 bw.WriteUTF16(Placeholder, true);
                 bw.Pad(8);
@@ -415,20 +542,20 @@ namespace SoulsFormats
                 bw.WriteInt32s(EntityGroupIDs);
                 bw.WriteInt32(UnkE3C);
                 bw.WriteInt32(UnkE40);
-                bw.WriteNull(0x10, false);
+                bw.WritePattern(0x10, 0x00);
                 bw.Pad(8);
 
                 bw.FillInt64("TypeDataOffset", bw.Position - start);
                 WriteTypeData(bw);
 
-                if (HasUnk5)
+                if (HasGparamConfig)
                 {
-                    bw.FillInt64("UnkOffset5", bw.Position - start);
-                    WriteUnk5(bw);
+                    bw.FillInt64("GparamOffset", bw.Position - start);
+                    WriteGparamConfig(bw);
                 }
                 else
                 {
-                    bw.FillInt64("UnkOffset5", 0);
+                    bw.FillInt64("GparamOffset", 0);
                 }
 
                 if (HasUnk6)
@@ -464,7 +591,7 @@ namespace SoulsFormats
                 throw new InvalidOperationException("Unk struct 2 should not be written for parts with no unk struct 2.");
             }
 
-            internal virtual void WriteUnk5(BinaryWriterEx bw)
+            internal virtual void WriteGparamConfig(BinaryWriterEx bw)
             {
                 throw new InvalidOperationException("Unk struct 5 should not be written for parts with no unk struct 5.");
             }
@@ -481,27 +608,45 @@ namespace SoulsFormats
 
             internal virtual void GetNames(MSBS msb, Entries entries)
             {
-                ModelName = GetName(entries.Models, ModelIndex);
+                ModelName = FindName(entries.Models, ModelIndex);
             }
 
             internal virtual void GetIndices(MSBS msb, Entries entries)
             {
-                ModelIndex = GetIndex(entries.Models, ModelName);
+                ModelIndex = FindIndex(entries.Models, ModelName);
             }
 
+            /// <summary>
+            /// Returns the type and name of the part as a string.
+            /// </summary>
             public override string ToString()
             {
                 return $"{Type} {Name}";
             }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public class UnkStruct1
             {
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public uint[] CollisionMask { get; private set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public byte Condition1 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public byte Condition2 { get; set; }
 
+                /// <summary>
+                /// Creates an UnkStruct1 with default values.
+                /// </summary>
                 public UnkStruct1()
                 {
                     CollisionMask = new uint[48];
@@ -509,6 +654,9 @@ namespace SoulsFormats
                     Condition2 = 0;
                 }
 
+                /// <summary>
+                /// Clones an existing UnkStruct1.
+                /// </summary>
                 public UnkStruct1(UnkStruct1 clone)
                 {
                     CollisionMask = (uint[])clone.CollisionMask.Clone();
@@ -522,7 +670,7 @@ namespace SoulsFormats
                     Condition1 = br.ReadByte();
                     Condition2 = br.ReadByte();
                     br.AssertInt16(0);
-                    br.AssertNull(0xC0, false);
+                    br.AssertPattern(0xC0, 0x00);
                 }
 
                 internal void Write(BinaryWriterEx bw)
@@ -531,20 +679,38 @@ namespace SoulsFormats
                     bw.WriteByte(Condition1);
                     bw.WriteByte(Condition2);
                     bw.WriteInt16(0);
-                    bw.WriteNull(0xC0, false);
+                    bw.WritePattern(0xC0, 0x00);
                 }
             }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public class UnkStruct2
             {
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int Condition { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int[] DispGroups { get; private set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short Unk24 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short Unk26 { get; set; }
 
+                /// <summary>
+                /// Creates an UnkStruct2 with default values.
+                /// </summary>
                 public UnkStruct2()
                 {
                     DispGroups = new int[8];
@@ -556,7 +722,7 @@ namespace SoulsFormats
                     DispGroups = br.ReadInt32s(8);
                     Unk24 = br.ReadInt16();
                     Unk26 = br.ReadInt16();
-                    br.AssertNull(0x20, false);
+                    br.AssertPattern(0x20, 0x00);
                 }
 
                 internal void Write(BinaryWriterEx bw)
@@ -565,60 +731,101 @@ namespace SoulsFormats
                     bw.WriteInt32s(DispGroups);
                     bw.WriteInt16(Unk24);
                     bw.WriteInt16(Unk26);
-                    bw.WriteNull(0x20, false);
+                    bw.WritePattern(0x20, 0x00);
                 }
             }
 
-            public class UnkStruct5
+            /// <summary>
+            /// Gparam value IDs for various part types.
+            /// </summary>
+            public class GparamConfig
             {
-                public int Unk00 { get; set; }
+                /// <summary>
+                /// ID of the value set from LightSet ParamEditor to use.
+                /// </summary>
+                public int LightSetID { get; set; }
 
-                public int Unk04 { get; set; }
+                /// <summary>
+                /// ID of the value set from FogParamEditor to use.
+                /// </summary>
+                public int FogParamID { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int Unk08 { get; set; }
 
-                public int Unk0C { get; set; }
+                /// <summary>
+                /// ID of the value set from Env Map:Editor to use.
+                /// </summary>
+                public int EnvMapID { get; set; }
 
-                public UnkStruct5() { }
+                /// <summary>
+                /// Creates a GparamConfig with default values.
+                /// </summary>
+                public GparamConfig() { }
 
-                public UnkStruct5(UnkStruct5 clone)
+                /// <summary>
+                /// Clones an existing GparamConfig.
+                /// </summary>
+                public GparamConfig(GparamConfig clone)
                 {
-                    Unk00 = clone.Unk00;
-                    Unk04 = clone.Unk04;
+                    LightSetID = clone.LightSetID;
+                    FogParamID = clone.FogParamID;
                     Unk08 = clone.Unk08;
-                    Unk0C = clone.Unk0C;
+                    EnvMapID = clone.EnvMapID;
                 }
 
-                internal UnkStruct5(BinaryReaderEx br)
+                internal GparamConfig(BinaryReaderEx br)
                 {
-                    Unk00 = br.ReadInt32();
-                    Unk04 = br.ReadInt32();
+                    LightSetID = br.ReadInt32();
+                    FogParamID = br.ReadInt32();
                     Unk08 = br.ReadInt32();
-                    Unk0C = br.ReadInt32();
-                    br.AssertNull(0x10, false);
+                    EnvMapID = br.ReadInt32();
+                    br.AssertPattern(0x10, 0x00);
                 }
 
                 internal void Write(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(Unk00);
-                    bw.WriteInt32(Unk04);
+                    bw.WriteInt32(LightSetID);
+                    bw.WriteInt32(FogParamID);
                     bw.WriteInt32(Unk08);
-                    bw.WriteInt32(Unk0C);
-                    bw.WriteNull(0x10, false);
+                    bw.WriteInt32(EnvMapID);
+                    bw.WritePattern(0x10, 0x00);
+                }
+
+                /// <summary>
+                /// Returns the four gparam values as a string.
+                /// </summary>
+                public override string ToString()
+                {
+                    return $"{LightSetID}, {FogParamID}, {Unk08}, {EnvMapID}";
                 }
             }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public class UnkStruct6
             {
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int Unk3C { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float Unk40 { get; set; }
 
+                /// <summary>
+                /// Creates an UnkStruct6 with default values.
+                /// </summary>
                 public UnkStruct6() { }
 
                 internal UnkStruct6(BinaryReaderEx br)
                 {
-                    br.AssertNull(0x3C, false);
+                    br.AssertPattern(0x3C, 0x00);
                     Unk3C = br.ReadInt32();
                     Unk40 = br.ReadSingle();
                     br.AssertInt32(0);
@@ -628,7 +835,7 @@ namespace SoulsFormats
 
                 internal void Write(BinaryWriterEx bw)
                 {
-                    bw.WriteNull(0x3C, false);
+                    bw.WritePattern(0x3C, 0x00);
                     bw.WriteInt32(Unk3C);
                     bw.WriteSingle(Unk40);
                     bw.WriteInt32(0);
@@ -637,20 +844,44 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public class UnkStruct7
             {
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int Unk00 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int Unk04 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int Unk08 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int Unk0C { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int Unk10 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int Unk14 { get; set; }
 
+                /// <summary>
+                /// Creates an UnkStruct7 with default values.
+                /// </summary>
                 public UnkStruct7() { }
 
                 internal UnkStruct7(BinaryReaderEx br)
@@ -678,26 +909,44 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Fixed visual geometry.
+            /// </summary>
             public class MapPiece : Part
             {
+                /// <summary>
+                /// PartType.MapPiece
+                /// </summary>
                 public override PartType Type => PartType.MapPiece;
 
                 internal override bool HasUnk1 => true;
                 internal override bool HasUnk2 => false;
-                internal override bool HasUnk5 => true;
+                internal override bool HasGparamConfig => true;
                 internal override bool HasUnk6 => false;
                 internal override bool HasUnk7 => true;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public UnkStruct1 Unk1 { get; set; }
 
-                public UnkStruct5 Unk5 { get; set; }
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public GparamConfig Gparam { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public UnkStruct7 Unk7 { get; set; }
 
+                /// <summary>
+                /// Creates a MapPiece with default values.
+                /// </summary>
                 public MapPiece() : base()
                 {
                     Unk1 = new UnkStruct1();
-                    Unk5 = new UnkStruct5();
+                    Gparam = new GparamConfig();
                     Unk7 = new UnkStruct7();
                 }
 
@@ -707,20 +956,9 @@ namespace SoulsFormats
                     br.AssertInt32(0);
                 }
 
-                internal override void ReadUnk1(BinaryReaderEx br)
-                {
-                    Unk1 = new UnkStruct1(br);
-                }
-
-                internal override void ReadUnk5(BinaryReaderEx br)
-                {
-                    Unk5 = new UnkStruct5(br);
-                }
-
-                internal override void ReadUnk7(BinaryReaderEx br)
-                {
-                    Unk7 = new UnkStruct7(br);
-                }
+                internal override void ReadUnk1(BinaryReaderEx br) => Unk1 = new UnkStruct1(br);
+                internal override void ReadGparamConfig(BinaryReaderEx br) => Gparam = new GparamConfig(br);
+                internal override void ReadUnk7(BinaryReaderEx br) => Unk7 = new UnkStruct7(br);
 
                 internal override void WriteTypeData(BinaryWriterEx bw)
                 {
@@ -728,40 +966,47 @@ namespace SoulsFormats
                     bw.WriteInt32(0);
                 }
 
-                internal override void WriteUnk1(BinaryWriterEx bw)
-                {
-                    Unk1.Write(bw);
-                }
-
-                internal override void WriteUnk5(BinaryWriterEx bw)
-                {
-                    Unk5.Write(bw);
-                }
-
-                internal override void WriteUnk7(BinaryWriterEx bw)
-                {
-                    Unk7.Write(bw);
-                }
+                internal override void WriteUnk1(BinaryWriterEx bw) => Unk1.Write(bw);
+                internal override void WriteGparamConfig(BinaryWriterEx bw) => Gparam.Write(bw);
+                internal override void WriteUnk7(BinaryWriterEx bw) => Unk7.Write(bw);
             }
 
+            /// <summary>
+            /// A dynamic or interactible element in the map.
+            /// </summary>
             public class Object : DummyObject
             {
+                /// <summary>
+                /// PartType.Object
+                /// </summary>
                 public override PartType Type => PartType.Object;
 
                 internal override bool HasUnk1 => true;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public UnkStruct1 Unk1 { get; set; }
 
+                /// <summary>
+                /// Creates an Object with default values.
+                /// </summary>
                 public Object() : base()
                 {
                     Unk1 = new UnkStruct1();
                 }
 
+                /// <summary>
+                /// Clones an existing Object.
+                /// </summary>
                 public Object(Object clone) : base(clone)
                 {
                     Unk1 = new UnkStruct1(clone.Unk1);
                 }
 
+                /// <summary>
+                /// Clones an existing DummyObject.
+                /// </summary>
                 public Object(DummyObject clone) : base(clone)
                 {
                     Unk1 = new UnkStruct1();
@@ -769,35 +1014,47 @@ namespace SoulsFormats
 
                 internal Object(BinaryReaderEx br) : base(br) { }
 
-                internal override void ReadUnk1(BinaryReaderEx br)
-                {
-                    Unk1 = new UnkStruct1(br);
-                }
+                internal override void ReadUnk1(BinaryReaderEx br) => Unk1 = new UnkStruct1(br);
 
-                internal override void WriteUnk1(BinaryWriterEx bw)
-                {
-                    Unk1.Write(bw);
-                }
+                internal override void WriteUnk1(BinaryWriterEx bw) => Unk1.Write(bw);
             }
 
+            /// <summary>
+            /// Any non-player character.
+            /// </summary>
             public class Enemy : DummyEnemy
             {
+                /// <summary>
+                /// PartType.Enemy
+                /// </summary>
                 public override PartType Type => PartType.Enemy;
 
                 internal override bool HasUnk1 => true;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public UnkStruct1 Unk1 { get; set; }
 
+                /// <summary>
+                /// Creates an Enemy with default values.
+                /// </summary>
                 public Enemy() : base()
                 {
                     Unk1 = new UnkStruct1();
                 }
 
+                /// <summary>
+                /// Clones an existing Enemy.
+                /// </summary>
                 public Enemy(Enemy clone) : base(clone)
                 {
                     Unk1 = new UnkStruct1(clone.Unk1);
                 }
 
+                /// <summary>
+                /// Clones an existing DummyEnemy.
+                /// </summary>
                 public Enemy(DummyEnemy clone) : base(clone)
                 {
                     Unk1 = new UnkStruct1();
@@ -805,103 +1062,187 @@ namespace SoulsFormats
 
                 internal Enemy(BinaryReaderEx br) : base(br) { }
 
-                internal override void ReadUnk1(BinaryReaderEx br)
-                {
-                    Unk1 = new UnkStruct1(br);
-                }
+                internal override void ReadUnk1(BinaryReaderEx br) => Unk1 = new UnkStruct1(br);
 
-                internal override void WriteUnk1(BinaryWriterEx bw)
-                {
-                    Unk1.Write(bw);
-                }
+                internal override void WriteUnk1(BinaryWriterEx bw) => Unk1.Write(bw);
             }
 
+            /// <summary>
+            /// A spawn point for the player, or something.
+            /// </summary>
             public class Player : Part
             {
+                /// <summary>
+                /// PartType.Player
+                /// </summary>
                 public override PartType Type => PartType.Player;
 
                 internal override bool HasUnk1 => false;
                 internal override bool HasUnk2 => false;
-                internal override bool HasUnk5 => false;
+                internal override bool HasGparamConfig => false;
                 internal override bool HasUnk6 => false;
                 internal override bool HasUnk7 => false;
 
+                /// <summary>
+                /// Creates a Player with default values.
+                /// </summary>
                 public Player() : base() { }
 
                 internal Player(BinaryReaderEx br) : base(br)
                 {
-                    br.AssertNull(0x10, false);
+                    br.AssertPattern(0x10, 0x00);
                 }
 
                 internal override void WriteTypeData(BinaryWriterEx bw)
                 {
-                    bw.WriteNull(0x10, false);
+                    bw.WritePattern(0x10, 0x00);
                 }
             }
 
+            /// <summary>
+            /// Invisible but physical geometry.
+            /// </summary>
             public class Collision : Part
             {
+                /// <summary>
+                /// PartType.Collision
+                /// </summary>
                 public override PartType Type => PartType.Collision;
 
                 internal override bool HasUnk1 => true;
                 internal override bool HasUnk2 => true;
-                internal override bool HasUnk5 => true;
+                internal override bool HasGparamConfig => true;
                 internal override bool HasUnk6 => true;
                 internal override bool HasUnk7 => false;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public UnkStruct1 Unk1 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public UnkStruct2 Unk2 { get; set; }
 
-                public UnkStruct5 Unk5 { get; set; }
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public GparamConfig Gparam { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public UnkStruct6 Unk6 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public byte HitFilterID { get; set; }
 
+                /// <summary>
+                /// Adds reverb to sounds while on this collision to simulate echoes.
+                /// </summary>
                 public byte SoundSpaceType { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float ReflectPlaneHeight { get; set; }
 
+                /// <summary>
+                /// Determines the text to display for map popups and save files.
+                /// </summary>
                 public short MapNameID { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public bool DisableStart { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public byte UnkT17 { get; set; }
 
+                /// <summary>
+                /// If not -1, the bonfire with this ID will be disabled when enemies are on this collision.
+                /// </summary>
                 public int DisableBonfireEntityID { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public byte UnkT24 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public byte UnkT25 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public byte UnkT26 { get; set; }
 
+                /// <summary>
+                /// Should alter visibility while on this collision, but doesn't seem to do much.
+                /// </summary>
                 public byte MapVisibility { get; set; }
 
+                /// <summary>
+                /// Used to determine invasion eligibility.
+                /// </summary>
                 public int PlayRegionID { get; set; }
 
+                /// <summary>
+                /// Alters camera properties while on this collision.
+                /// </summary>
                 public short LockCamParamID { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT3C { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT40 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT44 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT48 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT4C { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT50 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT54 { get; set; }
 
+                /// <summary>
+                /// Creates a Collision with default values.
+                /// </summary>
                 public Collision() : base()
                 {
                     Unk1 = new UnkStruct1();
                     Unk2 = new UnkStruct2();
-                    Unk5 = new UnkStruct5();
+                    Gparam = new GparamConfig();
                     Unk6 = new UnkStruct6();
                     DisableBonfireEntityID = -1;
                 }
@@ -942,25 +1283,10 @@ namespace SoulsFormats
                     br.AssertInt32(0);
                 }
 
-                internal override void ReadUnk1(BinaryReaderEx br)
-                {
-                    Unk1 = new UnkStruct1(br);
-                }
-
-                internal override void ReadUnk2(BinaryReaderEx br)
-                {
-                    Unk2 = new UnkStruct2(br);
-                }
-
-                internal override void ReadUnk5(BinaryReaderEx br)
-                {
-                    Unk5 = new UnkStruct5(br);
-                }
-
-                internal override void ReadUnk6(BinaryReaderEx br)
-                {
-                    Unk6 = new UnkStruct6(br);
-                }
+                internal override void ReadUnk1(BinaryReaderEx br) => Unk1 = new UnkStruct1(br);
+                internal override void ReadUnk2(BinaryReaderEx br) => Unk2 = new UnkStruct2(br);
+                internal override void ReadGparamConfig(BinaryReaderEx br) => Gparam = new GparamConfig(br);
+                internal override void ReadUnk6(BinaryReaderEx br) => Unk6 = new UnkStruct6(br);
 
                 internal override void WriteTypeData(BinaryWriterEx bw)
                 {
@@ -998,69 +1324,99 @@ namespace SoulsFormats
                     bw.WriteInt32(0);
                 }
 
-                internal override void WriteUnk1(BinaryWriterEx bw)
-                {
-                    Unk1.Write(bw);
-                }
-
-                internal override void WriteUnk2(BinaryWriterEx bw)
-                {
-                    Unk2.Write(bw);
-                }
-
-                internal override void WriteUnk5(BinaryWriterEx bw)
-                {
-                    Unk5.Write(bw);
-                }
-
-                internal override void WriteUnk6(BinaryWriterEx bw)
-                {
-                    Unk6.Write(bw);
-                }
+                internal override void WriteUnk1(BinaryWriterEx bw) => Unk1.Write(bw);
+                internal override void WriteUnk2(BinaryWriterEx bw) => Unk2.Write(bw);
+                internal override void WriteGparamConfig(BinaryWriterEx bw) => Gparam.Write(bw);
+                internal override void WriteUnk6(BinaryWriterEx bw) => Unk6.Write(bw);
             }
 
+            /// <summary>
+            /// An object that either isn't used, or is used for a cutscene.
+            /// </summary>
             public class DummyObject : Part
             {
+                /// <summary>
+                /// PartType.DummyObject
+                /// </summary>
                 public override PartType Type => PartType.DummyObject;
 
                 internal override bool HasUnk1 => false;
                 internal override bool HasUnk2 => false;
-                internal override bool HasUnk5 => true;
+                internal override bool HasGparamConfig => true;
                 internal override bool HasUnk6 => false;
                 internal override bool HasUnk7 => false;
 
-                public UnkStruct5 Unk5 { get; set; }
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public GparamConfig Gparam { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public string CollisionPartName1 { get; set; }
                 private int CollisionPartIndex1;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public byte UnkT0C { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public bool EnableObjAnimNetSyncStructure { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public byte UnkT0E { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public bool SetMainObjStructureBooleans { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short AnimID { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short UnkT18 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short UnkT1A { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT20 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public string CollisionPartName2 { get; set; }
                 private int CollisionPartIndex2;
 
+                /// <summary>
+                /// Creates a DummyObject with default values.
+                /// </summary>
                 public DummyObject() : base()
                 {
-                    Unk5 = new UnkStruct5();
+                    Gparam = new GparamConfig();
                 }
 
+                /// <summary>
+                /// Clones an existing DummyObject.
+                /// </summary>
                 public DummyObject(DummyObject clone) : base(clone)
                 {
-                    Unk5 = new UnkStruct5(clone.Unk5);
+                    Gparam = new GparamConfig(clone.Gparam);
                     CollisionPartName1 = clone.CollisionPartName1;
                     UnkT0C = clone.UnkT0C;
                     EnableObjAnimNetSyncStructure = clone.EnableObjAnimNetSyncStructure;
@@ -1092,10 +1448,7 @@ namespace SoulsFormats
                     CollisionPartIndex2 = br.ReadInt32();
                 }
 
-                internal override void ReadUnk5(BinaryReaderEx br)
-                {
-                    Unk5 = new UnkStruct5(br);
-                }
+                internal override void ReadGparamConfig(BinaryReaderEx br) => Gparam = new GparamConfig(br);
 
                 internal override void WriteTypeData(BinaryWriterEx bw)
                 {
@@ -1116,40 +1469,52 @@ namespace SoulsFormats
                     bw.WriteInt32(CollisionPartIndex2);
                 }
 
-                internal override void WriteUnk5(BinaryWriterEx bw)
-                {
-                    Unk5.Write(bw);
-                }
+                internal override void WriteGparamConfig(BinaryWriterEx bw) => Gparam.Write(bw);
 
                 internal override void GetNames(MSBS msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
-                    CollisionPartName1 = GetName(entries.Parts, CollisionPartIndex1);
-                    CollisionPartName2 = GetName(entries.Parts, CollisionPartIndex2);
+                    CollisionPartName1 = FindName(entries.Parts, CollisionPartIndex1);
+                    CollisionPartName2 = FindName(entries.Parts, CollisionPartIndex2);
                 }
 
                 internal override void GetIndices(MSBS msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
-                    CollisionPartIndex1 = GetIndex(entries.Parts, CollisionPartName1);
-                    CollisionPartIndex2 = GetIndex(entries.Parts, CollisionPartName2);
+                    CollisionPartIndex1 = FindIndex(entries.Parts, CollisionPartName1);
+                    CollisionPartIndex2 = FindIndex(entries.Parts, CollisionPartName2);
                 }
             }
 
+            /// <summary>
+            /// An enemy that either isn't used, or is used for a cutscene.
+            /// </summary>
             public class DummyEnemy : Part
             {
+                /// <summary>
+                /// PartType.DummyEnemy
+                /// </summary>
                 public override PartType Type => PartType.DummyEnemy;
 
                 internal override bool HasUnk1 => false;
                 internal override bool HasUnk2 => false;
-                internal override bool HasUnk5 => true;
+                internal override bool HasGparamConfig => true;
                 internal override bool HasUnk6 => false;
                 internal override bool HasUnk7 => false;
 
-                public UnkStruct5 Unk5 { get; set; }
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public GparamConfig Gparam { get; set; }
 
+                /// <summary>
+                /// An ID in NPCThinkParam that determines the enemy's AI characteristics.
+                /// </summary>
                 public int ThinkParamID { get; set; }
 
+                /// <summary>
+                /// An ID in NPCParam that determines a variety of enemy properties.
+                /// </summary>
                 public int NPCParamID { get; set; }
 
                 /// <summary>
@@ -1157,38 +1522,83 @@ namespace SoulsFormats
                 /// </summary>
                 public int UnkT10 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short ChrManipulatorAllocationParameter { get; set; }
 
+                /// <summary>
+                /// An ID in CharaInitParam that determines a human's inventory and stats.
+                /// </summary>
                 public int CharaInitID { get; set; }
 
+                /// <summary>
+                /// Should reference the collision the enemy starts on.
+                /// </summary>
                 public string CollisionPartName { get; set; }
                 private int CollisionPartIndex;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short UnkT20 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short UnkT22 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT24 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int BackupEventAnimID { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int EventFlagID { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int EventFlagCompareState { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT48 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT4C { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT50 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT78 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT84 { get; set; }
 
+                /// <summary>
+                /// Creates a DummyEnemy with default values.
+                /// </summary>
                 public DummyEnemy() : base()
                 {
-                    Unk5 = new UnkStruct5();
+                    Gparam = new GparamConfig();
                     ThinkParamID = -1;
                     NPCParamID = -1;
                     UnkT10 = -1;
@@ -1197,9 +1607,12 @@ namespace SoulsFormats
                     EventFlagID = -1;
                 }
 
+                /// <summary>
+                /// Clones an existing DummyEnemy.
+                /// </summary>
                 public DummyEnemy(DummyEnemy clone) : base(clone)
                 {
-                    Unk5 = new UnkStruct5(clone.Unk5);
+                    Gparam = new GparamConfig(clone.Gparam);
                     ThinkParamID = clone.ThinkParamID;
                     NPCParamID = clone.NPCParamID;
                     UnkT10 = clone.UnkT10;
@@ -1233,7 +1646,7 @@ namespace SoulsFormats
                     UnkT20 = br.ReadInt16();
                     UnkT22 = br.ReadInt16();
                     UnkT24 = br.ReadInt32();
-                    br.AssertNull(0x10, true);
+                    br.AssertPattern(0x10, 0xFF);
                     BackupEventAnimID = br.ReadInt32();
                     br.AssertInt32(-1);
                     EventFlagID = br.ReadInt32();
@@ -1244,7 +1657,7 @@ namespace SoulsFormats
                     br.AssertInt32(1);
                     br.AssertInt32(-1);
                     br.AssertInt32(1);
-                    br.AssertNull(0x18, false);
+                    br.AssertPattern(0x18, 0x00);
                     UnkT78 = br.ReadInt32();
                     br.AssertInt32(0);
                     br.AssertInt32(0);
@@ -1255,13 +1668,10 @@ namespace SoulsFormats
                         br.AssertInt16(-1);
                         br.AssertInt16(0xA);
                     }
-                    br.AssertNull(0x10, false);
+                    br.AssertPattern(0x10, 0x00);
                 }
 
-                internal override void ReadUnk5(BinaryReaderEx br)
-                {
-                    Unk5 = new UnkStruct5(br);
-                }
+                internal override void ReadGparamConfig(BinaryReaderEx br) => Gparam = new GparamConfig(br);
 
                 internal override void WriteTypeData(BinaryWriterEx bw)
                 {
@@ -1277,7 +1687,7 @@ namespace SoulsFormats
                     bw.WriteInt16(UnkT20);
                     bw.WriteInt16(UnkT22);
                     bw.WriteInt32(UnkT24);
-                    bw.WriteNull(0x10, true);
+                    bw.WritePattern(0x10, 0xFF);
                     bw.WriteInt32(BackupEventAnimID);
                     bw.WriteInt32(-1);
                     bw.WriteInt32(EventFlagID);
@@ -1288,7 +1698,7 @@ namespace SoulsFormats
                     bw.WriteInt32(1);
                     bw.WriteInt32(-1);
                     bw.WriteInt32(1);
-                    bw.WriteNull(0x18, false);
+                    bw.WritePattern(0x18, 0x00);
                     bw.WriteInt32(UnkT78);
                     bw.WriteInt32(0);
                     bw.WriteInt32(0);
@@ -1299,44 +1709,59 @@ namespace SoulsFormats
                         bw.WriteInt16(-1);
                         bw.WriteInt16(0xA);
                     }
-                    bw.WriteNull(0x10, false);
+                    bw.WritePattern(0x10, 0x00);
                 }
 
-                internal override void WriteUnk5(BinaryWriterEx bw)
-                {
-                    Unk5.Write(bw);
-                }
+                internal override void WriteGparamConfig(BinaryWriterEx bw) => Gparam.Write(bw);
 
                 internal override void GetNames(MSBS msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
-                    CollisionPartName = GetName(entries.Parts, CollisionPartIndex);
+                    CollisionPartName = FindName(entries.Parts, CollisionPartIndex);
                 }
 
                 internal override void GetIndices(MSBS msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
-                    CollisionPartIndex = GetIndex(entries.Parts, CollisionPartName);
+                    CollisionPartIndex = FindIndex(entries.Parts, CollisionPartName);
                 }
             }
 
+            /// <summary>
+            /// References an actual collision and causes another map to be loaded while on it.
+            /// </summary>
             public class ConnectCollision : Part
             {
+                /// <summary>
+                /// PartType.ConnectCollision
+                /// </summary>
                 public override PartType Type => PartType.ConnectCollision;
 
                 internal override bool HasUnk1 => false;
                 internal override bool HasUnk2 => true;
-                internal override bool HasUnk5 => false;
+                internal override bool HasGparamConfig => false;
                 internal override bool HasUnk6 => false;
                 internal override bool HasUnk7 => false;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public UnkStruct2 Unk2 { get; set; }
 
+                /// <summary>
+                /// The collision part to attach to.
+                /// </summary>
                 public string CollisionName { get; set; }
                 private int CollisionIndex;
 
+                /// <summary>
+                /// The map to load when on this collision.
+                /// </summary>
                 public byte[] MapID { get; private set; }
 
+                /// <summary>
+                /// Creates a ConnectCollision with default values.
+                /// </summary>
                 public ConnectCollision() : base()
                 {
                     Unk2 = new UnkStruct2();
@@ -1351,10 +1776,7 @@ namespace SoulsFormats
                     br.AssertInt32(0);
                 }
 
-                internal override void ReadUnk2(BinaryReaderEx br)
-                {
-                    Unk2 = new UnkStruct2(br);
-                }
+                internal override void ReadUnk2(BinaryReaderEx br) => Unk2 = new UnkStruct2(br);
 
                 internal override void WriteTypeData(BinaryWriterEx bw)
                 {
@@ -1364,21 +1786,18 @@ namespace SoulsFormats
                     bw.WriteInt32(0);
                 }
 
-                internal override void WriteUnk2(BinaryWriterEx bw)
-                {
-                    Unk2.Write(bw);
-                }
+                internal override void WriteUnk2(BinaryWriterEx bw) => Unk2.Write(bw);
 
                 internal override void GetNames(MSBS msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
-                    CollisionName = GetName(msb.Parts.Collisions, CollisionIndex);
+                    CollisionName = FindName(msb.Parts.Collisions, CollisionIndex);
                 }
 
                 internal override void GetIndices(MSBS msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
-                    CollisionIndex = GetIndex(msb.Parts.Collisions, CollisionName);
+                    CollisionIndex = FindIndex(msb.Parts.Collisions, CollisionName);
                 }
             }
         }

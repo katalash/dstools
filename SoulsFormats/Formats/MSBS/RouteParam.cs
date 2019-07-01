@@ -29,14 +29,9 @@ namespace SoulsFormats
             public List<Route.MufflingBoxLink> MufflingBoxLinks { get; set; }
 
             /// <summary>
-            /// Creates an empty RouteParam.
-            /// </summary>
-            public RouteParam() : this(0x23) { }
-
-            /// <summary>
             /// Creates an empty RouteParam with the given version.
             /// </summary>
-            public RouteParam(int unk00) : base(unk00, "ROUTE_PARAM_ST")
+            public RouteParam(int unk00 = 0x23) : base(unk00, "ROUTE_PARAM_ST")
             {
                 MufflingPortalLinks = new List<Route.MufflingPortalLink>();
                 MufflingBoxLinks = new List<Route.MufflingBoxLink>();
@@ -105,7 +100,7 @@ namespace SoulsFormats
                 Unk0C = br.ReadInt32();
                 br.AssertUInt32((uint)Type);
                 br.ReadInt32(); // ID
-                br.AssertNull(0x68, false);
+                br.AssertPattern(0x68, 0x00);
 
                 Name = br.GetUTF16(start + nameOffset);
             }
@@ -118,7 +113,7 @@ namespace SoulsFormats
                 bw.WriteInt32(Unk0C);
                 bw.WriteUInt32((uint)Type);
                 bw.WriteInt32(id);
-                bw.WriteNull(0x68, false);
+                bw.WritePattern(0x68, 0x00);
 
                 bw.FillInt64("NameOffset", bw.Position - start);
                 bw.WriteUTF16(Name, true);

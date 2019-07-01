@@ -20,7 +20,7 @@ public class MSBSObjectPart : MSBSDummyObjectPart
     {
         var part = new MSBS.Part.Object();
         _Serialize(part, parent);
-        part.Unk5 = Unk5.Serialize();
+        part.Gparam = Gparam.Serialize();
         part.CollisionPartName1 = CollisionPartName1;
         part.UnkT0C = UnkT0C;
         part.EnableObjAnimNetSyncStructure = EnableObjAnimNetSyncStructure;

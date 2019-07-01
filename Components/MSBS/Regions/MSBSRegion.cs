@@ -15,7 +15,7 @@ public abstract class MSBSRegion : MonoBehaviour
     /// <summary>
     /// Not sure if this is exactly a drawgroup, but it's what makes messages not appear in dark Firelink.
     /// </summary>
-    public int MapStudioLayer;
+    public uint MapStudioLayer;
 
 
     /// <summary>
@@ -24,8 +24,8 @@ public abstract class MSBSRegion : MonoBehaviour
     public int Unk2C;
     public short[] UnkA;
     public short[] UnkB;
-    public int UnkC00;
-    public int UnkC04;
+    public string ActivationPartName;
+    public int EntityID;
 
 
     /// <summary>
@@ -48,8 +48,8 @@ public abstract class MSBSRegion : MonoBehaviour
         {
             UnkB[i] = region.UnkB[i];
         }
-        UnkC00 = region.UnkC00;
-        UnkC04 = region.UnkC04;
+        ActivationPartName = region.ActivationPartName;
+        EntityID = region.EntityID;
 
         if (region.Shape is MSBS.Shape.Point)
         {
@@ -114,8 +114,8 @@ public abstract class MSBSRegion : MonoBehaviour
         {
             region.UnkB.Add(UnkB[i]);
         }
-        region.UnkC00 = UnkC00;
-        region.UnkC04 = UnkC04;
+        region.ActivationPartName = (ActivationPartName == "") ? null : ActivationPartName;
+        region.EntityID = EntityID;
 
         if (parent.GetComponent<SphereCollider>() != null)
         {

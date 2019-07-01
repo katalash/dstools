@@ -20,7 +20,7 @@ public class MSBSEnemyPart : MSBSDummyEnemyPart
     {
         var part = new MSBS.Part.Enemy();
         _Serialize(part, parent);
-        part.Unk5 = Unk5.Serialize();
+        part.Gparam = Gparam.Serialize();
         part.ThinkParamID = ThinkParamID;
         part.NPCParamID = NPCParamID;
         part.UnkT10 = UnkT10;

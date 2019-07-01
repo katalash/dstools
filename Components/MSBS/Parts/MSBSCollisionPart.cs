@@ -8,7 +8,7 @@ public class MSBSCollisionPart : MSBSPart
 {
     public MSBSUnkStruct1Part Unk1;
     public MSBSUnkStruct2Part Unk2;
-    public MSBSUnkStruct5Part Unk5;
+    public MSBSGParamConfig Gparam;
 
     public byte HitFilterID;
     public byte SoundSpaceType;
@@ -40,8 +40,8 @@ public class MSBSCollisionPart : MSBSPart
         Unk1.setStruct(part.Unk1);
         Unk2 = gameObject.AddComponent<MSBSUnkStruct2Part>();
         Unk2.setStruct(part.Unk2);
-        Unk5 = gameObject.AddComponent<MSBSUnkStruct5Part>();
-        Unk5.setStruct(part.Unk5);
+        Gparam = gameObject.AddComponent<MSBSGParamConfig>();
+        Gparam.setStruct(part.Gparam);
         HitFilterID = part.HitFilterID;
         SoundSpaceType = part.SoundSpaceType;
         ReflectPlaneHeight = part.ReflectPlaneHeight;
@@ -72,7 +72,7 @@ public class MSBSCollisionPart : MSBSPart
         _Serialize(part, parent);
         part.Unk1 = Unk1.Serialize();
         part.Unk2 = Unk2.Serialize();
-        part.Unk5 = Unk5.Serialize();
+        part.Gparam = Gparam.Serialize();
         part.Unk6 = new MSBS.Part.UnkStruct6();
         part.Unk6.Unk3C = Unk3C;
         part.Unk6.Unk40 = Unk40;

@@ -25,12 +25,17 @@ public class DarkSoulsTools : EditorWindow
         Undefined,
         DarkSoulsPTDE,
         DarkSoulsRemastered,
+        DarkSoulsIISOTFS,
         DarkSoulsIII,
         Bloodborne,
         Sekiro,
     }
 
-    GameType type = GameType.Undefined;
+    static GameType type = GameType.Undefined;
+    public static GameType GetGameType()
+    {
+        return type;
+    }
 
     static public string GameFolder(GameType game)
     {
@@ -49,6 +54,14 @@ public class DarkSoulsTools : EditorWindow
                 AssetDatabase.CreateFolder("Assets", "DSR");
             }
             return "DSR";
+        }
+        else if (game == GameType.DarkSoulsIISOTFS)
+        {
+            if (!AssetDatabase.IsValidFolder("Assets/DS2SOTFS"))
+            {
+                AssetDatabase.CreateFolder("Assets", "DS2SOTFS");
+            }
+            return "DS2SOTFS";
         }
         else if (game == GameType.DarkSoulsIII)
         {
@@ -87,7 +100,33 @@ public class DarkSoulsTools : EditorWindow
             try
             {
                 var hkx = HKX.Read(file.Bytes, (game == GameType.Bloodborne) ? HKX.HKXVariation.HKXBloodBorne : HKX.HKXVariation.HKXDS3);
-                CollisionUtilities.ImportDS3CollisionHKX(hkx, outputAssetPath + "/" + Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(file.Name)));
+                if (game == GameType.DarkSoulsIISOTFS)
+                {
+                    CollisionUtilities.ImportDS1CollisionHKX(hkx, outputAssetPath + "/" + Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(file.Name)));
+                }
+                else
+                {
+                    CollisionUtilities.ImportDS3CollisionHKX(hkx, outputAssetPath + "/" + Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(file.Name)));
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Failed to load hkx file " + file.Name);
+            }
+        }
+    }
+
+    static void ImportNavmeshHKXBND(string path, string outputAssetPath, GameType game)
+    {
+        var pathBase = Path.GetDirectoryName(path) + @"\" + Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(path));
+        var name = Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(path));
+        IBinder bnd = BND4.Read(GetOverridenPath(pathBase + ".nvmhktbnd.dcx"));
+        foreach (var file in bnd.Files)
+        {
+            try
+            {
+                var hkx = HKX.Read(file.Bytes, (game == GameType.Bloodborne) ? HKX.HKXVariation.HKXBloodBorne : HKX.HKXVariation.HKXDS3);
+                NavMeshUtilities.ImportNavimeshHKX(hkx, outputAssetPath + "/" + Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(file.Name)));
             }
             catch (Exception e)
             {
@@ -790,9 +829,21 @@ public class DarkSoulsTools : EditorWindow
 
     private void UpdateMapList()
     {
+        Maps = new List<string>();
+
+        // DS2 has its own structure for msbs, where they are all inside individual folders
+        if (type == GameType.DarkSoulsIISOTFS)
+        {
+            var maps = Directory.GetFileSystemEntries(Interroot + @"\map", @"m*");
+            foreach (var map in maps)
+            {
+                Maps.Add(Path.GetFileNameWithoutExtension($@"{map}.blah"));
+            }
+            return;
+        }
+
         var msbFiles = Directory.GetFileSystemEntries(Interroot + @"\map\MapStudio\", @"*.msb")
             .Select(Path.GetFileNameWithoutExtension);
-        Maps = new List<string>();
         var IDSet = new HashSet<string>();
         foreach (var cf in msbFiles)
         {
@@ -1061,10 +1112,19 @@ public class DarkSoulsTools : EditorWindow
                               sy * cp * cr - cy * sp * sr,
                               cy * cp * cr + sy * sp * sr);*/
 
-        // Apply in XZY order
+        // Apply in YZX order
         t.Rotate(new Vector3(0, 1, 0), e.y, Space.World);
         t.Rotate(new Vector3(0, 0, 1), e.z, Space.World);
         t.Rotate(new Vector3(1, 0, 0), e.x, Space.World);
+    }
+
+    static void EulerToTransformBTL(Vector3 e, Transform t)
+    {
+        // Apply in YZX order
+        t.Rotate(new Vector3(1, 0, 0), e.x, Space.World);
+        t.Rotate(new Vector3(0, 1, 0), e.y, Space.World);
+        t.Rotate(new Vector3(0, 0, 1), e.z, Space.World);
+
     }
 
     void onImportDS3Map(object o)
@@ -1629,6 +1689,147 @@ public class DarkSoulsTools : EditorWindow
                 evt.AddComponent<MSB3OtherEvent>();
                 evt.GetComponent<MSB3OtherEvent>().SetEvent(ev);
                 evt.transform.parent = Others.transform;
+            }
+        }
+        catch (Exception e)
+        {
+            EditorUtility.DisplayDialog("Import failed", e.Message + "\n" + e.StackTrace, "Ok");
+        }
+    }
+
+    void onImportDS2Map(object o)
+    {
+        try
+        {
+            string mapname = (string)o;
+            var msb = MSB2.Read(GetOverridenPath(Interroot + $@"\map\{mapname}\{mapname}.msb"));
+            string gameFolder = GameFolder(GameType.DarkSoulsIISOTFS);
+
+            if (!AssetDatabase.IsValidFolder("Assets/DS2SOTFS/" + mapname))
+            {
+                AssetDatabase.CreateFolder("Assets/DS2SOTFS", mapname);
+            }
+
+            // Create an MSB asset link to the DS2 asset
+            GameObject AssetLink = new GameObject("MSBAssetLink");
+            AssetLink.AddComponent<MSBAssetLink>();
+            AssetLink.GetComponent<MSBAssetLink>().Interroot = Interroot;
+            AssetLink.GetComponent<MSBAssetLink>().MapID = mapname;
+            AssetLink.GetComponent<MSBAssetLink>().MapPath = $@"{Interroot}\map\{mapname}\{mapname}.msb";
+
+            //
+            // Models section
+            //
+            GameObject ModelsSection = new GameObject("MSBModelDeclarations");
+
+            GameObject MapPieceModels = new GameObject("MapPieces");
+            MapPieceModels.transform.parent = ModelsSection.transform;
+
+            // Do a preload of all the flvers
+            /*try
+            {
+                AssetDatabase.StartAssetEditing();
+                foreach (var mappiece in msb.Models.MapPieces)
+                {
+                    var assetname = mappiece.Name;
+                    if (AssetDatabase.FindAssets($@"Assets/DS3/{mapname}/{assetname}.prefab").Length == 0 && LoadMapFlvers)
+                    {
+                        if (File.Exists(Interroot + $@"\map\{mapname}\{mapname}_{assetname.Substring(1)}.mapbnd.dcx"))
+                            FlverUtilities.ImportFlver(type, Interroot + $@"\map\{mapname}\{mapname}_{assetname.Substring(1)}.mapbnd.dcx", $@"Assets/DS3/{mapname}/{assetname}", $@"Assets/DS3/{mapname.Substring(0, 3)}");
+                    }
+                }
+            }
+            finally
+            {
+                AssetDatabase.StopAssetEditing();
+            }*/
+
+            foreach (var mappiece in msb.Models.MapPieces)
+            {
+                var assetname = mappiece.Name;
+                GameObject model = new GameObject(mappiece.Name);
+                model.transform.parent = MapPieceModels.transform;
+            }
+
+            // Load low res hkx assets
+            if (LoadHighResCol)
+            {
+                if (File.Exists(Interroot + $@"\model\map\h{mapname.Substring(1)}.hkxbhd"))
+                {
+                    ImportCollisionHKXBDT(Interroot + $@"\model\map\h{mapname.Substring(1)}.hkxbhd", $@"Assets/DS2SOTFS/{mapname}", type);
+                }
+            }
+            else
+            {
+                if (File.Exists(Interroot + $@"\model\map\l{mapname.Substring(1)}.hkxbhd"))
+                {
+                    AssetDatabase.StartAssetEditing();
+                    ImportCollisionHKXBDT(Interroot + $@"\model\map\l{mapname.Substring(1)}.hkxbhd", $@"Assets/DS2SOTFS/{mapname}", type);
+                    AssetDatabase.StopAssetEditing();
+                }
+            }
+
+            //
+            // Parts Section
+            //
+            GameObject PartsSection = new GameObject("MSBParts");
+
+            GameObject MapPieces = new GameObject("MapPieces");
+            MapPieces.transform.parent = PartsSection.transform;
+            foreach (var part in msb.Parts.MapPieces)
+            {
+                GameObject src = LoadMapFlvers ? AssetDatabase.LoadAssetAtPath<GameObject>($@"Assets/DS3/{mapname}/{part.ModelName}.prefab") : null;
+                if (src != null)
+                {
+                    GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
+                    obj.name = part.Name;
+                    obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
+                    //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
+                    EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
+                    obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
+                    obj.layer = 9;
+                    obj.transform.parent = MapPieces.transform;
+                }
+                else
+                {
+                    GameObject obj = new GameObject(part.Name);
+                    obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
+                    //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
+                    EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
+                    obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
+                    obj.layer = 9;
+                    obj.transform.parent = MapPieces.transform;
+                }
+            }
+
+            GameObject Collisions = new GameObject("Collisions");
+            Collisions.transform.parent = PartsSection.transform;
+            // "Items" section because ds2 msb isn't known well
+            foreach (var part in msb.Parts.Items)
+            {
+                string lowHigh = LoadHighResCol ? "h" : "l";
+                GameObject src = AssetDatabase.LoadAssetAtPath<GameObject>($@"Assets/DS2SOTFS/{mapname}/{lowHigh}{part.ModelName.Substring(1)}.prefab");
+                if (src != null)
+                {
+                    GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
+                    obj.name = part.Name;
+                    obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
+                    //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
+                    EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
+                    obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
+                    obj.layer = 12;
+                    obj.transform.parent = Collisions.transform;
+                }
+                else
+                {
+                    GameObject obj = new GameObject(part.Name);
+                    obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
+                    //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
+                    EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
+                    obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
+                    obj.layer = 12;
+                    obj.transform.parent = Collisions.transform;
+                }
             }
         }
         catch (Exception e)
@@ -3138,6 +3339,10 @@ public class DarkSoulsTools : EditorWindow
         {
             onImportDS1Map(o, true);
         }
+        else if (type == GameType.DarkSoulsIISOTFS)
+        {
+            onImportDS2Map(o);
+        }
         else if (type == GameType.DarkSoulsIII)
         {
             onImportDS3Map(o);
@@ -3151,6 +3356,39 @@ public class DarkSoulsTools : EditorWindow
             onImportSekiroMap(o);
         }
     }
+
+    // Temporary hardcoded table of DS2 map offsets while MSB2 is under construction
+    static Dictionary<string, Vector3> DS2MapOffsets = new Dictionary<string, Vector3>
+    {
+        { "m10_02_00_00", new Vector3(-498.00f,   30.00f, -260.00f) },
+        { "m10_04_00_00", new Vector3(    0.0f,     0.0f,     0.0f) },
+        { "m10_10_00_00", new Vector3( 208.00f,   10.00f, -133.00f) },
+        { "m10_14_00_00", new Vector3(-631.00f,   94.00f,  -88.00f) },
+        { "m10_15_00_00", new Vector3(-598.00f,   57.00f, -154.00f) },
+        { "m10_16_00_00", new Vector3( -78.00f,    4.00f,  562.00f) },
+        { "m10_17_00_00", new Vector3(-644.00f,   18.00f,  314.00f) },
+        { "m10_18_00_00", new Vector3(  52.00f,  -70.00f,  487.00f) },
+        { "m10_19_00_00", new Vector3(-589.00f,  166.00f,  605.00f) },
+        { "m10_23_00_00", new Vector3(-166.00f,  -11.00f,  -10.00f) },
+        { "m10_25_00_00", new Vector3( 188.00f, -151.00f,  -40.00f) },
+        { "m10_27_00_00", new Vector3(-712.00f,   12.00f, -434.00f) },
+        { "m10_29_00_00", new Vector3(-124.00f,   19.00f, -103.00f) },
+        { "m10_30_00_00", new Vector3( -20.00f,  -11.00f,  358.00f) },
+        { "m10_31_00_00", new Vector3( -14.00f,  -15.00f,  163.00f) },
+        { "m10_32_00_00", new Vector3(-488.00f,   55.00f, -587.00f) },
+        { "m10_33_00_00", new Vector3(-479.00f,   -9.00f,  211.00f) },
+        { "m10_34_00_00", new Vector3(-315.00f,  -73.00f,   60.00f) },
+        { "m20_10_00_00", new Vector3( 206.00f,   -4.00f, -175.61f) },
+        { "m20_11_00_00", new Vector3(-903.00f,  -29.00f, -242.00f) },
+        { "m20_21_00_00", new Vector3(-356.00f,   28.00f, -363.00f) },
+        { "m20_24_00_00", new Vector3(-1115.00f, -157.00f, -196.00f) },
+        { "m20_26_00_00", new Vector3(    0.0f,     0.0f,     0.0f) },
+        { "m40_03_00_00", new Vector3(-1048.00f,   53.00f,  376.00f) },
+        { "m50_35_00_00", new Vector3(    0.0f,     0.0f,     0.0f) },
+        { "m50_36_00_00", new Vector3(    0.0f,     0.0f,     0.0f) },
+        { "m50_37_00_00", new Vector3(    0.0f,     0.0f,     0.0f) },
+        { "m50_38_00_00", new Vector3(    0.0f,     0.0f,     0.0f) }
+    };
 
     void onImportBtl(object o)
     {
@@ -3194,18 +3432,39 @@ public class DarkSoulsTools : EditorWindow
                     }
                 }
             }
+            // DS2 has a hardcoded fallback table since MapOffsets aren't implemented yet
+            if (type == GameType.DarkSoulsIISOTFS)
+            {
+                if (DS2MapOffsets.ContainsKey(mapid))
+                {
+                    btlobject.transform.position = DS2MapOffsets[mapid];
+                }
+            }
             btlobject.AddComponent<BTLAssetLink>();
             var comp = btlobject.GetComponent<BTLAssetLink>();
             comp.BTLID = btlid;
             comp.BTLPath = Interroot + $@"\map\{mapid}\{btlid}.btl.dcx";
         }
 
-        var btlfile = BTL.Read(GetOverridenPath(Interroot + $@"\map\{mapid}\{btlid}.btl.dcx"));
+        BTL btlfile = null;
+        if (type == GameType.DarkSoulsIISOTFS)
+        {
+            // In DS2, the BTL is located inside the map's gibdt file
+            var pathbase = GetOverridenPath(Interroot + $@"\model\map\g{mapid.Substring(1)}");
+            btlobject.GetComponent<BTLAssetLink>().BTLPath = pathbase;
+            var bdt = BXF4.Read($@"{pathbase}.gibhd", $@"{pathbase}.gibdt");
+            var btl = bdt.Files.Find(x => x.Name.Contains("light.btl.dcx"));
+            btlfile = BTL.Read(btl.Bytes);
+        }
+        else
+        {
+            btlfile = BTL.Read(GetOverridenPath(Interroot + $@"\map\{mapid}\{btlid}.btl.dcx"));
+        }
         foreach (var light in btlfile.Lights)
         {
             GameObject obj = new GameObject(light.Name);
             BTLDS3Light l = null;
-            if (type == GameType.DarkSoulsIII || type == GameType.Bloodborne)
+            if (type == GameType.DarkSoulsIII || type == GameType.Bloodborne || type == GameType.DarkSoulsIISOTFS)
             {
                 obj.AddComponent<BTLDS3Light>();
                 obj.GetComponent<BTLDS3Light>().SetFromLight(light);
@@ -3220,6 +3479,15 @@ public class DarkSoulsTools : EditorWindow
             obj.AddComponent<Light>();
             var lcomp = obj.GetComponent<Light>();
             var hdlcomp = obj.AddComponent<HDAdditionalLightData>();
+            if (l.LightType == BTL.LightType.Spot)
+            {
+                lcomp.type = LightType.Spot;
+                lcomp.spotAngle = l.ConeAngle;
+            }
+            else if (l.LightType == BTL.LightType.Directional)
+            {
+                lcomp.type = LightType.Directional;
+            }
             lcomp.color = l.DiffuseColor;
             lcomp.range = l.Radius;
             hdlcomp.lightUnit = LightUnit.Lux;
@@ -3227,6 +3495,7 @@ public class DarkSoulsTools : EditorWindow
             hdlcomp.intensity = l.DiffusePower;
             obj.transform.parent = btlobject.transform;
             obj.transform.localPosition = new Vector3(light.Position.X, light.Position.Y, light.Position.Z);
+            EulerToTransformBTL(new Vector3(light.Rotation.X * Mathf.Rad2Deg, light.Rotation.Y * Mathf.Rad2Deg, light.Rotation.Z * Mathf.Rad2Deg), obj.transform);
         }
     }
 
@@ -3255,7 +3524,16 @@ public class DarkSoulsTools : EditorWindow
             }
 
             BTL export = new BTL();
-            if (type == GameType.DarkSoulsIII || type == GameType.Bloodborne)
+            if (type == GameType.DarkSoulsIISOTFS)
+            {
+                export.Version = 2;
+                export.LongOffsets = false;
+                foreach (var l in GetChildrenOfType<BTLDS3Light>(btlset))
+                {
+                    export.Lights.Add(l.GetComponent<BTLDS3Light>().Serialize(l));
+                }
+            }
+            else if (type == GameType.DarkSoulsIII || type == GameType.Bloodborne)
             {
                 export.Version = 6;
                 foreach (var l in GetChildrenOfType<BTLDS3Light>(btlset))
@@ -3274,16 +3552,34 @@ public class DarkSoulsTools : EditorWindow
             // Directory setup for overrides
             if (ModProjectDirectory != null)
             {
-                if (!Directory.Exists($@"{ModProjectDirectory}\map\{al.MapID}"))
+                if (type == GameType.DarkSoulsIISOTFS)
                 {
-                    Directory.CreateDirectory($@"{ModProjectDirectory}\map\{al.MapID}");
+                    if (!Directory.Exists($@"{ModProjectDirectory}\model\map"))
+                    {
+                        Directory.CreateDirectory($@"{ModProjectDirectory}\model\map");
+                    }
+                }
+                else
+                {
+                    if (!Directory.Exists($@"{ModProjectDirectory}\map\{al.MapID}"))
+                    {
+                        Directory.CreateDirectory($@"{ModProjectDirectory}\map\{al.MapID}");
+                    }
                 }
             }
 
             // Save a backup if one doesn't exist
             if (ModProjectDirectory == null && !File.Exists(btlal.BTLPath + ".backup"))
             {
-                File.Copy(btlal.BTLPath, btlal.BTLPath + ".backup");
+                if (type == GameType.DarkSoulsIISOTFS)
+                {
+                    File.Copy(btlal.BTLPath + ".gibhd", btlal.BTLPath + ".gibhd" + ".backup");
+                    File.Copy(btlal.BTLPath + ".gibdt", btlal.BTLPath + ".gibdt" + ".backup");
+                }
+                else
+                {
+                    File.Copy(btlal.BTLPath, btlal.BTLPath + ".backup");
+                }
             }
 
             // Write as a temporary file to make sure there are no errors before overwriting current file 
@@ -3295,19 +3591,58 @@ public class DarkSoulsTools : EditorWindow
 
             if (File.Exists(btlPath + ".temp"))
             {
-                File.Delete(btlPath + ".temp");
+                if (type == GameType.DarkSoulsIISOTFS)
+                {
+                    File.Delete(btlal.BTLPath + ".gibhd.temp");
+                    File.Delete(btlal.BTLPath + ".gibdt.temp");
+                }
+                else
+                {
+                    File.Delete(btlPath + ".temp");
+                }
             }
-            export.Write(btlPath + ".temp", (type == GameType.Sekiro) ? SoulsFormats.DCX.Type.SekiroDFLT : SoulsFormats.DCX.Type.DarkSouls3);
 
-            // Make a copy of the previous map
-            if (File.Exists(btlPath))
+            if (type == GameType.DarkSoulsIISOTFS)
             {
-                File.Copy(btlPath, btlPath + ".prev", true);
-            }
+                var bytes = export.Write(SoulsFormats.DCX.Type.DarkSouls1);
 
-            // Move temp file as new map file
-            File.Delete(btlPath);
-            File.Move(btlPath + ".temp", btlPath);
+                // Open the BXF file
+                var path = btlPath;
+                if (!File.Exists(path + ".gibhd"))
+                {
+                    path = btlal.BTLPath;
+                }
+                var archive = BXF4.Read(path + ".gibhd", path + ".gibdt");
+                archive.Files.Find(x => x.Name.Contains("light.btl.dcx")).Bytes = bytes;
+                archive.Write(btlPath + ".gibhd.temp", btlPath + ".gibdt.temp");
+
+                // Make a copy of the previous map
+                if (File.Exists(btlPath))
+                {
+                    File.Copy(btlPath + ".gibhd", btlPath + ".gibhd.prev", true);
+                    File.Copy(btlPath + ".gibdt", btlPath + ".gibdt.prev", true);
+                }
+
+                // Move temp file as new map file
+                File.Delete(btlPath + ".gibhd");
+                File.Delete(btlPath + ".gibdt");
+                File.Move(btlPath + ".gibhd.temp", btlPath + ".gibhd");
+                File.Move(btlPath + ".gibdt.temp", btlPath + ".gibdt");
+            }
+            else
+            {
+                export.Write(btlPath + ".temp", (type == GameType.Sekiro) ? SoulsFormats.DCX.Type.SekiroDFLT : SoulsFormats.DCX.Type.DarkSouls3);
+
+                // Make a copy of the previous map
+                if (File.Exists(btlPath))
+                {
+                    File.Copy(btlPath, btlPath + ".prev", true);
+                }
+
+                // Move temp file as new map file
+                File.Delete(btlPath);
+                File.Move(btlPath + ".temp", btlPath);
+            }
         }
     }
 
@@ -4942,6 +5277,10 @@ public class DarkSoulsTools : EditorWindow
             {
                 type = GameType.DarkSoulsRemastered;
             }
+            else if (file.ToLower().Contains("darksoulsii.exe"))
+            {
+                type = GameType.DarkSoulsIISOTFS;
+            }
             else if (file.ToLower().Contains("darksoulsiii.exe"))
             {
                 type = GameType.DarkSoulsIII;
@@ -5214,6 +5553,25 @@ public class DarkSoulsTools : EditorWindow
             }
         }
 
+        if (type == GameType.Bloodborne && GUILayout.Button("Import Chalice Navimeshes"))
+        {
+            if (!AssetDatabase.IsValidFolder("Assets/Bloodborne/m29_00_00_00"))
+            {
+                AssetDatabase.CreateFolder("Assets/Bloodborne", "m29_00_00_00");
+            }
+            if (!AssetDatabase.IsValidFolder("Assets/Bloodborne/m29_00_00_00/navmesh"))
+            {
+                AssetDatabase.CreateFolder("Assets/Bloodborne/m29_00_00_00", "navmesh");
+            }
+            // Load low res hkx assets
+            AssetDatabase.StartAssetEditing();
+            if (File.Exists(Interroot + $@"\map\m29_00_00_00\m29_00_00_00.nvmhktbnd.dcx"))
+            {
+                ImportNavmeshHKXBND(Interroot + $@"\map\m29_00_00_00\m29_00_00_00.nvmhktbnd.dcx", $@"Assets/Bloodborne/m29_00_00_00/navmesh", type);
+            }
+            AssetDatabase.StopAssetEditing();
+        }
+
         GUILayout.Label("Map tools", EditorStyles.boldLabel);
 
         LoadMapFlvers = GUILayout.Toggle(LoadMapFlvers, "Load map piece models (slow)");
@@ -5238,7 +5596,7 @@ public class DarkSoulsTools : EditorWindow
             }
         }
 
-        if ((type == GameType.DarkSoulsIII || type == GameType.Sekiro) && GameObject.Find("MSBAssetLink") != null)
+        if ((type == GameType.DarkSoulsIII || type == GameType.Sekiro || type == GameType.DarkSoulsIISOTFS) && GameObject.Find("MSBAssetLink") != null)
         {
             if (GUILayout.Button("Import BTL (Lights)"))
             {
@@ -5246,12 +5604,19 @@ public class DarkSoulsTools : EditorWindow
                 var assetLink = GameObject.Find("MSBAssetLink");
                 var alc = assetLink.GetComponent<MSBAssetLink>();
                 var mapid = alc.MapID;
-                var btlFiles = Directory.GetFileSystemEntries(Interroot + $@"\map\{mapid}\", @"*.btl.dcx")
-                    .Select(Path.GetFileNameWithoutExtension).Select(Path.GetFileNameWithoutExtension);
-                var btls = new List<string>();
-                foreach (var btl in btlFiles)
+                if (type == GameType.DarkSoulsIISOTFS)
                 {
-                    menu.AddItem(new GUIContent(btl), false, onImportBtl, btl);
+                    menu.AddItem(new GUIContent("light"), false, onImportBtl, "light");
+                }
+                else
+                {
+                    var btlFiles = Directory.GetFileSystemEntries(Interroot + $@"\map\{mapid}\", @"*.btl.dcx")
+                        .Select(Path.GetFileNameWithoutExtension).Select(Path.GetFileNameWithoutExtension);
+                    var btls = new List<string>();
+                    foreach (var btl in btlFiles)
+                    {
+                        menu.AddItem(new GUIContent(btl), false, onImportBtl, btl);
+                    }
                 }
                 menu.ShowAsContext();
             }
@@ -5274,7 +5639,7 @@ public class DarkSoulsTools : EditorWindow
             }
         }
 
-        if ((type == GameType.DarkSoulsIII || type == GameType.Sekiro) && GUILayout.Button("Export BTLs (lights)"))
+        if ((type == GameType.DarkSoulsIII || type == GameType.Sekiro || type == GameType.DarkSoulsIISOTFS) && GUILayout.Button("Export BTLs (lights)"))
         {
             try
             {

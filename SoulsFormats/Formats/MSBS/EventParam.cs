@@ -26,39 +26,85 @@ namespace SoulsFormats
         }
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
 
+        /// <summary>
+        /// Dynamic or interactive systems such as item pickups, levers, enemy spawners, etc.
+        /// </summary>
         public class EventParam : Param<Event>
         {
+            /// <summary>
+            /// Item pickups out in the open or inside containers.
+            /// </summary>
             public List<Event.Treasure> Treasures { get; set; }
 
+            /// <summary>
+            /// Enemy spawners.
+            /// </summary>
             public List<Event.Generator> Generators { get; set; }
 
+            /// <summary>
+            /// Interactive objects like levers and doors.
+            /// </summary>
             public List<Event.ObjAct> ObjActs { get; set; }
 
+            /// <summary>
+            /// Shift the entire map by a certain amount.
+            /// </summary>
             public List<Event.MapOffset> MapOffsets { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public List<Event.WalkRoute> WalkRoutes { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public List<Event.GroupTour> GroupTours { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public List<Event.Event17> Event17s { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public List<Event.Event18> Event18s { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public List<Event.Event20> Event20s { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public List<Event.Event21> Event21s { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public List<Event.PartsGroup> PartsGroups { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public List<Event.Talk> Talks { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public List<Event.AutoDrawGroup> AutoDrawGroups { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public List<Event.Other> Others { get; set; }
 
-            public EventParam() : this(0x23) { }
-
-            public EventParam(int unk00) : base(unk00, "EVENT_PARAM_ST")
+            /// <summary>
+            /// Creates an empty EventParam with the given version.
+            /// </summary>
+            public EventParam(int unk00 = 0x23) : base(unk00, "EVENT_PARAM_ST")
             {
                 Treasures = new List<Event.Treasure>();
                 Generators = new List<Event.Generator>();
@@ -156,6 +202,9 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Returns every Event in the order they'll be written.
+            /// </summary>
             public override List<Event> GetEntries()
             {
                 return SFUtil.ConcatAll<Event>(
@@ -165,20 +214,38 @@ namespace SoulsFormats
             }
         }
 
+        /// <summary>
+        /// A dynamic or interactive system.
+        /// </summary>
         public abstract class Event : Entry
         {
+            /// <summary>
+            /// The specific type of this Event.
+            /// </summary>
             public abstract EventType Type { get; }
 
             internal abstract bool HasTypeData { get; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public int EventIndex { get; set; }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public string PartName { get; set; }
             private int PartIndex;
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public string RegionName { get; set; }
             private int RegionIndex;
 
+            /// <summary>
+            /// Identifies the Event in event scripts.
+            /// </summary>
             public int EntityID { get; set; }
 
             internal Event()
@@ -247,40 +314,70 @@ namespace SoulsFormats
 
             internal virtual void GetNames(MSBS msb, Entries entries)
             {
-                PartName = GetName(entries.Parts, PartIndex);
-                RegionName = GetName(entries.Regions, RegionIndex);
+                PartName = FindName(entries.Parts, PartIndex);
+                RegionName = FindName(entries.Regions, RegionIndex);
             }
 
             internal virtual void GetIndices(MSBS msb, Entries entries)
             {
-                PartIndex = GetIndex(entries.Parts, PartName);
-                RegionIndex = GetIndex(entries.Regions, RegionName);
+                PartIndex = FindIndex(entries.Parts, PartName);
+                RegionIndex = FindIndex(entries.Regions, RegionName);
             }
 
+            /// <summary>
+            /// Returns the type and name of the event as a string.
+            /// </summary>
             public override string ToString()
             {
                 return $"{Type} {Name}";
             }
 
+            /// <summary>
+            /// An item pickup in the open or inside a container.
+            /// </summary>
             public class Treasure : Event
             {
+                /// <summary>
+                /// EventType.Treasure
+                /// </summary>
                 public override EventType Type => EventType.Treasure;
 
                 internal override bool HasTypeData => true;
 
+                /// <summary>
+                /// The part that the treasure is attached to.
+                /// </summary>
                 public string TreasurePartName { get; set; }
                 private int TreasurePartIndex;
 
+                /// <summary>
+                /// The item lot to be given.
+                /// </summary>
                 public int ItemLotID { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int ActionButtonID { get; set; }
 
+                /// <summary>
+                /// The animation to play on pickup.
+                /// </summary>
                 public int PickupAnimID { get; set; }
 
+                /// <summary>
+                /// Whether the treasure is inside a container.
+                /// </summary>
                 public bool InChest { get; set; }
 
+                /// <summary>
+                /// Whether the treasure should be disabled by default.
+                /// </summary>
                 public bool StartDisabled { get; set; }
 
+                /// <summary>
+                /// Creates a Treasure with default values.
+                /// </summary>
                 public Treasure() : base()
                 {
                     ItemLotID = -1;
@@ -295,7 +392,7 @@ namespace SoulsFormats
                     TreasurePartIndex = br.ReadInt32();
                     br.AssertInt32(0);
                     ItemLotID = br.ReadInt32();
-                    br.AssertNull(0x24, true);
+                    br.AssertPattern(0x24, 0xFF);
                     ActionButtonID = br.ReadInt32();
                     PickupAnimID = br.ReadInt32();
                     InChest = br.ReadBoolean();
@@ -313,7 +410,7 @@ namespace SoulsFormats
                     bw.WriteInt32(TreasurePartIndex);
                     bw.WriteInt32(0);
                     bw.WriteInt32(ItemLotID);
-                    bw.WriteNull(0x24, true);
+                    bw.WritePattern(0x24, 0xFF);
                     bw.WriteInt32(ActionButtonID);
                     bw.WriteInt32(PickupAnimID);
                     bw.WriteBoolean(InChest);
@@ -327,46 +424,88 @@ namespace SoulsFormats
                 internal override void GetNames(MSBS msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
-                    TreasurePartName = GetName(entries.Parts, TreasurePartIndex);
+                    TreasurePartName = FindName(entries.Parts, TreasurePartIndex);
                 }
 
                 internal override void GetIndices(MSBS msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
-                    TreasurePartIndex = GetIndex(entries.Parts, TreasurePartName);
+                    TreasurePartIndex = FindIndex(entries.Parts, TreasurePartName);
                 }
             }
 
+            /// <summary>
+            /// An enemy spawner.
+            /// </summary>
             public class Generator : Event
             {
+                /// <summary>
+                /// EventType.Generator
+                /// </summary>
                 public override EventType Type => EventType.Generator;
 
                 internal override bool HasTypeData => true;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short MaxNum { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short LimitNum { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short MinGenNum { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short MaxGenNum { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float MinInterval { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float MaxInterval { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int SessionCondition { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT14 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public float UnkT18 { get; set; }
 
+                /// <summary>
+                /// Regions where parts will spawn from.
+                /// </summary>
                 public string[] SpawnRegionNames { get; private set; }
                 private int[] SpawnRegionIndices;
 
+                /// <summary>
+                /// Parts that will be respawned.
+                /// </summary>
                 public string[] SpawnPartNames { get; private set; }
                 private int[] SpawnPartIndices;
 
+                /// <summary>
+                /// Creates a Generator with default values.
+                /// </summary>
                 public Generator() : base()
                 {
                     SpawnRegionNames = new string[8];
@@ -384,11 +523,11 @@ namespace SoulsFormats
                     SessionCondition = br.ReadInt32();
                     UnkT14 = br.ReadSingle();
                     UnkT18 = br.ReadSingle();
-                    br.AssertNull(0x14, false);
+                    br.AssertPattern(0x14, 0x00);
                     SpawnRegionIndices = br.ReadInt32s(8);
-                    br.AssertNull(0x10, false);
+                    br.AssertPattern(0x10, 0x00);
                     SpawnPartIndices = br.ReadInt32s(32);
-                    br.AssertNull(0x20, false);
+                    br.AssertPattern(0x20, 0x00);
                 }
 
                 internal override void WriteTypeData(BinaryWriterEx bw)
@@ -402,55 +541,69 @@ namespace SoulsFormats
                     bw.WriteInt32(SessionCondition);
                     bw.WriteSingle(UnkT14);
                     bw.WriteSingle(UnkT18);
-                    bw.WriteNull(0x14, false);
+                    bw.WritePattern(0x14, 0x00);
                     bw.WriteInt32s(SpawnRegionIndices);
-                    bw.WriteNull(0x10, false);
+                    bw.WritePattern(0x10, 0x00);
                     bw.WriteInt32s(SpawnPartIndices);
-                    bw.WriteNull(0x20, false);
+                    bw.WritePattern(0x20, 0x00);
                 }
 
                 internal override void GetNames(MSBS msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
-                    SpawnRegionNames = new string[SpawnRegionIndices.Length];
-                    for (int i = 0; i < SpawnRegionIndices.Length; i++)
-                        SpawnRegionNames[i] = GetName(entries.Regions, SpawnRegionIndices[i]);
-
-                    SpawnPartNames = new string[SpawnPartIndices.Length];
-                    for (int i = 0; i < SpawnPartIndices.Length; i++)
-                        SpawnPartNames[i] = GetName(entries.Parts, SpawnPartIndices[i]);
+                    SpawnRegionNames = FindNames(entries.Regions, SpawnRegionIndices);
+                    SpawnPartNames = FindNames(entries.Parts, SpawnPartIndices);
                 }
 
                 internal override void GetIndices(MSBS msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
-                    SpawnRegionIndices = new int[SpawnRegionNames.Length];
-                    for (int i = 0; i < SpawnRegionNames.Length; i++)
-                        SpawnRegionIndices[i] = GetIndex(entries.Regions, SpawnRegionNames[i]);
-
-                    SpawnPartIndices = new int[SpawnPartNames.Length];
-                    for (int i = 0; i < SpawnPartNames.Length; i++)
-                        SpawnPartIndices[i] = GetIndex(entries.Parts, SpawnPartNames[i]);
+                    SpawnRegionIndices = FindIndices(entries.Regions, SpawnRegionNames);
+                    SpawnPartIndices = FindIndices(entries.Parts, SpawnPartNames);
                 }
             }
 
+            /// <summary>
+            /// An interactive object.
+            /// </summary>
             public class ObjAct : Event
             {
+                /// <summary>
+                /// EventType.ObjAct
+                /// </summary>
                 public override EventType Type => EventType.ObjAct;
 
                 internal override bool HasTypeData => true;
 
+                /// <summary>
+                /// Unknown why objacts need an extra entity ID.
+                /// </summary>
                 public int ObjActEntityID { get; set; }
 
+                /// <summary>
+                /// The part to be interacted with.
+                /// </summary>
                 public string ObjActPartName { get; set; }
                 private int ObjActPartIndex;
 
+                /// <summary>
+                /// A row in ObjActParam.
+                /// </summary>
                 public int ObjActID { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public byte StateType { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int EventFlagID { get; set; }
 
+                /// <summary>
+                /// Creates an ObjAct with default values.
+                /// </summary>
                 public ObjAct() : base()
                 {
                     ObjActEntityID = -1;
@@ -489,26 +642,41 @@ namespace SoulsFormats
                 internal override void GetNames(MSBS msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
-                    ObjActPartName = GetName(entries.Parts, ObjActPartIndex);
+                    ObjActPartName = FindName(entries.Parts, ObjActPartIndex);
                 }
 
                 internal override void GetIndices(MSBS msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
-                    ObjActPartIndex = GetIndex(entries.Parts, ObjActPartName);
+                    ObjActPartIndex = FindIndex(entries.Parts, ObjActPartName);
                 }
             }
 
+            /// <summary>
+            /// Shifts the entire map; already accounted for in MSB coordinates.
+            /// </summary>
             public class MapOffset : Event
             {
+                /// <summary>
+                /// EventType.MapOffset
+                /// </summary>
                 public override EventType Type => EventType.MapOffset;
 
                 internal override bool HasTypeData => true;
 
+                /// <summary>
+                /// How much to shift by.
+                /// </summary>
                 public Vector3 Position { get; set; }
 
+                /// <summary>
+                /// Unknown, but looks like rotation.
+                /// </summary>
                 public float Degree { get; set; }
 
+                /// <summary>
+                /// Creates a MapOffset with default values.
+                /// </summary>
                 public MapOffset() : base() { }
 
                 internal MapOffset(BinaryReaderEx br) : base(br)
@@ -524,19 +692,37 @@ namespace SoulsFormats
                 }
             }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public class WalkRoute : Event
             {
+                /// <summary>
+                /// EventType.WalkRoute
+                /// </summary>
                 public override EventType Type => EventType.WalkRoute;
 
                 internal override bool HasTypeData => true;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT00 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public string[] WalkRegionNames { get; private set; }
                 private short[] WalkRegionIndices;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public WREntry[] WREntries { get; set; }
 
+                /// <summary>
+                /// Creates a WalkRoute with default values.
+                /// </summary>
                 public WalkRoute() : base()
                 {
                     WalkRegionNames = new string[32];
@@ -555,7 +741,7 @@ namespace SoulsFormats
                     WREntries = new WREntry[5];
                     for (int i = 0; i < 5; i++)
                         WREntries[i] = new WREntry(br);
-                    br.AssertNull(0x14, false);
+                    br.AssertPattern(0x14, 0x00);
                 }
 
                 internal override void WriteTypeData(BinaryWriterEx bw)
@@ -567,7 +753,7 @@ namespace SoulsFormats
                     bw.WriteInt16s(WalkRegionIndices);
                     for (int i = 0; i < 5; i++)
                         WREntries[i].Write(bw);
-                    bw.WriteNull(0x14, false);
+                    bw.WritePattern(0x14, 0x00);
                 }
 
                 internal override void GetNames(MSBS msb, Entries entries)
@@ -575,7 +761,7 @@ namespace SoulsFormats
                     base.GetNames(msb, entries);
                     WalkRegionNames = new string[WalkRegionIndices.Length];
                     for (int i = 0; i < WalkRegionIndices.Length; i++)
-                        WalkRegionNames[i] = GetName(entries.Regions, WalkRegionIndices[i]);
+                        WalkRegionNames[i] = FindName(entries.Regions, WalkRegionIndices[i]);
 
                     foreach (WREntry wrEntry in WREntries)
                         wrEntry.GetNames(entries);
@@ -586,21 +772,36 @@ namespace SoulsFormats
                     base.GetIndices(msb, entries);
                     WalkRegionIndices = new short[WalkRegionNames.Length];
                     for (int i = 0; i < WalkRegionNames.Length; i++)
-                        WalkRegionIndices[i] = (short)GetIndex(entries.Regions, WalkRegionNames[i]);
+                        WalkRegionIndices[i] = (short)FindIndex(entries.Regions, WalkRegionNames[i]);
 
                     foreach (WREntry wrEntry in WREntries)
                         wrEntry.GetIndices(entries);
                 }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public class WREntry
                 {
+                    /// <summary>
+                    /// Unknown.
+                    /// </summary>
                     public string RegionName { get; set; }
                     private short RegionIndex;
 
+                    /// <summary>
+                    /// Unknown.
+                    /// </summary>
                     public int Unk04 { get; set; }
 
+                    /// <summary>
+                    /// Unknown.
+                    /// </summary>
                     public int Unk08 { get; set; }
 
+                    /// <summary>
+                    /// Creates a WREntry with default values.
+                    /// </summary>
                     public WREntry() { }
 
                     internal WREntry(BinaryReaderEx br)
@@ -621,29 +822,47 @@ namespace SoulsFormats
 
                     internal void GetNames(Entries entries)
                     {
-                        RegionName = GetName(entries.Regions, RegionIndex);
+                        RegionName = FindName(entries.Regions, RegionIndex);
                     }
 
                     internal void GetIndices(Entries entries)
                     {
-                        RegionIndex = (short)GetIndex(entries.Regions, RegionName);
+                        RegionIndex = (short)FindIndex(entries.Regions, RegionName);
                     }
                 }
             }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public class GroupTour : Event
             {
+                /// <summary>
+                /// EventType.GroupTour
+                /// </summary>
                 public override EventType Type => EventType.GroupTour;
 
                 internal override bool HasTypeData => true;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int PlatoonIDScriptActive { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int State { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public string[] GroupPartNames { get; private set; }
                 private int[] GroupPartIndices;
 
+                /// <summary>
+                /// Creates a GroupTour with default values.
+                /// </summary>
                 public GroupTour() : base()
                 {
                     GroupPartNames = new string[32];
@@ -670,78 +889,116 @@ namespace SoulsFormats
                 internal override void GetNames(MSBS msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
-                    GroupPartNames = new string[GroupPartIndices.Length];
-                    for (int i = 0; i < GroupPartIndices.Length; i++)
-                        GroupPartNames[i] = GetName(entries.Parts, GroupPartIndices[i]);
+                    GroupPartNames = FindNames(entries.Parts, GroupPartIndices);
                 }
 
                 internal override void GetIndices(MSBS msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
-                    GroupPartIndices = new int[GroupPartNames.Length];
-                    for (int i = 0; i < GroupPartNames.Length; i++)
-                        GroupPartIndices[i] = GetIndex(entries.Parts, GroupPartNames[i]);
+                    GroupPartIndices = FindIndices(entries.Parts, GroupPartNames);
                 }
             }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public class Event17 : Event
             {
+                /// <summary>
+                /// EventType.Event17
+                /// </summary>
                 public override EventType Type => EventType.Event17;
 
                 internal override bool HasTypeData => true;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT00 { get; set; }
 
+                /// <summary>
+                /// Creates an Event17 with default values.
+                /// </summary>
                 public Event17() : base() { }
 
                 internal Event17(BinaryReaderEx br) : base(br)
                 {
                     UnkT00 = br.ReadInt32();
-                    br.AssertNull(0x1C, false);
+                    br.AssertPattern(0x1C, 0x00);
                 }
 
                 internal override void WriteTypeData(BinaryWriterEx bw)
                 {
                     bw.WriteInt32(UnkT00);
-                    bw.WriteNull(0x1C, false);
+                    bw.WritePattern(0x1C, 0x00);
                 }
             }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public class Event18 : Event
             {
+                /// <summary>
+                /// EventType.Event18
+                /// </summary>
                 public override EventType Type => EventType.Event18;
 
                 internal override bool HasTypeData => true;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT00 { get; set; }
 
+                /// <summary>
+                /// Creates an Event18 with default values.
+                /// </summary>
                 public Event18() : base() { }
 
                 internal Event18(BinaryReaderEx br) : base(br)
                 {
                     UnkT00 = br.ReadInt32();
-                    br.AssertNull(0x1C, false);
+                    br.AssertPattern(0x1C, 0x00);
                 }
 
                 internal override void WriteTypeData(BinaryWriterEx bw)
                 {
                     bw.WriteInt32(UnkT00);
-                    bw.WriteNull(0x1C, false);
+                    bw.WritePattern(0x1C, 0x00);
                 }
             }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public class Event20 : Event
             {
+                /// <summary>
+                /// EventType.Event20
+                /// </summary>
                 public override EventType Type => EventType.Event20;
 
                 internal override bool HasTypeData => true;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT00 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short UnkT04 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short UnkT06 { get; set; }
 
+                /// <summary>
+                /// Creates an Event20 with default values.
+                /// </summary>
                 public Event20() : base() { }
 
                 internal Event20(BinaryReaderEx br) : base(br)
@@ -749,7 +1006,7 @@ namespace SoulsFormats
                     UnkT00 = br.ReadInt32();
                     UnkT04 = br.ReadInt16();
                     UnkT06 = br.ReadInt16();
-                    br.AssertNull(0x18, false);
+                    br.AssertPattern(0x18, 0x00);
                 }
 
                 internal override void WriteTypeData(BinaryWriterEx bw)
@@ -757,19 +1014,31 @@ namespace SoulsFormats
                     bw.WriteInt32(UnkT00);
                     bw.WriteInt16(UnkT04);
                     bw.WriteInt16(UnkT06);
-                    bw.WriteNull(0x18, false);
+                    bw.WritePattern(0x18, 0x00);
                 }
             }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public class Event21 : Event
             {
+                /// <summary>
+                /// EventType.Event21
+                /// </summary>
                 public override EventType Type => EventType.Event21;
 
                 internal override bool HasTypeData => true;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public string[] Event21PartNames { get; private set; }
                 private int[] Event21PartIndices;
 
+                /// <summary>
+                /// Creates an Event21 with default values.
+                /// </summary>
                 public Event21() : base()
                 {
                     Event21PartNames = new string[32];
@@ -788,50 +1057,82 @@ namespace SoulsFormats
                 internal override void GetNames(MSBS msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
-                    Event21PartNames = new string[Event21PartIndices.Length];
-                    for (int i = 0; i < Event21PartIndices.Length; i++)
-                        Event21PartNames[i] = GetName(entries.Parts, Event21PartIndices[i]);
+                    Event21PartNames = FindNames(entries.Parts, Event21PartIndices);
                 }
 
                 internal override void GetIndices(MSBS msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
-                    Event21PartIndices = new int[Event21PartNames.Length];
-                    for (int i = 0; i < Event21PartNames.Length; i++)
-                        Event21PartIndices[i] = GetIndex(entries.Parts, Event21PartNames[i]);
+                    Event21PartIndices = FindIndices(entries.Parts, Event21PartNames);
                 }
             }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public class PartsGroup : Event
             {
+                /// <summary>
+                /// EventType.PartsGroup
+                /// </summary>
                 public override EventType Type => EventType.PartsGroup;
 
                 internal override bool HasTypeData => false;
 
+                /// <summary>
+                /// Creates a PartsGroup with default values.
+                /// </summary>
                 public PartsGroup() : base() { }
 
                 internal PartsGroup(BinaryReaderEx br) : base(br) { }
             }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public class Talk : Event
             {
+                /// <summary>
+                /// EventType.Talk
+                /// </summary>
                 public override EventType Type => EventType.Talk;
 
                 internal override bool HasTypeData => true;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT00 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public string[] EnemyNames { get; private set; }
                 private int[] EnemyIndices;
 
+                /// <summary>
+                /// IDs of talk ESDs.
+                /// </summary>
                 public int[] TalkIDs { get; private set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short UnkT44 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public short UnkT46 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT48 { get; set; }
 
+                /// <summary>
+                /// Creates a Talk with default values.
+                /// </summary>
                 public Talk() : base()
                 {
                     EnemyNames = new string[8];
@@ -846,7 +1147,7 @@ namespace SoulsFormats
                     UnkT44 = br.ReadInt16();
                     UnkT46 = br.ReadInt16();
                     UnkT48 = br.ReadInt32();
-                    br.AssertNull(0x34, false);
+                    br.AssertPattern(0x34, 0x00);
                 }
 
                 internal override void WriteTypeData(BinaryWriterEx bw)
@@ -857,59 +1158,79 @@ namespace SoulsFormats
                     bw.WriteInt16(UnkT44);
                     bw.WriteInt16(UnkT46);
                     bw.WriteInt32(UnkT48);
-                    bw.WriteNull(0x34, false);
+                    bw.WritePattern(0x34, 0x00);
                 }
 
                 internal override void GetNames(MSBS msb, Entries entries)
                 {
                     base.GetNames(msb, entries);
-                    EnemyNames = new string[EnemyIndices.Length];
-                    for (int i = 0; i < EnemyIndices.Length; i++)
-                        EnemyNames[i] = GetName(msb.Parts.Enemies, EnemyIndices[i]);
+                    EnemyNames = FindNames(msb.Parts.Enemies, EnemyIndices);
                 }
 
                 internal override void GetIndices(MSBS msb, Entries entries)
                 {
                     base.GetIndices(msb, entries);
-                    EnemyIndices = new int[EnemyNames.Length];
-                    for (int i = 0; i < EnemyNames.Length; i++)
-                        EnemyIndices[i] = GetIndex(msb.Parts.Enemies, EnemyNames[i]);
+                    EnemyIndices = FindIndices(msb.Parts.Enemies, EnemyNames);
                 }
             }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public class AutoDrawGroup : Event
             {
+                /// <summary>
+                /// EventType.AutoDrawGroup
+                /// </summary>
                 public override EventType Type => EventType.AutoDrawGroup;
 
                 internal override bool HasTypeData => true;
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT00 { get; set; }
 
+                /// <summary>
+                /// Unknown.
+                /// </summary>
                 public int UnkT04 { get; set; }
 
+                /// <summary>
+                /// Creates an AutoDrawGroup with default values.
+                /// </summary>
                 public AutoDrawGroup() : base() { }
 
                 internal AutoDrawGroup(BinaryReaderEx br) : base(br)
                 {
                     UnkT00 = br.ReadInt32();
                     UnkT04 = br.ReadInt32();
-                    br.AssertNull(0x18, false);
+                    br.AssertPattern(0x18, 0x00);
                 }
 
                 internal override void WriteTypeData(BinaryWriterEx bw)
                 {
                     bw.WriteInt32(UnkT00);
                     bw.WriteInt32(UnkT04);
-                    bw.WriteNull(0x18, false);
+                    bw.WritePattern(0x18, 0x00);
                 }
             }
 
+            /// <summary>
+            /// Unknown.
+            /// </summary>
             public class Other : Event
             {
+                /// <summary>
+                /// EventType.Other
+                /// </summary>
                 public override EventType Type => EventType.Other;
 
                 internal override bool HasTypeData => false;
 
+                /// <summary>
+                /// Creates an Other with default values.
+                /// </summary>
                 public Other() : base() { }
 
                 internal Other(BinaryReaderEx br) : base(br) { }

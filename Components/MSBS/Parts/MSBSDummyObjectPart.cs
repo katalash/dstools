@@ -6,7 +6,7 @@ using SoulsFormats;
 [AddComponentMenu("Sekiro/Parts/Dummy Object")]
 public class MSBSDummyObjectPart : MSBSPart
 {
-    public MSBSUnkStruct5Part Unk5;
+    public MSBSGParamConfig Gparam;
 
     public string CollisionPartName1;
     public string CollisionPartName2;
@@ -26,8 +26,8 @@ public class MSBSDummyObjectPart : MSBSPart
     public void SetPart(MSBS.Part.DummyObject part)
     {
         setBasePart(part);
-        Unk5 = gameObject.AddComponent<MSBSUnkStruct5Part>();
-        Unk5.setStruct(part.Unk5);
+        Gparam = gameObject.AddComponent<MSBSGParamConfig>();
+        Gparam.setStruct(part.Gparam);
         CollisionPartName1 = part.CollisionPartName1;
         UnkT0C = part.UnkT0C;
         EnableObjAnimNetSyncStructure = part.EnableObjAnimNetSyncStructure;
@@ -45,7 +45,7 @@ public class MSBSDummyObjectPart : MSBSPart
     {
         var part = new MSBS.Part.DummyObject();
         _Serialize(part, parent);
-        part.Unk5 = Unk5.Serialize();
+        part.Gparam = Gparam.Serialize();
         part.CollisionPartName1 = CollisionPartName1;
         part.UnkT0C = UnkT0C;
         part.EnableObjAnimNetSyncStructure = EnableObjAnimNetSyncStructure;

@@ -6,7 +6,7 @@ using SoulsFormats;
 [AddComponentMenu("Sekiro/Parts/Dummy Enemy")]
 public class MSBSDummyEnemyPart : MSBSPart
 {
-    public MSBSUnkStruct5Part Unk5;
+    public MSBSGParamConfig Gparam;
     public int ThinkParamID;
     public int NPCParamID;
     public int UnkT10;
@@ -28,8 +28,8 @@ public class MSBSDummyEnemyPart : MSBSPart
     public void SetPart(MSBS.Part.DummyEnemy part)
     {
         setBasePart(part);
-        Unk5 = gameObject.AddComponent<MSBSUnkStruct5Part>();
-        Unk5.setStruct(part.Unk5);
+        Gparam = gameObject.AddComponent<MSBSGParamConfig>();
+        Gparam.setStruct(part.Gparam);
         ThinkParamID = part.ThinkParamID;
         NPCParamID = part.NPCParamID;
         UnkT10 = part.UnkT10;
@@ -53,7 +53,7 @@ public class MSBSDummyEnemyPart : MSBSPart
     {
         var part = new MSBS.Part.DummyEnemy();
         _Serialize(part, parent);
-        part.Unk5 = Unk5.Serialize();
+        part.Gparam = Gparam.Serialize();
         part.ThinkParamID = ThinkParamID;
         part.NPCParamID = NPCParamID;
         part.UnkT10 = UnkT10;

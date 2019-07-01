@@ -429,7 +429,7 @@ namespace SoulsFormats
                 // BB padding rules are truly A team's best work
                 if (bw.Position - stringBase <= 0x38)
                 {
-                    bw.WriteNull(0x3C - (int)(bw.Position - stringBase), false);
+                    bw.WritePattern(0x3C - (int)(bw.Position - stringBase), 0);
                 }
                 else
                 {
@@ -564,7 +564,7 @@ namespace SoulsFormats
                     Unk08 = br.ReadInt32();
                     EnvMapID = br.ReadInt32();
                     //Unk10 = br.ReadInt32();
-                    br.AssertNull(0x10, false);
+                    br.AssertPattern(0x10, 0);
                 }
 
                 internal void Write(BinaryWriterEx bw)
@@ -574,7 +574,7 @@ namespace SoulsFormats
                     bw.WriteInt32(Unk08);
                     bw.WriteInt32(EnvMapID);
                     //bw.WriteInt32(Unk10);
-                    bw.WriteNull(0x10, false);
+                    bw.WritePattern(0x10, 0);
                 }
 
                 /// <summary>
@@ -659,7 +659,7 @@ namespace SoulsFormats
                     Unk0C = br.ReadInt32();
                     Unk10 = br.ReadInt32();
                     Unk14 = br.ReadInt32();
-                    br.AssertNull(0x24, false);
+                    br.AssertPattern(0x24, 0);
                     Unk3C = br.ReadInt32();
                     Unk40 = br.ReadSingle();
                     br.AssertInt32(0);
@@ -675,7 +675,7 @@ namespace SoulsFormats
                     bw.WriteInt32(Unk0C);
                     bw.WriteInt32(Unk10);
                     bw.WriteInt32(Unk14);
-                    bw.WriteNull(0x24, false);
+                    bw.WritePattern(0x24, 0);
                     bw.WriteInt32(Unk3C);
                     bw.WriteSingle(Unk40);
                     bw.WriteInt32(0);

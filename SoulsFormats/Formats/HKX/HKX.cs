@@ -488,6 +488,11 @@ namespace SoulsFormats
                             hkobject = new HKNPPhysicsSystemData();
                             hkobject.Read(hkx, this, br, variation);
                         }
+                        else if (reference.ClassName.ClassName == "hkaiNavMesh")
+                        {
+                            hkobject = new HKAINavMesh();
+                            hkobject.Read(hkx, this, br, variation);
+                        }
                         else
                         {
                             hkobject = new HKXGenericObject();

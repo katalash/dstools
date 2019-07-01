@@ -189,14 +189,14 @@ public abstract class MSBPartEditorBase : Editor
             else if (type == MSBType.MSBBB)
             {
                 var comp = mapPiece.GetComponent<MSBBBMapPiecePart>();
-                bool visible = ((dispgroups[0] & comp.DispGroup1) != 0) ||
-                               ((dispgroups[1] & comp.DispGroup2) != 0) ||
-                               ((dispgroups[2] & comp.DispGroup3) != 0) ||
-                               ((dispgroups[3] & comp.DispGroup4) != 0) ||
-                               ((dispgroups[4] & comp.DispGroup5) != 0) ||
-                               ((dispgroups[5] & comp.DispGroup6) != 0) ||
-                               ((dispgroups[6] & comp.DispGroup7) != 0) ||
-                               ((dispgroups[7] & comp.DispGroup8) != 0);
+                bool visible = ((dispgroups[0] & comp.DrawGroup1) != 0) ||
+                               ((dispgroups[1] & comp.DrawGroup2) != 0) ||
+                               ((dispgroups[2] & comp.DrawGroup3) != 0) ||
+                               ((dispgroups[3] & comp.DrawGroup4) != 0) ||
+                               ((dispgroups[4] & comp.DrawGroup5) != 0) ||
+                               ((dispgroups[5] & comp.DrawGroup6) != 0) ||
+                               ((dispgroups[6] & comp.DrawGroup7) != 0) ||
+                               ((dispgroups[7] & comp.DrawGroup8) != 0);
                 mapPiece.SetActive(visible);
             }
             else if (type == MSBType.MSB1)

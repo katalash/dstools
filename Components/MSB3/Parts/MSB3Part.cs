@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
 using System.Numerics;
+using System;
 
 // Stores all the MSB specific fields for a part
 public abstract class MSB3Part : MonoBehaviour
@@ -136,30 +137,41 @@ public abstract class MSB3Part : MonoBehaviour
         System.Numerics.Matrix4x4 mat2 = System.Numerics.Matrix4x4.CreateRotationZ(z)
             * System.Numerics.Matrix4x4.CreateRotationX(x) * System.Numerics.Matrix4x4.CreateRotationY(y);
 
-        // XYZ
-        if (Mathf.Abs(mat2.M13) < 0.99999f)
+        // YZX
+        if (Mathf.Abs(mat2.M21) < 0.99999f)
         {
-            y = ((r.y >= 90.0f && r.y < 270.0f) ? Mathf.PI + Mathf.Asin(Mathf.Clamp(mat2.M13, -1.0f, 1.0f)) : -Mathf.Asin(Mathf.Clamp(mat2.M13, -1.0f, 1.0f)));
-            x = Mathf.Atan2(mat2.M23 / Mathf.Cos(y), mat2.M33 / Mathf.Cos(y));
-            z = Mathf.Atan2(mat2.M12 / Mathf.Cos(y), mat2.M11 / Mathf.Cos(y));
+            z = (float)((r.z >= 90.0f && r.z < 270.0f) ? Math.PI + Math.Asin(Math.Max(Math.Min((double)mat2.M21, 1.0), -1.0)) : -Math.Asin(Math.Max(Math.Min((double)mat2.M21, 1.0), -1.0)));
+            x = (float)Math.Atan2(mat2.M23 / Math.Cos(z), mat2.M22 / Math.Cos(z));
+            y = (float)Math.Atan2(mat2.M31 / Math.Cos(z), mat2.M11 / Math.Cos(z));
         }
         else
         {
-            if (mat2.M31 > 0)
+            if (mat2.M12 > 0)
             {
-                y = -Mathf.PI / 2.0f;
-                x = Mathf.Atan2(-mat2.M21, -mat2.M31);
-                z = 0.0f;
+                z = -Mathf.PI / 2.0f;
+                y = (float)Math.Atan2(-mat2.M13, -mat2.M33);
+                x = 0.0f;
             }
             else
             {
-                y = Mathf.PI / 2.0f;
-                x = Mathf.Atan2(mat2.M21, mat2.M31);
-                z = 0.0f;
+                z = Mathf.PI / 2.0f;
+                y = (float)Math.Atan2(mat2.M13, mat2.M33);
+                x = 0.0f;
             }
         }
 
         return new System.Numerics.Vector3(Mathf.Rad2Deg * x, Mathf.Rad2Deg * y, Mathf.Rad2Deg * z);
+    }
+
+    static System.Numerics.Vector3 ConvertQuatEuler(UnityEngine.Quaternion q)
+    {
+        double r11 = -2.0 * (q.x * q.z - q.w * q.y);
+        double r12 = q.w * q.w + q.x * q.x - q.y * q.y - q.z * q.z;
+        double r21 = 2.0 * (q.x * q.y + q.w * q.z);
+        double r31 = -2.0 * (q.y * q.z - q.w * q.x);
+        double r32 = q.w * q.w - q.x * q.x + q.y * q.y - q.z * q.z;
+        return new System.Numerics.Vector3(Mathf.Rad2Deg * (float)Math.Atan2(r31, r32),
+            Mathf.Rad2Deg * (float)Math.Atan2(r11, r12), Mathf.Rad2Deg * (float)Math.Asin(r21));
     }
 
     internal void _Serialize(MSB3.Part part, GameObject parent)
@@ -174,9 +186,10 @@ public abstract class MSB3Part : MonoBehaviour
         //part.Rotation.X = parent.transform.rotation.eulerAngles.x;
         //part.Rotation.Y = parent.transform.rotation.eulerAngles.z;
         //part.Rotation.Z = -parent.transform.rotation.eulerAngles.y;
-        //part.Rotation = ConvertEuler(parent.transform.eulerAngles);
-        part.Rotation = new System.Numerics.Vector3(Rotation.x, Rotation.y, Rotation.z);
-        //print($@"{part.Name}: {parent.transform.eulerAngles}, {parent.transform.localEulerAngles} -> {part.Rotation}");
+        part.Rotation = ConvertEuler(parent.transform.eulerAngles);
+        //part.Rotation = ConvertQuatEuler(parent.transform.rotation);
+        //part.Rotation = new System.Numerics.Vector3(Rotation.x, Rotation.y, Rotation.z);
+        print($@"{part.Name}: {Rotation}, {parent.transform.eulerAngles} -> {part.Rotation}");
         part.Scale.X = parent.transform.localScale.x;
         part.Scale.Y = parent.transform.localScale.y;
         part.Scale.Z = parent.transform.localScale.z;

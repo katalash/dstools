@@ -10,7 +10,7 @@ public class MSBSMapPieceModel : MSBSModel
     /// <summary>
     /// Unknown.
     /// </summary>
-    public int UnkT00;
+    public bool UnkT00;
 
     /// <summary>
     /// Unknown.

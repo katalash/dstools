@@ -8,7 +8,7 @@ public class MSBSMapPiecePart : MSBSPart
 {
 
     public MSBSUnkStruct1Part Unk1;
-    public MSBSUnkStruct5Part Unk5;
+    public MSBSGParamConfig Gparam;
     public int Unk00;
     public int Unk04;
     public int Unk08;
@@ -21,8 +21,8 @@ public class MSBSMapPiecePart : MSBSPart
         setBasePart(part);
         Unk1 = gameObject.AddComponent<MSBSUnkStruct1Part>();
         Unk1.setStruct(part.Unk1);
-        Unk5 = gameObject.AddComponent<MSBSUnkStruct5Part>();
-        Unk5.setStruct(part.Unk5);
+        Gparam = gameObject.AddComponent<MSBSGParamConfig>();
+        Gparam.setStruct(part.Gparam);
         Unk00 = part.Unk7.Unk00;
         Unk04 = part.Unk7.Unk04;
         Unk08 = part.Unk7.Unk08;
@@ -38,7 +38,7 @@ public class MSBSMapPiecePart : MSBSPart
         var part = new MSBS.Part.MapPiece();
         _Serialize(part, parent);
         part.Unk1 = Unk1.Serialize();
-        part.Unk5 = Unk5.Serialize();
+        part.Gparam = Gparam.Serialize();
         part.Unk7 = new MSBS.Part.UnkStruct7();
         part.Unk7.Unk00 = Unk00;
         part.Unk7.Unk04 = Unk04;

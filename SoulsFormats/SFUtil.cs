@@ -15,6 +15,17 @@ namespace SoulsFormats
     public static class SFUtil
     {
         /// <summary>
+        /// Makes a backup of a file if not already found, and returns the backed-up path.
+        /// </summary>
+        public static string Backup(string file)
+        {
+            string bak = file + ".bak";
+            if (!File.Exists(bak))
+                File.Copy(file, bak);
+            return bak;
+        }
+
+        /// <summary>
         /// Returns the extension of the specified file path, removing .dcx if present.
         /// </summary>
         public static string GetRealExtension(string path)
@@ -175,6 +186,17 @@ namespace SoulsFormats
             foreach (IEnumerable<T> list in lists)
                 all = all.Concat(list);
             return all.ToList();
+        }
+
+        /// <summary>
+        /// Convert a list to a dictionary with indices as keys.
+        /// </summary>
+        public static Dictionary<int, T> Dictionize<T>(List<T> items)
+        {
+            var dict = new Dictionary<int, T>(items.Count);
+            for (int i = 0; i < items.Count; i++)
+                dict[i] = items[i];
+            return dict;
         }
 
         private static byte[] ds3RegulationKey = Encoding.ASCII.GetBytes("ds3#jn/8_7(rsY9pg55GFN7VFL#+3n/)");

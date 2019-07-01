@@ -48,14 +48,9 @@ namespace SoulsFormats
             public List<Model.Collision> Collisions { get; set; }
 
             /// <summary>
-            /// Creates an empty ModelParam.
-            /// </summary>
-            public ModelParam() : this(0x23) { }
-
-            /// <summary>
             /// Creates an empty ModelParam with the given version.
             /// </summary>
-            public ModelParam(int unk00) : base(unk00, "MODEL_PARAM_ST")
+            public ModelParam(int unk00 = 0x23) : base(unk00, "MODEL_PARAM_ST")
             {
                 MapPieces = new List<Model.MapPiece>();
                 Objects = new List<Model.Object>();
@@ -126,7 +121,7 @@ namespace SoulsFormats
             /// </summary>
             public string Placeholder { get; set; }
 
-            internal int InstanceCount;
+            private int InstanceCount;
 
             /// <summary>
             /// Unknown.
@@ -167,7 +162,7 @@ namespace SoulsFormats
                 bw.ReserveInt64("TypeDataOffset");
 
                 bw.FillInt64("NameOffset", bw.Position - start);
-                bw.WriteUTF16(Name, true);
+                bw.WriteUTF16(ReambiguateName(Name), true);
                 bw.FillInt64("SibOffset", bw.Position - start);
                 bw.WriteUTF16(Placeholder, true);
                 bw.Pad(8);
@@ -217,7 +212,17 @@ namespace SoulsFormats
                 /// <summary>
                 /// Unknown.
                 /// </summary>
-                public int UnkT00 { get; set; }
+                public bool UnkT00 { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public bool UnkT01 { get; set; }
+
+                /// <summary>
+                /// Unknown.
+                /// </summary>
+                public bool UnkT02 { get; set; }
 
                 /// <summary>
                 /// Unknown.
@@ -256,7 +261,10 @@ namespace SoulsFormats
 
                 internal MapPiece(BinaryReaderEx br) : base(br)
                 {
-                    UnkT00 = br.ReadInt32();
+                    UnkT00 = br.ReadBoolean();
+                    UnkT01 = br.ReadBoolean();
+                    UnkT02 = br.ReadBoolean();
+                    br.AssertByte(0);
                     UnkT04 = br.ReadSingle();
                     UnkT08 = br.ReadSingle();
                     UnkT0C = br.ReadSingle();
@@ -268,7 +276,10 @@ namespace SoulsFormats
 
                 internal override void WriteTypeData(BinaryWriterEx bw)
                 {
-                    bw.WriteInt32(UnkT00);
+                    bw.WriteBoolean(UnkT00);
+                    bw.WriteBoolean(UnkT01);
+                    bw.WriteBoolean(UnkT02);
+                    bw.WriteByte(0);
                     bw.WriteSingle(UnkT04);
                     bw.WriteSingle(UnkT08);
                     bw.WriteSingle(UnkT0C);
