@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using PropertyHook;
 using UnityEngine;
 
-public abstract class DS2GXLightBase
+public abstract class DS3GXLightBase
 {
     public abstract bool IsValid();
 
@@ -24,16 +24,16 @@ public abstract class DS2GXLightBase
     {
         get
         {
-            float r = BasePointer.ReadSingle(0x10);
-            float g = BasePointer.ReadSingle(0x14);
-            float b = BasePointer.ReadSingle(0x18);
+            float r = BasePointer.ReadSingle(0x70);
+            float g = BasePointer.ReadSingle(0x74);
+            float b = BasePointer.ReadSingle(0x78);
             return new Color(r, g, b);
         }
         set
         {
-            BasePointer.WriteSingle(0x10, value.r);
-            BasePointer.WriteSingle(0x14, value.g);
-            BasePointer.WriteSingle(0x18, value.b);
+            BasePointer.WriteSingle(0x70, value.r);
+            BasePointer.WriteSingle(0x74, value.g);
+            BasePointer.WriteSingle(0x78, value.b);
         }
     }
 
@@ -41,11 +41,11 @@ public abstract class DS2GXLightBase
     {
         get
         {
-            return BasePointer.ReadSingle(0x1C);
+            return BasePointer.ReadSingle(0x7C);
         }
         set
         {
-            BasePointer.WriteSingle(0x1C, value);
+            BasePointer.WriteSingle(0x7C, value);
         }
     }
 
@@ -53,16 +53,16 @@ public abstract class DS2GXLightBase
     {
         get
         {
-            float r = BasePointer.ReadSingle(0x20);
-            float g = BasePointer.ReadSingle(0x24);
-            float b = BasePointer.ReadSingle(0x28);
+            float r = BasePointer.ReadSingle(0x80);
+            float g = BasePointer.ReadSingle(0x84);
+            float b = BasePointer.ReadSingle(0x88);
             return new Color(r, g, b);
         }
         set
         {
-            BasePointer.WriteSingle(0x20, value.r);
-            BasePointer.WriteSingle(0x24, value.g);
-            BasePointer.WriteSingle(0x28, value.b);
+            BasePointer.WriteSingle(0x80, value.r);
+            BasePointer.WriteSingle(0x84, value.g);
+            BasePointer.WriteSingle(0x88, value.b);
         }
     }
 
@@ -70,11 +70,11 @@ public abstract class DS2GXLightBase
     {
         get
         {
-            return BasePointer.ReadSingle(0x2C);
+            return BasePointer.ReadSingle(0x8C);
         }
         set
         {
-            BasePointer.WriteSingle(0x2C, value);
+            BasePointer.WriteSingle(0x8C, value);
         }
     }
 
@@ -84,11 +84,12 @@ public abstract class DS2GXLightBase
     {
         get
         {
-            return BasePointer.ReadByte(0x49) == 1;
+            return false;
+            //return BasePointer.ReadByte(0x49) == 1;
         }
         set
         {
-            BasePointer.WriteBoolean(0x49, value);
+            //BasePointer.WriteBoolean(0x49, value);
         }
     }
 

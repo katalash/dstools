@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 using PropertyHook;
 using UnityEngine;
 
-public class DS2GXPointLight : DS2GXLightBase
+public class DS3GXPointLight : DS3GXLightBase
 {
-    public DS2GXPointLight(PHook hook, PHPointer b, int index)
+    public DS3GXPointLight(PHook hook, PHPointer b, int index)
     {
         Hook = hook;
         BasePointer = b;
@@ -26,7 +26,7 @@ public class DS2GXPointLight : DS2GXLightBase
             return false;
         }
         // See if vtable pointer is valid
-        if (BasePointer.ReadUInt64(0x0) != 0x1411DA3D0)
+        if (BasePointer.ReadUInt64(0x0) != 0x143D3A7D8)
         {
             return false;
         }
@@ -41,9 +41,9 @@ public class DS2GXPointLight : DS2GXLightBase
             {
                 return new Vector3(0.0f, 0.0f, 0.0f);
             }
-            float x = BasePointer.ReadSingle(0x50);
-            float y = BasePointer.ReadSingle(0x54);
-            float z = BasePointer.ReadSingle(0x58);
+            float x = BasePointer.ReadSingle(0x150);
+            float y = BasePointer.ReadSingle(0x154);
+            float z = BasePointer.ReadSingle(0x158);
             return new Vector3(x, y, z);
         }
         set
@@ -52,9 +52,9 @@ public class DS2GXPointLight : DS2GXLightBase
             {
                 return;
             }
-            BasePointer.WriteSingle(0x50, value.x);
-            BasePointer.WriteSingle(0x54, value.y);
-            BasePointer.WriteSingle(0x58, value.z);
+            BasePointer.WriteSingle(0x150, value.x);
+            BasePointer.WriteSingle(0x154, value.y);
+            BasePointer.WriteSingle(0x158, value.z);
         }
     }
 
@@ -62,11 +62,11 @@ public class DS2GXPointLight : DS2GXLightBase
     {
         get
         {
-            return BasePointer.ReadSingle(0x5C);
+            return BasePointer.ReadSingle(0x15C);
         }
         set
         {
-            BasePointer.WriteSingle(0x5C, value);
+            BasePointer.WriteSingle(0x15C, value);
         }
     }
 
@@ -78,7 +78,7 @@ public class DS2GXPointLight : DS2GXLightBase
         }
         set
         {
-            BasePointer.WriteSingle(0x74, value);
+            //BasePointer.WriteSingle(0x74, value);
         }
     }
 
@@ -90,7 +90,7 @@ public class DS2GXPointLight : DS2GXLightBase
         }
         set
         {
-            BasePointer.WriteSingle(0x78, value);
+            //BasePointer.WriteSingle(0x78, value);
         }
     }
 
@@ -102,7 +102,7 @@ public class DS2GXPointLight : DS2GXLightBase
         }
         set
         {
-            BasePointer.WriteSingle(0x7C, value);
+            //BasePointer.WriteSingle(0x7C, value);
         }
     }
 }

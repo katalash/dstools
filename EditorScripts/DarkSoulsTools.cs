@@ -3450,9 +3450,11 @@ public class DarkSoulsTools : EditorWindow
         if (type == GameType.DarkSoulsIISOTFS)
         {
             // In DS2, the BTL is located inside the map's gibdt file
-            var pathbase = GetOverridenPath(Interroot + $@"\model\map\g{mapid.Substring(1)}");
+            var pathbase = Interroot + $@"\model\map\g{mapid.Substring(1)}";
             btlobject.GetComponent<BTLAssetLink>().BTLPath = pathbase;
-            var bdt = BXF4.Read($@"{pathbase}.gibhd", $@"{pathbase}.gibdt");
+            var bhdpath = GetOverridenPath(pathbase + ".gibhd");
+            var bdtpath = GetOverridenPath(pathbase + ".gibdt");
+            var bdt = BXF4.Read(bhdpath, bdtpath);
             var btl = bdt.Files.Find(x => x.Name.Contains("light.btl.dcx"));
             btlfile = BTL.Read(btl.Bytes);
         }
@@ -3495,7 +3497,8 @@ public class DarkSoulsTools : EditorWindow
             hdlcomp.intensity = l.DiffusePower;
             obj.transform.parent = btlobject.transform;
             obj.transform.localPosition = new Vector3(light.Position.X, light.Position.Y, light.Position.Z);
-            EulerToTransformBTL(new Vector3(light.Rotation.X * Mathf.Rad2Deg, light.Rotation.Y * Mathf.Rad2Deg, light.Rotation.Z * Mathf.Rad2Deg), obj.transform);
+            //EulerToTransformBTL(new Vector3(light.Rotation.X * Mathf.Rad2Deg, light.Rotation.Y * Mathf.Rad2Deg, light.Rotation.Z * Mathf.Rad2Deg), obj.transform);
+            obj.transform.localEulerAngles = new Vector3(light.Rotation.X * Mathf.Rad2Deg, light.Rotation.Y * Mathf.Rad2Deg, light.Rotation.Z * Mathf.Rad2Deg);
         }
     }
 

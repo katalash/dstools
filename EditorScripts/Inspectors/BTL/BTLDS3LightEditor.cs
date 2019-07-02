@@ -20,7 +20,11 @@ public class BTLDS3LightEditor : BTLEditorBase
         serializedObject.Update();
         if (DarkSoulsTools.GetGameType() == DarkSoulsTools.GameType.DarkSoulsIISOTFS)
         {
-            DrawLiveConnectionStatus();
+            DrawLiveConnectionStatusDS2();
+        }
+        else if (DarkSoulsTools.GetGameType() == DarkSoulsTools.GameType.DarkSoulsIII)
+        {
+            DrawLiveConnectionStatusDS3();
         }
         DrawRawProperties();
     }

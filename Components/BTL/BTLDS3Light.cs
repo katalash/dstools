@@ -204,7 +204,8 @@ class BTLDS3Light : MonoBehaviour
     public float UnkC4;
 
     // Live connection to DS2
-    private DS2GXLightBase ConnectedLight = null;
+    private DS2GXLightBase ConnectedLightDS2 = null;
+    private DS3GXLightBase ConnectedLightDS3 = null;
 
     public virtual void SetFromLight(BTL.Light l)
     {
@@ -266,7 +267,7 @@ class BTLDS3Light : MonoBehaviour
             //z = (float)((r.z >= 90.0f && r.z < 270.0f) ? Math.PI + Math.Asin(Math.Max(Math.Min((double)mat2.M21, 1.0), -1.0)) : -Math.Asin(Math.Max(Math.Min((double)mat2.M21, 1.0), -1.0)));
             //x = (float)Math.Atan2(mat2.M23 / Math.Cos(z), mat2.M22 / Math.Cos(z));
             //y = (float)Math.Atan2(mat2.M31 / Math.Cos(z), mat2.M11 / Math.Cos(z));
-            y = (float)((r.x >= 90.0f && r.x < 270.0f) ? Math.PI + Math.Asin(Math.Max(Math.Min((double)mat2.M31, 1.0), -1.0)) : -Math.Asin(Math.Max(Math.Min((double)mat2.M31, 1.0), -1.0)));
+            y = (float)((r.y >= 90.0f && r.y < 270.0f) ? Math.PI + Math.Asin(Math.Max(Math.Min((double)mat2.M31, 1.0), -1.0)) : -Math.Asin(Math.Max(Math.Min((double)mat2.M31, 1.0), -1.0)));
             x = (float)Math.Atan2(mat2.M23 / Math.Cos(y), mat2.M33 / Math.Cos(y));
             z = (float)Math.Atan2(mat2.M12 / Math.Cos(y), mat2.M11 / Math.Cos(y));
         }
@@ -313,7 +314,8 @@ class BTLDS3Light : MonoBehaviour
         l.Unk30 = Unk30;
         l.Unk34 = Unk34;
         //l.Rotation = new System.Numerics.Vector3(Rotation.x * Mathf.Deg2Rad, Rotation.y * Mathf.Deg2Rad, Rotation.z * Mathf.Deg2Rad);
-        l.Rotation = ConvertEuler(parent.transform.localEulerAngles);
+        //l.Rotation = ConvertEuler(parent.transform.localEulerAngles);
+        l.Rotation = new System.Numerics.Vector3(parent.transform.eulerAngles.x * Mathf.Deg2Rad, parent.transform.eulerAngles.y * Mathf.Deg2Rad, parent.transform.eulerAngles.z * Mathf.Deg2Rad);
         print($@"{l.Name}: {Rotation}, {parent.transform.eulerAngles} -> {l.Rotation * Mathf.Rad2Deg}");
         l.Unk50 = Unk50;
         l.Unk54 = Unk54;
@@ -340,33 +342,68 @@ class BTLDS3Light : MonoBehaviour
 
     public void SetConnectedLight(DS2GXLightBase light)
     {
-        ConnectedLight = light;
+        ConnectedLightDS2 = light;
+    }
+
+    public void SetConnectedLight(DS3GXLightBase light)
+    {
+        ConnectedLightDS3 = light;
     }
 
     public void OnDrawGizmosSelected()
     {
-        if (ConnectedLight != null && ConnectedLight.IsValid())
+        if (ConnectedLightDS2 != null && ConnectedLightDS2.IsValid())
         {
-            if (ConnectedLight is DS2GXSpotLight)
+            if (ConnectedLightDS2 is DS2GXSpotLight)
             {
-                ((DS2GXSpotLight)ConnectedLight).Transform = gameObject.transform.localToWorldMatrix;
+                ((DS2GXSpotLight)ConnectedLightDS2).Transform = gameObject.transform.localToWorldMatrix;
             }
             else
             {
-                ConnectedLight.Position = gameObject.transform.position;
+                ConnectedLightDS2.Position = gameObject.transform.position;
             }
-            ConnectedLight.Diffuse = DiffuseColor;
-            ConnectedLight.DiffusePower = DiffusePower;
-            ConnectedLight.Specular = new Color(DiffuseColor.r * SpecularColor.r,
+            ConnectedLightDS2.Diffuse = DiffuseColor;
+            ConnectedLightDS2.DiffusePower = DiffusePower;
+            ConnectedLightDS2.Specular = new Color(DiffuseColor.r * SpecularColor.r,
                                                 DiffuseColor.g * SpecularColor.g,
                                                 DiffuseColor.b * SpecularColor.b);
-            ConnectedLight.SpecularPower = SpecularPower;
-            ConnectedLight.Radius = Radius;
-            ConnectedLight.EnableShadows = CastsShadows;
+            ConnectedLightDS2.SpecularPower = SpecularPower;
+            ConnectedLightDS2.Radius = Radius;
+            ConnectedLightDS2.EnableShadows = CastsShadows;
+            ConnectedLightDS2.FlickerMin = FlickerIntervalMin;
+            ConnectedLightDS2.FlickerMax = FlickerIntervalMax;
+            ConnectedLightDS2.FlickerMult = FlickerBrightnessMult;
         }
         else
         {
-            ConnectedLight = null;
+            ConnectedLightDS2 = null;
+        }
+
+        if (ConnectedLightDS3 != null && ConnectedLightDS3.IsValid())
+        {
+            if (ConnectedLightDS3 is DS3GXSpotLight)
+            {
+                ((DS3GXSpotLight)ConnectedLightDS3).Transform = gameObject.transform.localToWorldMatrix;
+            }
+            else
+            {
+                ConnectedLightDS3.Position = gameObject.transform.position;
+            }
+            ConnectedLightDS3.Diffuse = DiffuseColor;
+            ConnectedLightDS3.DiffusePower = DiffusePower;
+            ConnectedLightDS3.Specular = new Color(DiffuseColor.r * SpecularColor.r,
+                                                DiffuseColor.g * SpecularColor.g,
+                                                DiffuseColor.b * SpecularColor.b);
+            ConnectedLightDS3.SpecularPower = SpecularPower;
+            ConnectedLightDS3.Radius = Radius;
+            ConnectedLightDS3.EnableShadows = CastsShadows;
+            ConnectedLightDS3.FlickerMin = FlickerIntervalMin;
+            ConnectedLightDS3.FlickerMax = FlickerIntervalMax;
+            ConnectedLightDS3.FlickerMult = FlickerBrightnessMult;
+        }
+        else
+        {
+            ConnectedLightDS3 = null;
         }
     }
 }

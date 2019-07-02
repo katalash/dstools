@@ -21,7 +21,7 @@ public abstract class BTLEditorBase : Editor
     }
     protected BTLType _BTLType = BTLType.BTL2;
 
-    protected void DrawLiveConnectionStatus()
+    protected void DrawLiveConnectionStatusDS2()
     {
         if (DS2LiveConnection.GetStatus() == DS2LiveConnection.ConnectionStatus.StatusStopped)
         {
@@ -40,6 +40,48 @@ public abstract class BTLEditorBase : Editor
         {
             EditorGUILayout.LabelField("Live Connected to DS2");
             var lightman = DS2LiveConnection.GetLightManager();
+            if (lightman != null)
+            {
+                var pos = ((BTLDS3Light)target).gameObject.transform.position;
+                var light = lightman.FindLightByPosition(pos);
+                if (light != null)
+                {
+                    EditorGUILayout.LabelField("Connected to Light. Index " + light.Index);
+                    ((BTLDS3Light)target).SetConnectedLight(light);
+                }
+                else
+                {
+                    EditorGUILayout.LabelField("Could not find in game light.");
+                    EditorGUILayout.LabelField("Make sure you are in the correct level.");
+                    EditorGUILayout.LabelField("Try exporting the BTL and reloading the map.");
+                }
+            }
+            else
+            {
+                EditorGUILayout.LabelField("Could not find Light Manager. You are likely not in the game");
+            }
+        }
+    }
+
+    protected void DrawLiveConnectionStatusDS3()
+    {
+        if (DS3LiveConnection.GetStatus() == DS3LiveConnection.ConnectionStatus.StatusStopped)
+        {
+            DS3LiveConnection.Connect();
+        }
+        if (DS3LiveConnection.GetStatus() == DS3LiveConnection.ConnectionStatus.StatusConnecting)
+        {
+            EditorGUILayout.LabelField("Attempting to connect to DS3 Game");
+            if (GUILayout.Button("Force Reattempt"))
+            {
+                DS3LiveConnection.Stop();
+                DS3LiveConnection.Connect();
+            }
+        }
+        else if (DS3LiveConnection.GetStatus() == DS3LiveConnection.ConnectionStatus.StatusConnected)
+        {
+            EditorGUILayout.LabelField("Live Connected to DS3");
+            var lightman = DS3LiveConnection.GetLightManager();
             if (lightman != null)
             {
                 var pos = ((BTLDS3Light)target).gameObject.transform.position;
