@@ -11,7 +11,7 @@ DSTools is a Unity Editor plugin that aims to create an integrated modding solut
 0. Be warned that a lot of disk space is needed. You'll probably want at least 25GB of storage for DS1 modding and 50GB+ for DS3/Sekiro. This is because all the archives need to be unpacked, unity needs to be installed, and there needs to be room for imported assets cached in Unity.
 1. Join the Souls modding discord (https://discord.gg/mT2JJjx). Trust us, Dark Souls modding is still difficult, and almost all active modders are in this community and are happy to answer questions.
 2. Unpack your game of choice that you are modding. Use [UDSFM](https://www.nexusmods.com/darksouls/mods/1304) for DS1:PTDE and [UXM](https://www.nexusmods.com/darksouls3/mods/286) for DS3.
-3. Install Unity 2018.3.6 (free edition works and is what I used). Older and newer versions are not tested and may not work.
+3. Install the latest version of Unity 2019.1 (free edition works and is what I used).
 4. Create a new project WITH the High-Definition RP (Preview) template. Other templates are not supported.
 5. In the new project go to Window->Package Manager and update High Definition RP to the latest version. Older versions cause massive stuttering with complex maps loaded.
 6. Go to Edit->Project settings and in the Editor section set the Asset Serialization Mode to Force Binary. This saves a massive amount of disk space and makes reading and writing assets much faster.
