@@ -161,12 +161,12 @@ class BTLDS3Light : MonoBehaviour
     /// <summary>
     /// Unknown.
     /// </summary>
-    public float Unk98;
+    public float ConeAngleWidthDS2;
 
     /// <summary>
     /// Unknown.
     /// </summary>
-    public float Unk9C;
+    public float NearPlane;
 
     /// <summary>
     /// Unknown.
@@ -239,8 +239,8 @@ class BTLDS3Light : MonoBehaviour
         Unk84 = l.Unk84;
         Unk88 = l.Unk88;
         Unk90 = l.Unk90;
-        Unk98 = l.Unk98;
-        Unk9C = l.Unk9C;
+        ConeAngleWidthDS2 = l.Unk98;
+        NearPlane = l.Unk9C;
         UnkA0 = l.UnkA0;
         Sharpness = l.Sharpness;
         UnkAC = l.UnkAC;
@@ -328,8 +328,8 @@ class BTLDS3Light : MonoBehaviour
         l.FlickerIntervalMin = FlickerIntervalMin;
         l.FlickerIntervalMax = FlickerIntervalMax;
         l.FlickerBrightnessMult = FlickerBrightnessMult;
-        l.Unk98 = Unk98;
-        l.Unk9C = Unk9C;
+        l.Unk98 = ConeAngleWidthDS2;
+        l.Unk9C = NearPlane;
         l.UnkA0 = UnkA0;
         l.Sharpness = Sharpness;
         l.UnkAC = UnkAC;
@@ -357,6 +357,20 @@ class BTLDS3Light : MonoBehaviour
             if (ConnectedLightDS2 is DS2GXSpotLight)
             {
                 ((DS2GXSpotLight)ConnectedLightDS2).Transform = gameObject.transform.localToWorldMatrix;
+                float angle2 = (ConeAngleWidthDS2 == 0.0f) ? ConeAngle : ConeAngleWidthDS2;
+                Matrix4x4 projection = Matrix4x4.zero;
+                float S1 = 1.0f / Mathf.Tan((ConeAngle / 2.0f) * Mathf.Deg2Rad);
+                float S2 = 1.0f / Mathf.Tan((angle2 / 2.0f) * Mathf.Deg2Rad);
+                projection.m00 = S2;
+                projection.m11 = S1;
+                projection.m22 = Radius / (Radius - NearPlane);
+                projection.m23 = -Radius * NearPlane / (Radius - NearPlane);
+                projection.m32 = 1.0f;
+                ((DS2GXSpotLight)ConnectedLightDS2).Projection = projection;
+                ((DS2GXSpotLight)ConnectedLightDS2).NearClip = NearPlane;
+                ((DS2GXSpotLight)ConnectedLightDS2).FieldOfView = ConeAngle * Mathf.Deg2Rad;
+                ((DS2GXSpotLight)ConnectedLightDS2).FieldOfViewWidth = angle2 * Mathf.Deg2Rad;
+                ((DS2GXSpotLight)ConnectedLightDS2).FieldOfViewRatio = Mathf.Tan(angle2 * Mathf.Deg2Rad * 0.5f) / Mathf.Tan(ConeAngle * Mathf.Deg2Rad *0.5f);
             }
             else
             {

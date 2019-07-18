@@ -79,6 +79,7 @@ namespace SoulsFormats
         }
 
         // Represents a tree node for a mesh's BVH tree when it's expanded from its packed format
+        [System.Serializable]
         public class BVHNode
         {
             // Bounding box AABB that contains all the children as well

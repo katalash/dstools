@@ -85,7 +85,7 @@ class MTDAssetLink : ScriptableObject
             }
             def.UVIndex = tex.UVNumber - uvoffset;
 
-            if (tex.Type.ToUpper() == "G_LIGHTMAP" || tex.Type.ToUpper() == "G_DOLTEXTURE1")
+            if (tex.Type.ToUpper() == "G_LIGHTMAP" || tex.Type.ToUpper() == "G_DOLTEXTURE1" || tex.Type.ToUpper() == "G_GITEXTURE")
             {
                 LightmapUVIndex = def.UVIndex;
             }

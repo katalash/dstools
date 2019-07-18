@@ -36,5 +36,27 @@ class FlverSubmeshEditor : Editor
                 }
             }
         }
+
+        if (GUILayout.Button("Dump Normals"))
+        {
+            var dump = CreateInstance<NormalDump>();
+            var mesh = ((FlverSubmesh)target).gameObject.GetComponent<MeshFilter>().sharedMesh;
+            dump.Normals = mesh.normals;
+            AssetDatabase.CreateAsset(dump, "Assets/normaldump.asset");
+        }
+
+        if (submesh.Link != null)
+        {
+            if (submesh.Link.Submeshes.Count > submesh.SubmeshIdx)
+            {
+                if (submesh.Link.Submeshes[submesh.SubmeshIdx].Mtd != null)
+                {
+                    var sub = submesh.Link.Submeshes[submesh.SubmeshIdx];
+                    GUILayout.Label($@"Material Name: {sub.Name}");
+                    GUILayout.Label($@"MTD: {sub.Mtd}");
+                    GUILayout.Label($@"Lightmap Index: {sub.Mtd.LightmapUVIndex}");
+                }
+            }
+        }
     }
 }

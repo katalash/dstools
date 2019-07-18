@@ -22,4 +22,17 @@ class FlverSubmesh : MonoBehaviour
     /// Index of the submesh this represents
     /// </summary>
     public int SubmeshIdx;
+
+    /*public void OnDrawGizmosSelected()
+    {
+        Gizmos.matrix = transform.localToWorldMatrix;
+        var mesh = gameObject.GetComponent<MeshFilter>().sharedMesh;
+        var normals = mesh.normals;
+        var tangents = mesh.tangents;
+        var pos = mesh.vertices;
+        for (int i = 0; i < pos.Count(); i++)
+        {
+            Gizmos.DrawRay(pos[i], tangents[i] * tangents[i].w);
+        }
+    }*/
 }

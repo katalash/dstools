@@ -130,9 +130,36 @@ public class DarkSoulsTools : EditorWindow
             }
             catch (Exception e)
             {
+                //Debug.LogError("Failed to load hkx file " + file.Name);
+                Debug.LogError(e.Message);
+                Debug.LogError(e.StackTrace);
+            } 
+        }
+    }
+
+    static void ImportMapBDT(string path, string outputAssetPath, string mapname)
+    {
+        AssetDatabase.StartAssetEditing();
+        var pathBase = Path.GetDirectoryName(path) + @"\" + Path.GetFileNameWithoutExtension(path);
+        var name = Path.GetFileNameWithoutExtension(path);
+        BXF4 bxf = BXF4.Read(GetOverridenPath(pathBase + ".mapbhd"), GetOverridenPath(pathBase + ".mapbdt"));
+        foreach (var file in bxf.Files)
+        {
+            try
+            {
+                var flver = FLVER.Read(file.Bytes);
+                FLVERAssetLink link = ScriptableObject.CreateInstance<FLVERAssetLink>();
+                link.Type = FLVERAssetLink.ContainerType.Mapbdt;
+                link.ArchivePath = pathBase;
+                link.FlverPath = file.Name;
+                FlverUtilities.ImportFlver(flver, link, type, outputAssetPath + "/" + Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(file.Name)), $@"Assets/DS2SOTFS/{mapname}", true);
+            }
+            catch (Exception e)
+            {
                 Console.WriteLine("Failed to load hkx file " + file.Name);
             }
         }
+        AssetDatabase.StopAssetEditing();
     }
 
     static void ImportObjTextures(string objpath, string objid, GameType type)
@@ -736,10 +763,17 @@ public class DarkSoulsTools : EditorWindow
         var pathBase = Path.GetDirectoryName(path) + @"\" + Path.GetFileNameWithoutExtension(path);
         var name = Path.GetFileNameWithoutExtension(path);
         BXF4 bxf = BXF4.Read(pathBase + ".tpfbhd", pathBase + ".tpfbdt");
-        
-        if (!AssetDatabase.IsValidFolder($@"Assets/{gameFolder}/" + name.Substring(0, 3)))
+
+        var mapname = name.Substring(0, 3);
+        if (type == GameType.DarkSoulsIISOTFS)
         {
-            AssetDatabase.CreateFolder($@"Assets/{gameFolder}", name.Substring(0, 3));
+            // DS2 has textures per map
+            mapname = $@"m{name.Substring(1)}";
+        }
+
+        if (!AssetDatabase.IsValidFolder($@"Assets/{gameFolder}/" + mapname))
+        {
+            AssetDatabase.CreateFolder($@"Assets/{gameFolder}", mapname);
         }
 
         AssetDatabase.StartAssetEditing();
@@ -752,7 +786,7 @@ public class DarkSoulsTools : EditorWindow
                 {
                     t.ConvertPS4ToPC();
                 }
-                CreateTextureFromTPF($@"{gameFolder}/" + name.Substring(0, 3) + "/" + Path.GetFileNameWithoutExtension((Path.GetFileNameWithoutExtension(tpf.Name))) + ".dds", t.Textures[0]);
+                CreateTextureFromTPF($@"{gameFolder}/" + mapname + "/" + Path.GetFileNameWithoutExtension((Path.GetFileNameWithoutExtension(tpf.Name))) + ".dds", t.Textures[0]);
             }
             catch (Exception ex)
             {
@@ -1744,6 +1778,12 @@ public class DarkSoulsTools : EditorWindow
                 AssetDatabase.StopAssetEditing();
             }*/
 
+            // Do a preload of all the flvers
+            if (File.Exists($@"{Interroot}\model\map\{mapname}.mapbhd") && LoadMapFlvers)
+            {
+                ImportMapBDT($@"{Interroot}\model\map\{mapname}", $@"Assets/DS2SOTFS/{mapname}", mapname);
+            }
+
             foreach (var mappiece in msb.Models.MapPieces)
             {
                 var assetname = mappiece.Name;
@@ -1778,7 +1818,7 @@ public class DarkSoulsTools : EditorWindow
             MapPieces.transform.parent = PartsSection.transform;
             foreach (var part in msb.Parts.MapPieces)
             {
-                GameObject src = LoadMapFlvers ? AssetDatabase.LoadAssetAtPath<GameObject>($@"Assets/DS3/{mapname}/{part.ModelName}.prefab") : null;
+                GameObject src = true ? AssetDatabase.LoadAssetAtPath<GameObject>($@"Assets/DS2SOTFS/{mapname}/{part.ModelName}.prefab") : null;
                 if (src != null)
                 {
                     GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
@@ -1885,7 +1925,14 @@ public class DarkSoulsTools : EditorWindow
             var mapbase = mapname.Substring(0, 9) + "_00";
             if (chalice)
             {
-                msb = MSBBB.Read(GetOverridenPath(Interroot + $@"\map\MapStudio\{mapbase}\{mapname}.msb.dcx"));
+                if (mapbase.StartsWith("m29"))
+                {
+                    msb = MSBBB.Read(GetOverridenPath(Interroot + $@"\map\MapStudio\{mapbase}\{mapname}.msb.dcx"));
+                }
+                else
+                {
+                    msb = MSBBB.Read(GetOverridenPath(Interroot + $@"\map\MapStudio\{mapname}.msb.dcx"));
+                }
             }
             else
             {
@@ -3572,7 +3619,7 @@ public class DarkSoulsTools : EditorWindow
             }
 
             // Save a backup if one doesn't exist
-            if (ModProjectDirectory == null && !File.Exists(btlal.BTLPath + ".backup"))
+            if (ModProjectDirectory == null && !File.Exists(btlal.BTLPath + ".gibhd.backup"))
             {
                 if (type == GameType.DarkSoulsIISOTFS)
                 {
@@ -3696,7 +3743,7 @@ public class DarkSoulsTools : EditorWindow
     {
         IBinder bnd;
         var gameFolder = GameFolder(type);
-        if (type == GameType.Bloodborne || type == GameType.DarkSoulsIII || type == GameType.Sekiro)
+        if (type == GameType.Bloodborne || type == GameType.DarkSoulsIII || type == GameType.Sekiro || type == GameType.DarkSoulsIISOTFS)
         {
             bnd = BND4.Read(GetOverridenPath(path));
         }
@@ -5401,7 +5448,11 @@ public class DarkSoulsTools : EditorWindow
         {
             try
             {
-                if (type != GameType.DarkSoulsIII && type != GameType.Sekiro)
+                if (type == GameType.DarkSoulsIISOTFS)
+                {
+                    ImportMTDBND(Interroot + $@"\material\allmaterialbnd.bnd", type);
+                }
+                else if (type != GameType.DarkSoulsIII && type != GameType.Sekiro)
                 {
                     ImportMTDBND(Interroot + $@"\mtd\Mtd.mtdbnd", type);
                 }
@@ -5571,6 +5622,29 @@ public class DarkSoulsTools : EditorWindow
             if (File.Exists(Interroot + $@"\map\m29_00_00_00\m29_00_00_00.nvmhktbnd.dcx"))
             {
                 ImportNavmeshHKXBND(Interroot + $@"\map\m29_00_00_00\m29_00_00_00.nvmhktbnd.dcx", $@"Assets/Bloodborne/m29_00_00_00/navmesh", type);
+            }
+            AssetDatabase.StopAssetEditing();
+        }
+
+        if (type == GameType.DarkSoulsIII && GUILayout.Button("Import Map Navimeshes") && GameObject.Find("MSBAssetLink") != null)
+        {
+            var assetLink = GameObject.Find("MSBAssetLink");
+            var alc = assetLink.GetComponent<MSBAssetLink>();
+            var mapid = alc.MapID;
+
+            if (!AssetDatabase.IsValidFolder($@"Assets/DS3/{mapid}"))
+            {
+                AssetDatabase.CreateFolder("Assets/DS3", mapid);
+            }
+            if (!AssetDatabase.IsValidFolder($"Assets/DS3/{mapid}/navmesh"))
+            {
+                AssetDatabase.CreateFolder($"Assets/DS3/{mapid}", "navmesh");
+            }
+            // Load low res hkx assets
+            AssetDatabase.StartAssetEditing();
+            if (File.Exists(Interroot + $@"\map\{mapid}\{mapid}.nvmhktbnd.dcx"))
+            {
+                ImportNavmeshHKXBND(Interroot + $@"\map\{mapid}\{mapid}.nvmhktbnd.dcx", $@"Assets/DS3/{mapid}/navmesh", type);
             }
             AssetDatabase.StopAssetEditing();
         }

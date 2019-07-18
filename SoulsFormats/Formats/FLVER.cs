@@ -1393,15 +1393,16 @@ namespace SoulsFormats
                         {
                             if (!flip)
                             {
-                                faces.Add((int)vi1);
-                                faces.Add((int)vi2);
+                                // Opposite winding order for unity
                                 faces.Add((int)vi3);
+                                faces.Add((int)vi2);
+                                faces.Add((int)vi1);
                             }
                             else
                             {
-                                faces.Add((int)vi3);
-                                faces.Add((int)vi2);
                                 faces.Add((int)vi1);
+                                faces.Add((int)vi2);
+                                faces.Add((int)vi3);
                             }
                         }
 
@@ -1412,9 +1413,12 @@ namespace SoulsFormats
                 {
                     for (int i = 0; i < Vertices.Length - 2; i += 3)
                     {
-                        faces.Add((int)Vertices[i]);
-                        faces.Add((int)Vertices[i + 1]);
+                        //faces.Add((int)Vertices[i]);
+                        //faces.Add((int)Vertices[i + 1]);
+                        //faces.Add((int)Vertices[i + 2]);
                         faces.Add((int)Vertices[i + 2]);
+                        faces.Add((int)Vertices[i + 1]);
+                        faces.Add((int)Vertices[i]);
                     }
                 }
                 return faces;

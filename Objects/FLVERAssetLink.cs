@@ -19,6 +19,7 @@ class FLVERAssetLink : ScriptableObject
     {
         None,
         Mapbnd,
+        Mapbdt,
         Objbnd,
         Chrbnd,
         Partsbnd
@@ -215,6 +216,7 @@ class FLVERAssetLink : ScriptableObject
         combined.SetUVs(0, uvs0);
         combined.SetUVs(1, uvs1);
         combined.SetTriangles(indices.ToArray(), 0);
+        combined.UploadMeshData(false);
         var lmuvs = Unwrapping.GeneratePerTriangleUV(combined);
 
         // Extract the uvs and apply back to the submeshes

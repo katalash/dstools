@@ -493,6 +493,16 @@ namespace SoulsFormats
                             hkobject = new HKAINavMesh();
                             hkobject.Read(hkx, this, br, variation);
                         }
+                        else if (reference.ClassName.ClassName == "hkcdStaticTreeDefaultTreeStorage6")
+                        {
+                            hkobject = new HKCDStaticAABBTreeStorage();
+                            hkobject.Read(hkx, this, br, variation);
+                        }
+                        else if (reference.ClassName.ClassName == "hkaiDirectedGraphExplicitCost")
+                        {
+                            hkobject = new HKAIDirectedGraphExplicitCost();
+                            hkobject.Read(hkx, this, br, variation);
+                        }
                         else
                         {
                             hkobject = new HKXGenericObject();

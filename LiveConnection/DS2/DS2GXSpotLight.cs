@@ -81,14 +81,86 @@ public class DS2GXSpotLight : DS2GXLightBase
         }
     }
 
+    public Matrix4x4 Projection
+    {
+        set
+        {
+            BasePointer.WriteSingle(0x90, value[0, 0]);
+            BasePointer.WriteSingle(0x94, value[1, 0]);
+            BasePointer.WriteSingle(0x98, value[2, 0]);
+            BasePointer.WriteSingle(0x9C, value[3, 0]);
+            BasePointer.WriteSingle(0xA0, value[0, 1]);
+            BasePointer.WriteSingle(0xA4, value[1, 1]);
+            BasePointer.WriteSingle(0xA8, value[2, 1]);
+            BasePointer.WriteSingle(0xAC, value[3, 1]);
+            BasePointer.WriteSingle(0xB0, value[0, 2]);
+            BasePointer.WriteSingle(0xB4, value[1, 2]);
+            BasePointer.WriteSingle(0xB8, value[2, 2]);
+            BasePointer.WriteSingle(0xBC, value[3, 2]);
+            BasePointer.WriteSingle(0xC0, value[0, 3]);
+            BasePointer.WriteSingle(0xC4, value[1, 3]);
+            BasePointer.WriteSingle(0xC8, value[2, 3]);
+            BasePointer.WriteSingle(0xCC, value[3, 3]);
+        }
+    }
+
     public override float Radius
     {
         get
         {
-            return 0.0f;
+            return BasePointer.ReadSingle(0xD4);
         }
         set
         {
+            BasePointer.WriteSingle(0xD4, value);
+        }
+    }
+
+    public float NearClip
+    {
+        get
+        {
+            return BasePointer.ReadSingle(0xD0);
+        }
+        set
+        {
+            BasePointer.WriteSingle(0xD0, value);
+        }
+    }
+
+    public float FieldOfView
+    {
+        get
+        {
+            return BasePointer.ReadSingle(0xD8);
+        }
+        set
+        {
+            BasePointer.WriteSingle(0xD8, value);
+        }
+    }
+
+    public float FieldOfViewWidth
+    {
+        get
+        {
+            return BasePointer.ReadSingle(0xDC);
+        }
+        set
+        {
+            BasePointer.WriteSingle(0xDC, value);
+        }
+    }
+
+    public float FieldOfViewRatio
+    {
+        get
+        {
+            return BasePointer.ReadSingle(0xE0);
+        }
+        set
+        {
+            BasePointer.WriteSingle(0xE0, value);
         }
     }
 
