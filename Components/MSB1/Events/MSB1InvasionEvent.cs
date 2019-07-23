@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
-using MeowDSIO.DataTypes.MSB;
-using MeowDSIO.DataTypes.MSB.EVENT_PARAM_ST;
 
 [AddComponentMenu("Dark Souls 1/Events/Invasion")]
 public class MSB1InvasionEvent : MSB1Event
@@ -20,21 +18,22 @@ public class MSB1InvasionEvent : MSB1Event
 
     public string SpawnPoint;
 
-    public void SetEvent(MsbEventNpcWorldInvitation evt)
+    public override void SetEvent(MSB1.Event bevt)
     {
+        var evt = (MSB1.Event.PseudoMultiplayer)bevt;
         setBaseEvent(evt);
-        HostEventEntityID = evt.NPCHostEntityID;
+        HostEventEntityID = evt.HostEntityID;
         EventFlagID = evt.EventFlagID;
-        SpawnPoint = evt.SpawnPoint;
+        SpawnPoint = evt.SpawnPointName;
     }
 
-    public MsbEventNpcWorldInvitation Serialize(GameObject parent)
+    public override MSB1.Event Serialize(GameObject parent)
     {
-        var evt = new MsbEventNpcWorldInvitation();
+        var evt = new MSB1.Event.PseudoMultiplayer();
         _Serialize(evt, parent);
-        evt.NPCHostEntityID = HostEventEntityID;
+        evt.HostEntityID = HostEventEntityID;
         evt.EventFlagID = EventFlagID;
-        evt.SpawnPoint = (SpawnPoint == "") ? null : SpawnPoint;
+        evt.SpawnPointName = (SpawnPoint == "") ? null : SpawnPoint;
         return evt;
     }
 }

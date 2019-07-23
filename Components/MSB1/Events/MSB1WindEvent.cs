@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
-using MeowDSIO.DataTypes.MSB;
-using MeowDSIO.DataTypes.MSB.EVENT_PARAM_ST;
 
 [AddComponentMenu("Dark Souls 1/Events/Wind")]
 public class MSB1WindEvent : MSB1Event
@@ -25,47 +23,48 @@ public class MSB1WindEvent : MSB1Event
     public float UnkT38;
     public float UnkT3C;
 
-    public void SetEvent(MsbEventWindSFX evt)
+    public override void SetEvent(MSB1.Event bevt)
     {
+        var evt = (MSB1.Event.WindSFX)bevt;
         setBaseEvent(evt);
-        UnkT00 = evt.SubUnk1;
-        UnkT04 = evt.SubUnk2;
-        UnkT08 = evt.SubUnk3;
-        UnkT0C = evt.SubUnk4;
-        UnkT10 = evt.SubUnk5;
-        UnkT14 = evt.SubUnk6;
-        UnkT18 = evt.SubUnk7;
-        UnkT1C = evt.SubUnk8;
-        UnkT20 = evt.SubUnk9;
-        UnkT24 = evt.SubUnk10;
-        UnkT28 = evt.SubUnk11;
-        UnkT2C = evt.SubUnk12;
-        UnkT30 = evt.SubUnk13;
-        UnkT34 = evt.SubUnk14;
-        UnkT38 = evt.SubUnk15;
-        UnkT3C = evt.SubUnk16;
+        UnkT00 = evt.UnkT00;
+        UnkT04 = evt.UnkT04;
+        UnkT08 = evt.UnkT08;
+        UnkT0C = evt.UnkT0C;
+        UnkT10 = evt.UnkT10;
+        UnkT14 = evt.UnkT14;
+        UnkT18 = evt.UnkT18;
+        UnkT1C = evt.UnkT1C;
+        UnkT20 = evt.UnkT20;
+        UnkT24 = evt.UnkT24;
+        UnkT28 = evt.UnkT28;
+        UnkT2C = evt.UnkT2C;
+        UnkT30 = evt.UnkT30;
+        UnkT34 = evt.UnkT34;
+        UnkT38 = evt.UnkT38;
+        UnkT3C = evt.UnkT3C;
     }
 
-    public MsbEventWindSFX Serialize(GameObject parent)
+    public override MSB1.Event Serialize(GameObject parent)
     {
-        var evt = new MsbEventWindSFX();
+        var evt = new MSB1.Event.WindSFX();
         _Serialize(evt, parent);
-        evt.SubUnk1 = UnkT00;
-        evt.SubUnk2 = UnkT04;
-        evt.SubUnk3 = UnkT08;
-        evt.SubUnk4 = UnkT0C;
-        evt.SubUnk5 = UnkT10;
-        evt.SubUnk6 = UnkT14;
-        evt.SubUnk7 = UnkT18;
-        evt.SubUnk8 = UnkT1C;
-        evt.SubUnk9 = UnkT20;
-        evt.SubUnk10 = UnkT24;
-        evt.SubUnk11 = UnkT28;
-        evt.SubUnk12 = UnkT2C;
-        evt.SubUnk13 = UnkT30;
-        evt.SubUnk14 = UnkT34;
-        evt.SubUnk15 = UnkT38;
-        evt.SubUnk16 = UnkT3C;
+        evt.UnkT00 = UnkT00;
+        evt.UnkT04 = UnkT04;
+        evt.UnkT08 = UnkT08;
+        evt.UnkT0C = UnkT0C;
+        evt.UnkT10 = UnkT10;
+        evt.UnkT14 = UnkT14;
+        evt.UnkT18 = UnkT18;
+        evt.UnkT1C = UnkT1C;
+        evt.UnkT20 = UnkT20;
+        evt.UnkT24 = UnkT24;
+        evt.UnkT28 = UnkT28;
+        evt.UnkT2C = UnkT2C;
+        evt.UnkT30 = UnkT30;
+        evt.UnkT34 = UnkT34;
+        evt.UnkT38 = UnkT38;
+        evt.UnkT3C = UnkT3C;
         return evt;
     }
 }

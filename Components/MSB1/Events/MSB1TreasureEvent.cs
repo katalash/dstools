@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
-using MeowDSIO.DataTypes.MSB;
-using MeowDSIO.DataTypes.MSB.EVENT_PARAM_ST;
 
 [AddComponentMenu("Dark Souls 1/Events/Treasure")]
 public class MSB1TreasureEvent : MSB1Event
@@ -11,38 +9,42 @@ public class MSB1TreasureEvent : MSB1Event
     /// <summary>
     /// The part the treasure is attached to.
     /// </summary>
-    public string PartName2;
+    public string TreasurePartName;
 
     /// <summary>
     /// IDs in the item lot param given by this treasure.
     /// </summary>
     public int ItemLot1, ItemLot2, ItemLot3, ItemLot4, ItemLot5;
 
-    public int Unk1;
+    public bool InChest;
+    public bool StartDisabled;
 
-    public void SetEvent(MsbEventTreasure evt)
+    public override void SetEvent(MSB1.Event bevt)
     {
+        var evt = (MSB1.Event.Treasure)bevt;
         setBaseEvent(evt);
-        PartName2 = evt.AttachObj;
-        ItemLot1 = evt.ItemLot1;
-        ItemLot2 = evt.ItemLot2;
-        ItemLot3 = evt.ItemLot3;
-        ItemLot4 = evt.ItemLot4;
-        ItemLot5 = evt.ItemLot5;
-        Unk1 = evt.SubUnk2;
+        TreasurePartName = evt.TreasurePartName;
+        ItemLot1 = evt.ItemLots[0];
+        ItemLot2 = evt.ItemLots[1];
+        ItemLot3 = evt.ItemLots[2];
+        ItemLot4 = evt.ItemLots[3];
+        ItemLot5 = evt.ItemLots[4];
+        InChest = evt.InChest;
+        StartDisabled = evt.StartDisabled;
     }
 
-    public MsbEventTreasure Serialize(GameObject parent)
+    public override MSB1.Event Serialize(GameObject parent)
     {
-        var evt = new MsbEventTreasure();
+        var evt = new MSB1.Event.Treasure();
         _Serialize(evt, parent);
-        evt.AttachObj = (PartName2 == "") ? null : PartName2;
-        evt.ItemLot1 = ItemLot1;
-        evt.ItemLot2 = ItemLot2;
-        evt.ItemLot3 = ItemLot3;
-        evt.ItemLot4 = ItemLot4;
-        evt.ItemLot5 = ItemLot5;
-        evt.SubUnk2 = Unk1;
+        evt.TreasurePartName = (TreasurePartName == "") ? null : TreasurePartName;
+        evt.ItemLots[0] = ItemLot1;
+        evt.ItemLots[1] = ItemLot2;
+        evt.ItemLots[2] = ItemLot3;
+        evt.ItemLots[3] = ItemLot4;
+        evt.ItemLots[4] = ItemLot5;
+        evt.InChest = InChest;
+        evt.StartDisabled = StartDisabled;
         return evt;
     }
 }

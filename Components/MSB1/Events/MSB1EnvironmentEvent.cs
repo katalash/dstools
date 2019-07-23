@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
-using MeowDSIO.DataTypes.MSB;
-using MeowDSIO.DataTypes.MSB.EVENT_PARAM_ST;
 
 [AddComponentMenu("Dark Souls 1/Events/Environment Effect")]
 public class MSB1EnvironmentEvent : MSB1Event
@@ -15,27 +13,28 @@ public class MSB1EnvironmentEvent : MSB1Event
     public float UnkT10;
     public float UnkT14;
 
-    public void SetEvent(MsbEventEnvironment evt)
+    public override void SetEvent(MSB1.Event bevt)
     {
+        var evt = (MSB1.Event.Environment)bevt;
         setBaseEvent(evt);
-        UnkT00 = evt.SubUnk1;
-        UnkT04 = evt.SubUnk2;
-        UnkT08 = evt.SubUnk3;
-        UnkT0C = evt.SubUnk4;
-        UnkT10 = evt.SubUnk5;
-        UnkT14 = evt.SubUnk6;
+        UnkT00 = evt.UnkT00;
+        UnkT04 = evt.UnkT04;
+        UnkT08 = evt.UnkT08;
+        UnkT0C = evt.UnkT0C;
+        UnkT10 = evt.UnkT10;
+        UnkT14 = evt.UnkT14;
     }
 
-    public MsbEventEnvironment Serialize(GameObject parent)
+    public override MSB1.Event Serialize(GameObject parent)
     {
-        var evt = new MsbEventEnvironment();
+        var evt = new MSB1.Event.Environment();
         _Serialize(evt, parent);
-        evt.SubUnk1 = UnkT00;
-        evt.SubUnk2 = UnkT04;
-        evt.SubUnk3 = UnkT08;
-        evt.SubUnk4 = UnkT0C;
-        evt.SubUnk5 = UnkT10;
-        evt.SubUnk6 = UnkT14;
+        evt.UnkT00 = UnkT00;
+        evt.UnkT04 = UnkT04;
+        evt.UnkT08 = UnkT08;
+        evt.UnkT0C = UnkT0C;
+        evt.UnkT10 = UnkT10;
+        evt.UnkT14 = UnkT14;
         return evt;
     }
 }

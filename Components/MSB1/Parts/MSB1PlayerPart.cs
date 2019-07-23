@@ -2,20 +2,19 @@
 using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
-using MeowDSIO.DataTypes.MSB;
-using MeowDSIO.DataTypes.MSB.PARTS_PARAM_ST;
 
 [AddComponentMenu("Dark Souls 1/Parts/Player")]
 public class MSB1PlayerPart : MSB1Part
 {
-    public void SetPart(MsbPartsPlayer part)
+    public override void SetPart(MSB1.Part bpart)
     {
+        var part = (MSB1.Part.Player)bpart;
         setBasePart(part);
     }
 
-    public MsbPartsPlayer Serialize(GameObject parent)
+    public override MSB1.Part Serialize(GameObject parent)
     {
-        var part = new MsbPartsPlayer();
+        var part = new MSB1.Part.Player();
         _Serialize(part, parent);
         return part;
     }

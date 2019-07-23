@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
-using MeowDSIO.DataTypes.MSB;
-using MeowDSIO.DataTypes.MSB.EVENT_PARAM_ST;
 
 [AddComponentMenu("Dark Souls 1/Events/Navimesh")]
 public class MSB1NavimeshEvent : MSB1Event
@@ -11,19 +9,20 @@ public class MSB1NavimeshEvent : MSB1Event
     /// <summary>
     /// Region for navimesh
     /// </summary>
-    public string RegionName;
+    public string NavmeshRegionName;
 
-    public void SetEvent(MsbEventNavimesh evt)
+    public override void SetEvent(MSB1.Event bevt)
     {
+        var evt = (MSB1.Event.Navmesh)bevt;
         setBaseEvent(evt);
-        RegionName = evt.NvmRegion;
+        NavmeshRegionName = evt.NavmeshRegionName;
     }
 
-    public MsbEventNavimesh Serialize(GameObject parent)
+    public override MSB1.Event Serialize(GameObject parent)
     {
-        var evt = new MsbEventNavimesh();
+        var evt = new MSB1.Event.Navmesh();
         _Serialize(evt, parent);
-        evt.NvmRegion = (RegionName == "") ? null : RegionName;
+        evt.NavmeshRegionName = (NavmeshRegionName == "") ? null : NavmeshRegionName;
         return evt;
     }
 }

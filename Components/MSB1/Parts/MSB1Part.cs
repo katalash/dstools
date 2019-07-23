@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
 using System.Numerics;
-using MeowDSIO.DataTypes.MSB;
-using MeowDSIO.DataTypes.MSB.PARTS_PARAM_ST;
 
 // Stores all the MSB specific fields for a part
 public abstract class MSB1Part : MonoBehaviour
@@ -19,10 +17,6 @@ public abstract class MSB1Part : MonoBehaviour
     /// </summary>
     public string Placeholder;
 
-    /// <summary>
-    /// The ID of this part, which should be unique but does not appear to be used otherwise.
-    /// </summary>
-    public int ID;
 
     /// <summary>
     /// The name of this part's model.
@@ -47,16 +41,16 @@ public abstract class MSB1Part : MonoBehaviour
     /// <summary>
     /// Unknown.
     /// </summary>
-    public sbyte LightID, FogID, ScatterID, LensFlareID;
+    public byte LightID, FogID, ScatterID, LensFlareID;
 
-    public sbyte ShadowID, DepthOfFieldID, ToneMapID, ToneCorrectID;
+    public byte ShadowID, DepthOfFieldID, ToneMapID, ToneCorrectID;
 
     /// <summary>
     /// Unknown.
     /// </summary>
-    public sbyte LanternID, LodParamID;
+    public byte LanternID, LodParamID;
 
-    public bool IsShadowSrc;
+    public byte IsShadowSrc;
 
     /// <summary>
     /// Unknown.
@@ -73,21 +67,20 @@ public abstract class MSB1Part : MonoBehaviour
     /// </summary>
     public bool DisablePointLightEffect;
 
-    public void setBasePart(MsbPartsBase part)
+    public void setBasePart(MSB1.Part part)
     {
-        Placeholder = part.PlaceholderModel;
-        ID = part.Index;
+        Placeholder = part.Placeholder;
         ModelName = part.ModelName;
-        DrawGroup1 = part.DrawGroup1;
-        DrawGroup2 = part.DrawGroup2;
-        DrawGroup3 = part.DrawGroup3;
-        DrawGroup4 = part.DrawGroup4;
-        DispGroup1 = part.DispGroup1;
-        DispGroup2 = part.DispGroup2;
-        DispGroup3 = part.DispGroup3;
-        DispGroup4 = part.DispGroup4;
+        DrawGroup1 = part.DrawGroups[0];
+        DrawGroup2 = part.DrawGroups[1];
+        DrawGroup3 = part.DrawGroups[2];
+        DrawGroup4 = part.DrawGroups[3];
+        DispGroup1 = part.DispGroups[0];
+        DispGroup2 = part.DispGroups[1];
+        DispGroup3 = part.DispGroups[2];
+        DispGroup4 = part.DispGroups[3];
 
-        Rotation = new UnityEngine.Vector3(part.RotX, part.RotY, part.RotZ);
+        Rotation = new UnityEngine.Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
 
         EventEntityID = part.EntityID;
         LightID = part.LightID;
@@ -101,42 +94,46 @@ public abstract class MSB1Part : MonoBehaviour
         LanternID = part.LanternID;
         LodParamID = part.LodParamID;
         IsShadowSrc = part.IsShadowSrc;
-        IsShadowDest = part.IsShadowDest;
-        IsShadowOnly = part.IsShadowOnly;
-        DrawByReflectCam = part.DrawByReflectCam;
-        DrawOnlyReflectCam = part.DrawOnlyReflectCam;
-        UseDepthBiasFloat = part.IsUseDepthBiasFloat;
-        DisablePointLightEffect = part.DisablePointLightEffect;
+        IsShadowDest = part.IsShadowDest >= 1;
+        IsShadowOnly = part.IsShadowOnly >= 1;
+        DrawByReflectCam = part.DrawByReflectCam >= 1;
+        DrawOnlyReflectCam = part.DrawOnlyReflectCam >= 1;
+        UseDepthBiasFloat = part.UseDepthBiasFloat >= 1;
+        DisablePointLightEffect = part.DisablePointLightEffect >= 1;
     }
 
-    internal void _Serialize(MsbPartsBase part, GameObject parent)
+    internal void _Serialize(MSB1.Part part, GameObject parent)
     {
         part.Name = parent.name;
-        part.PlaceholderModel = Placeholder;
-        part.Index = ID;
+        part.Placeholder = Placeholder;
 
-        part.PosX = parent.transform.position.x;
-        part.PosY = parent.transform.position.y;
-        part.PosZ = parent.transform.position.z;
-        //part.RotX = parent.transform.eulerAngles.x;
-        //part.RotY = parent.transform.eulerAngles.y;
-        //part.RotZ = parent.transform.eulerAngles.z;
-        part.RotX = Rotation.x;
-        part.RotY = Rotation.y;
-        part.RotZ = Rotation.z;
-        part.ScaleX = parent.transform.localScale.x;
-        part.ScaleY = parent.transform.localScale.y;
-        part.ScaleZ = parent.transform.localScale.z;
+        var pos = new System.Numerics.Vector3();
+        pos.X = parent.transform.position.x;
+        pos.Y = parent.transform.position.y;
+        pos.Z = parent.transform.position.z;
+        part.Position = pos;
+
+        var rot = new System.Numerics.Vector3();
+        rot.X = Rotation.x;
+        rot.Y = Rotation.y;
+        rot.Z = Rotation.z;
+        part.Rotation = rot;
+
+        var scale = new System.Numerics.Vector3();
+        scale.X = parent.transform.localScale.x;
+        scale.Y = parent.transform.localScale.y;
+        scale.Z = parent.transform.localScale.z;
+        part.Scale = scale;
 
         part.ModelName = (ModelName == "") ? null : ModelName;
-        part.DrawGroup1 = DrawGroup1;
-        part.DrawGroup2 = DrawGroup2;
-        part.DrawGroup3 = DrawGroup3;
-        part.DrawGroup4 = DrawGroup4;
-        part.DispGroup1 = DispGroup1;
-        part.DispGroup2 = DispGroup2;
-        part.DispGroup3 = DispGroup3;
-        part.DispGroup4 = DispGroup4;
+        part.DrawGroups[0] = DrawGroup1;
+        part.DrawGroups[1] = DrawGroup2;
+        part.DrawGroups[2] = DrawGroup3;
+        part.DrawGroups[3] = DrawGroup4;
+        part.DispGroups[0] = DispGroup1;
+        part.DispGroups[1] = DispGroup2;
+        part.DispGroups[2] = DispGroup3;
+        part.DispGroups[3] = DispGroup4;
 
         part.EntityID = EventEntityID;
         part.LightID = LightID;
@@ -150,21 +147,14 @@ public abstract class MSB1Part : MonoBehaviour
         part.LanternID = LanternID;
         part.LodParamID = LodParamID;
         part.IsShadowSrc = IsShadowSrc;
-        part.IsShadowDest = IsShadowDest;
-        part.IsShadowOnly = IsShadowOnly;
-        part.DrawByReflectCam = DrawByReflectCam;
-        part.DrawOnlyReflectCam = DrawOnlyReflectCam;
-        part.IsUseDepthBiasFloat = UseDepthBiasFloat;
-        part.DisablePointLightEffect = DisablePointLightEffect;
+        part.IsShadowDest = (byte)(IsShadowDest ? 1 : 0);
+        part.IsShadowOnly = (byte)(IsShadowOnly ? 1 : 0);
+        part.DrawByReflectCam = (byte)(DrawByReflectCam ? 1 : 0);
+        part.DrawOnlyReflectCam = (byte)(DrawOnlyReflectCam ? 1 : 0);
+        part.UseDepthBiasFloat = (byte)(UseDepthBiasFloat ? 1 : 0);
+        part.DisablePointLightEffect = (byte)(DisablePointLightEffect ? 1 : 0);
     }
 
-    void Start()
-    {
-        
-    }
-
-    void Update()
-    {
-        
-    }
+    public abstract void SetPart(MSB1.Part part);
+    public abstract MSB1.Part Serialize(GameObject obj);
 }

@@ -2,33 +2,32 @@
 using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
-using MeowDSIO.DataTypes.MSB;
-using MeowDSIO.DataTypes.MSB.PARTS_PARAM_ST;
 
 [AddComponentMenu("Dark Souls 1/Parts/Navimesh")]
 public class MSB1NavimeshPart : MSB1Part
 {
-    public int NavimeshGroup1;
-    public int NavimeshGroup2;
-    public int NavimeshGroup3;
-    public int NavimeshGroup4;
-    public void SetPart(MsbPartsNavimesh part)
+    public uint NavimeshGroup1;
+    public uint NavimeshGroup2;
+    public uint NavimeshGroup3;
+    public uint NavimeshGroup4;
+    public override void SetPart(MSB1.Part bpart)
     {
+        var part = (MSB1.Part.Navmesh)bpart;
         setBasePart(part);
-        NavimeshGroup1 = part.NaviMeshGroup1;
-        NavimeshGroup2 = part.NaviMeshGroup2;
-        NavimeshGroup3 = part.NaviMeshGroup3;
-        NavimeshGroup4 = part.NaviMeshGroup4;
+        NavimeshGroup1 = part.NvmGroups[0];
+        NavimeshGroup2 = part.NvmGroups[1];
+        NavimeshGroup3 = part.NvmGroups[2];
+        NavimeshGroup4 = part.NvmGroups[3];
     }
 
-    public MsbPartsNavimesh Serialize(GameObject parent)
+    public override MSB1.Part Serialize(GameObject parent)
     {
-        var part = new MsbPartsNavimesh();
+        var part = new MSB1.Part.Navmesh();
         _Serialize(part, parent);
-        part.NaviMeshGroup1 = NavimeshGroup1;
-        part.NaviMeshGroup2 = NavimeshGroup2;
-        part.NaviMeshGroup3 = NavimeshGroup3;
-        part.NaviMeshGroup4 = NavimeshGroup4;
+        part.NvmGroups[0] = NavimeshGroup1;
+        part.NvmGroups[1] = NavimeshGroup2;
+        part.NvmGroups[2] = NavimeshGroup3;
+        part.NvmGroups[3] = NavimeshGroup4;
         return part;
     }
 }

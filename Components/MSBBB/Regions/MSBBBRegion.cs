@@ -47,26 +47,26 @@ public class MSBBBRegion : MonoBehaviour
         System.Numerics.Matrix4x4 mat2 = System.Numerics.Matrix4x4.CreateRotationZ(z)
             * System.Numerics.Matrix4x4.CreateRotationX(x) * System.Numerics.Matrix4x4.CreateRotationY(y);
 
-        // XYZ
-        if (Mathf.Abs(mat2.M13) < 0.99999f)
+        // YZX
+        if (Mathf.Abs(mat2.M21) < 0.99999f)
         {
-            y = ((r.y >= 90.0f && r.y < 270.0f) ? Mathf.PI + Mathf.Asin(Mathf.Clamp(mat2.M13, -1.0f, 1.0f)) : -Mathf.Asin(Mathf.Clamp(mat2.M13, -1.0f, 1.0f)));
-            x = Mathf.Atan2(mat2.M23 / Mathf.Cos(y), mat2.M33 / Mathf.Cos(y));
-            z = Mathf.Atan2(mat2.M12 / Mathf.Cos(y), mat2.M11 / Mathf.Cos(y));
+            z = (float)((r.z >= 90.0f && r.z < 270.0f) ? Math.PI + Math.Asin(Math.Max(Math.Min((double)mat2.M21, 1.0), -1.0)) : -Math.Asin(Math.Max(Math.Min((double)mat2.M21, 1.0), -1.0)));
+            x = (float)Math.Atan2(mat2.M23 / Math.Cos(z), mat2.M22 / Math.Cos(z));
+            y = (float)Math.Atan2(mat2.M31 / Math.Cos(z), mat2.M11 / Math.Cos(z));
         }
         else
         {
-            if (mat2.M31 > 0)
+            if (mat2.M12 > 0)
             {
-                y = -Mathf.PI / 2.0f;
-                x = Mathf.Atan2(-mat2.M21, -mat2.M31);
-                z = 0.0f;
+                z = -Mathf.PI / 2.0f;
+                y = (float)Math.Atan2(-mat2.M13, -mat2.M33);
+                x = 0.0f;
             }
             else
             {
-                y = Mathf.PI / 2.0f;
-                x = Mathf.Atan2(mat2.M21, mat2.M31);
-                z = 0.0f;
+                z = Mathf.PI / 2.0f;
+                y = (float)Math.Atan2(mat2.M13, mat2.M33);
+                x = 0.0f;
             }
         }
 

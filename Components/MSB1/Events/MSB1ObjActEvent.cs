@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
-using MeowDSIO.DataTypes.MSB;
-using MeowDSIO.DataTypes.MSB.EVENT_PARAM_ST;
 
 [AddComponentMenu("Dark Souls 1/Events/Object Action")]
 public class MSB1ObjActEvent : MSB1Event
@@ -16,41 +14,42 @@ public class MSB1ObjActEvent : MSB1Event
     /// <summary>
     /// Unknown.
     /// </summary>
-    public string PartName2;
+    public string ObjActPartName;
 
     /// <summary>
     /// Unknown.
     /// </summary>
-    public short ParameterID;
+    public short ObjActParamID;
 
     /// <summary>
     /// Unknown.
     /// </summary>
-    public short UnkT10;
+    public short UnkT0A;
 
     /// <summary>
     /// Unknown.
     /// </summary>
     public int EventFlagID;
 
-    public void SetEvent(MsbEventObjAct evt)
+    public override void SetEvent(MSB1.Event bevt)
     {
+        var evt = (MSB1.Event.ObjAct)bevt;
         setBaseEvent(evt);
         ObjActEntityID = evt.ObjActEntityID;
-        PartName2 = evt.ObjName;
-        ParameterID = evt.ParameterID;
-        UnkT10 = evt.SubUnk1;
+        ObjActPartName = evt.ObjActPartName;
+        ObjActParamID = evt.ObjActParamID;
+        UnkT0A = evt.UnkT0A;
         EventFlagID = evt.EventFlagID;
     }
 
-    public MsbEventObjAct Serialize(GameObject parent)
+    public override MSB1.Event Serialize(GameObject parent)
     {
-        var evt = new MsbEventObjAct();
+        var evt = new MSB1.Event.ObjAct();
         _Serialize(evt, parent);
         evt.ObjActEntityID = ObjActEntityID;
-        evt.ObjName = (PartName2 == "") ? null : PartName2;
-        evt.ParameterID = ParameterID;
-        evt.SubUnk1 = UnkT10;
+        evt.ObjActPartName = (ObjActPartName == "") ? null : ObjActPartName;
+        evt.ObjActParamID = ObjActParamID;
+        evt.UnkT0A = UnkT0A;
         evt.EventFlagID = EventFlagID;
         return evt;
     }

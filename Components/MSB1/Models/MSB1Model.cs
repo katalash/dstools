@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
-using MeowDSIO.DataTypes.MSB;
-using MeowDSIO.DataTypes.MSB.MODEL_PARAM_ST;
 
 // Stores all the MSB specific fields for a part
 public abstract class MSB1Model : MonoBehaviour
@@ -13,31 +11,17 @@ public abstract class MSB1Model : MonoBehaviour
     /// </summary>
     public string Placeholder;
 
-    /// <summary>
-    /// The ID of this model.
-    /// </summary>
-    public int ID;
-
-    public void setBaseModel(MsbModelBase model)
+    public void setBaseModel(MSB1.Model model)
     {
-        Placeholder = model.PlaceholderModel;
-        ID = model.Index;
+        Placeholder = model.Placeholder;
     }
 
-    internal void _Serialize(MsbModelBase model, GameObject parent)
+    internal void _Serialize(MSB1.Model model, GameObject parent)
     {
         model.Name = parent.name;
-        model.PlaceholderModel = Placeholder;
-        model.Index = ID;
+        model.Placeholder = Placeholder;
     }
 
-    void Start()
-    {
-        
-    }
-
-    void Update()
-    {
-        
-    }
+    public abstract void SetModel(MSB1.Model model);
+    public abstract MSB1.Model Serialize(GameObject obj);
 }

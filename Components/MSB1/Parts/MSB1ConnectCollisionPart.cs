@@ -2,28 +2,36 @@
 using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
-using MeowDSIO.DataTypes.MSB;
-using MeowDSIO.DataTypes.MSB.PARTS_PARAM_ST;
 
 [AddComponentMenu("Dark Souls 1/Parts/Connect Collision")]
 public class MSB1ConnectCollisionPart : MSB1Part
 {
-    public byte UnkT00;
-    public string MapName;
+    public string CollisionName;
+    public byte MapID1;
+    public byte MapID2;
+    public byte MapID3;
+    public byte MapID4;
 
-    public void SetPart(MsbPartsConnectHit part)
+    public override void SetPart(MSB1.Part bpart)
     {
+        var part = (MSB1.Part.ConnectCollision)bpart;
         setBasePart(part);
-        UnkT00 = part.SubUnk1;
-        MapName = part.MapName;
+        CollisionName = part.CollisionName;
+        MapID1 = part.MapID[0];
+        MapID2 = part.MapID[1];
+        MapID3 = part.MapID[2];
+        MapID4 = part.MapID[3];
     }
 
-    public MsbPartsConnectHit Serialize(GameObject parent)
+    public override MSB1.Part Serialize(GameObject parent)
     {
-        var part = new MsbPartsConnectHit();
+        var part = new MSB1.Part.ConnectCollision();
         _Serialize(part, parent);
-        part.SubUnk1 = UnkT00;
-        part.MapName = (MapName == "") ? null : MapName;
+        part.CollisionName = (CollisionName == "") ? null : CollisionName;
+        part.MapID[0] = MapID1;
+        part.MapID[1] = MapID2;
+        part.MapID[2] = MapID3;
+        part.MapID[3] = MapID4;
         return part;
     }
 }

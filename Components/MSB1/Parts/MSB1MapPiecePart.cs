@@ -2,20 +2,19 @@
 using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
-using MeowDSIO.DataTypes.MSB;
-using MeowDSIO.DataTypes.MSB.PARTS_PARAM_ST;
 
 public class MSB1MapPiecePart : MSB1Part
 {
     [AddComponentMenu("Dark Souls 1/Parts/Map Piece")]
-    public void SetPart(MsbPartsMapPiece part)
+    public override void SetPart(MSB1.Part bpart)
     {
+        var part = (MSB1.Part.MapPiece)bpart;
         setBasePart(part);
     }
 
-    public MsbPartsMapPiece Serialize(GameObject parent)
+    public override MSB1.Part Serialize(GameObject parent)
     {
-        var part = new MsbPartsMapPiece();
+        var part = new MSB1.Part.MapPiece();
         _Serialize(part, parent);
         return part;
     }

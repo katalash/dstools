@@ -2,21 +2,19 @@
 using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
-using MeowDSIO.DataTypes.MSB;
-using MeowDSIO.DataTypes.MSB.PARTS_PARAM_ST;
 
 [AddComponentMenu("Dark Souls 1/Parts/Collision")]
 public class MSB1CollisionPart : MSB1Part
 {
     public byte HitFilterID;
-    public PartsCollisionSoundSpaceType SoundSpace;
-    public string EnvLightMapSpot;
+    public byte SoundSpace;
+    public short EnvLightMapSpotIndex;
     public float ReflectPlaneHeight;
 
-    public int NvmGroup1;
-    public int NvmGroup2;
-    public int NvmGroup3;
-    public int NvmGroup4;
+    public uint NvmGroup1;
+    public uint NvmGroup2;
+    public uint NvmGroup3;
+    public uint NvmGroup4;
 
     public int VagrantID1;
     public int VagrantID2;
@@ -30,59 +28,60 @@ public class MSB1CollisionPart : MSB1Part
 
     public short LockCamID1, LockCamID2;
 
-    public void SetPart(MsbPartsHit part)
+    public override void SetPart(MSB1.Part bpart)
     {
+        var part = (MSB1.Part.Collision)bpart;
         setBasePart(part);
         HitFilterID = part.HitFilterID;
         SoundSpace = part.SoundSpaceType;
-        EnvLightMapSpot = part.EnvLightMapSpot;
+        EnvLightMapSpotIndex = part.EnvLightMapSpotIndex;
         ReflectPlaneHeight = part.ReflectPlaneHeight;
 
-        NvmGroup1 = part.NvmGroup1;
-        NvmGroup2 = part.NvmGroup2;
-        NvmGroup3 = part.NvmGroup3;
-        NvmGroup4 = part.NvmGroup4;
+        NvmGroup1 = part.NvmGroups[0];
+        NvmGroup2 = part.NvmGroups[1];
+        NvmGroup3 = part.NvmGroups[2];
+        NvmGroup4 = part.NvmGroups[3];
 
-        VagrantID1 = part.VagrantID1;
-        VagrantID2 = part.VagrantID2;
-        VagrantID3 = part.VagrantID3;
+        VagrantID1 = part.VagrantEntityIDs[0];
+        VagrantID2 = part.VagrantEntityIDs[1];
+        VagrantID3 = part.VagrantEntityIDs[2];
 
         MapNameID = part.MapNameID;
         DisableStart = (part.DisableStart > 0);
-        DisableBonfireEntityID = part.DisableBonfireID;
+        DisableBonfireEntityID = part.DisableBonfireEntityID;
 
         PlayRegionID = part.PlayRegionID;
 
-        LockCamID1 = part.LockCamID1;
-        LockCamID2 = part.LockCamID2;
+        LockCamID1 = part.LockCamParamID1;
+        LockCamID2 = part.LockCamParamID1;
     }
 
-    public MsbPartsHit Serialize(GameObject parent)
+    public override MSB1.Part Serialize(GameObject parent)
     {
-        var part = new MsbPartsHit();
+        var part = new MSB1.Part.Collision();
         part.HitFilterID = HitFilterID;
         part.SoundSpaceType = SoundSpace;
-        part.EnvLightMapSpot = (EnvLightMapSpot == "") ? null : EnvLightMapSpot;
+        part.EnvLightMapSpotIndex = EnvLightMapSpotIndex;
         part.ReflectPlaneHeight = ReflectPlaneHeight;
 
         _Serialize(part, parent);
-        part.NvmGroup1 = NvmGroup1;
-        part.NvmGroup2 = NvmGroup2;
-        part.NvmGroup3 = NvmGroup3;
-        part.NvmGroup4 = NvmGroup4;
+        part.NvmGroups[0] = NvmGroup1;
+        part.NvmGroups[1] = NvmGroup2;
+        part.NvmGroups[2] = NvmGroup3;
+        part.NvmGroups[3] = NvmGroup4;
 
-        part.VagrantID1 = VagrantID1;
-        part.VagrantID2 = VagrantID2;
-        part.VagrantID3 = VagrantID3;
+        part.VagrantEntityIDs[0] = VagrantID1;
+        part.VagrantEntityIDs[1] = VagrantID2;
+        part.VagrantEntityIDs[2] = VagrantID3;
 
         part.MapNameID = MapNameID;
         part.DisableStart = (short)(DisableStart ? 1 : 0);
-        part.DisableBonfireID = DisableBonfireEntityID;
+        part.DisableBonfireEntityID = DisableBonfireEntityID;
 
         part.PlayRegionID = PlayRegionID;
 
-        part.LockCamID1 = LockCamID1;
-        part.LockCamID2 = LockCamID2;
+        part.LockCamParamID1 = LockCamID1;
+        part.LockCamParamID2 = LockCamID2;
         return part;
     }
 }

@@ -6,10 +6,6 @@ using UnityEngine;
 using UnityEditor;
 using UnityEngine.Experimental.Rendering.HDPipeline;
 using SoulsFormats;
-using MeowDSIO;
-using MeowDSIO.DataFiles;
-using MeowDSIO.DataTypes.MSB;
-using MeowDSIO.DataTypes.MSB.POINT_PARAM_ST;
 
 public class DarkSoulsTools : EditorWindow
 {
@@ -1081,44 +1077,53 @@ public class DarkSoulsTools : EditorWindow
         return obj;
     }
 
-    GameObject InstantiateRegion(MsbRegionBase region, GameObject parent)
+    GameObject InstantiateRegion(MSB1.Region region, GameObject parent)
     {
         GameObject obj = new GameObject(region.Name);
-        obj.transform.position = new Vector3(region.PosX, region.PosY, region.PosZ);
+        obj.transform.position = new Vector3(region.Position.X, region.Position.Y, region.Position.Z);
         //obj.transform.rotation = Quaternion.Euler(region.Rotation.X, region.Rotation.Y, region.Rotation.Z);
-        EulerToTransform(new Vector3(region.RotX, region.RotY, region.RotZ), obj.transform);
-        if (region is MsbRegionBox)
+        EulerToTransform(new Vector3(region.Rotation.X, region.Rotation.Y, region.Rotation.Z), obj.transform);
+        if (region.Shape.Type == MSB1.ShapeType.Box)
         {
-            var shape = (MsbRegionBox)region;
+            var shape = (MSB1.Shape.Box)region.Shape;
             obj.AddComponent<BoxCollider>();
             var col = obj.GetComponent<BoxCollider>();
             col.isTrigger = true;
-            col.size = new Vector3(shape.WidthX, shape.HeightY, shape.DepthZ);
+            col.size = new Vector3(shape.Width, shape.Height, shape.Depth);
         }
-        else if (region is MsbRegionSphere)
+        else if (region.Shape.Type == MSB1.ShapeType.Sphere)
         {
-            var shape = (MsbRegionSphere)region;
+            var shape = (MSB1.Shape.Sphere)region.Shape;
             obj.AddComponent<SphereCollider>();
             var col = obj.GetComponent<SphereCollider>();
             col.isTrigger = true;
             col.radius = shape.Radius;
         }
-        else if (region is MsbRegionPoint)
+        else if (region.Shape.Type == MSB1.ShapeType.Point)
         {
-            var shape = (MsbRegionPoint)region;
+            var shape = (MSB1.Shape.Point)region.Shape;
             obj.AddComponent<SphereCollider>();
             var col = obj.GetComponent<SphereCollider>();
             col.isTrigger = true;
             col.radius = 1.0f;
         }
-        else if (region is MsbRegionCylinder)
+        else if (region.Shape.Type == MSB1.ShapeType.Cylinder)
         {
-            var shape = (MsbRegionCylinder)region;
+            var shape = (MSB1.Shape.Cylinder)region.Shape;
             obj.AddComponent<CapsuleCollider>();
             var col = obj.GetComponent<CapsuleCollider>();
             col.isTrigger = true;
             col.radius = shape.Radius;
             col.height = shape.Height;
+        }
+        else if (region.Shape.Type == MSB1.ShapeType.Circle)
+        {
+            var shape = (MSB1.Shape.Circle)region.Shape;
+            obj.AddComponent<CapsuleCollider>();
+            var col = obj.GetComponent<CapsuleCollider>();
+            col.isTrigger = true;
+            col.radius = shape.Radius;
+            col.height = shape.Radius;
         }
         else
         {
@@ -2190,12 +2195,50 @@ public class DarkSoulsTools : EditorWindow
         }
     }
 
+    public static void InstantiateDS1Model<T, U>(string mdlName, GameObject modelsRoot, List<U> models) where T : MSB1Model where U : MSB1.Model
+    {
+        GameObject obj = new GameObject(mdlName);
+        obj.transform.parent = modelsRoot.transform;
+        foreach (var md in models)
+        {
+            GameObject mdl = new GameObject(md.Name);
+            mdl.AddComponent<T>();
+            mdl.GetComponent<T>().SetModel(md);
+            mdl.transform.parent = obj.transform;
+        }
+    }
+
+    public static void InitializeDS1Part<T>(GameObject obj, MSB1.Part part, int layer, GameObject parent) where T : MSB1Part
+    {
+        obj.AddComponent<T>();
+        obj.GetComponent<T>().SetPart(part);
+        obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
+        //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
+        EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
+        obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
+        obj.layer = layer;
+        obj.transform.parent = parent.transform;
+    }
+
+    public static void InstantiateDS1Event<T, U>(string evtName, GameObject eventsRoot, List<U> events) where T : MSB1Event where U : MSB1.Event
+    {
+        GameObject obj = new GameObject(evtName);
+        obj.transform.parent = eventsRoot.transform;
+        foreach (var ev in events)
+        {
+            GameObject evt = new GameObject(ev.Name);
+            evt.AddComponent<T>();
+            evt.GetComponent<T>().SetEvent(ev);
+            evt.transform.parent = obj.transform;
+        }
+    }
+
     void onImportDS1Map(object o, bool remastered)
     {
         try
         {
             string mapname = (string)o;
-            var msb = DataFile.LoadFromFile<MSB>(GetOverridenPath(Interroot + $@"\map\MapStudio\{mapname}.msb"));
+            var msb = MSB1.Read(GetOverridenPath(Interroot + $@"\map\MapStudio\{mapname}.msb"));
             int area = int.Parse(mapname.Substring(1, 2));
             GameFolder(GameType.DarkSoulsPTDE);
             // Make adjusted mapname so darkroot garden meme works
@@ -2212,14 +2255,6 @@ public class DarkSoulsTools : EditorWindow
             AssetLink.GetComponent<MSBAssetLink>().Interroot = Interroot;
             AssetLink.GetComponent<MSBAssetLink>().MapID = mapname;
             AssetLink.GetComponent<MSBAssetLink>().MapPath = $@"{Interroot}\map\MapStudio\{mapname}.msb";
-
-            //
-            // Models section
-            //
-            GameObject ModelsSection = new GameObject("MSBModelDeclarations");
-
-            GameObject MapPieceModels = new GameObject("MapPieces");
-            MapPieceModels.transform.parent = ModelsSection.transform;
 
             // Do a preload of all the flvers
             try
@@ -2240,60 +2275,19 @@ public class DarkSoulsTools : EditorWindow
                 AssetDatabase.StopAssetEditing();
             }
 
-            foreach (var mappiece in msb.Models.MapPieces)
-            {
-                var assetname = mappiece.Name;
-                GameObject model = new GameObject(mappiece.Name);
-                model.AddComponent<MSB1MapPieceModel>();
-                model.GetComponent<MSB1MapPieceModel>().SetModel(mappiece);
-                model.transform.parent = MapPieceModels.transform;
-            }
+            //
+            // Models section
+            //
+            GameObject ModelsSection = new GameObject("MSBModelDeclarations");
 
-            // Load low res hkx assets
-            /*if (LoadHighResCol)
-            {
-                if (File.Exists(Interroot + $@"\map\{mapname}\h{mapname.Substring(1)}.hkxbhd"))
-                {
-                    ImportCollisionHKXBDT(Interroot + $@"\map\{mapname}\h{mapname.Substring(1)}.hkxbhd", $@"Assets/{mapname}");
-                }
-            }
-            else
-            {
-                if (File.Exists(Interroot + $@"\map\{mapname}\l{mapname.Substring(1)}.hkxbhd"))
-                {
-                    ImportCollisionHKXBDT(Interroot + $@"\map\{mapname}\l{mapname.Substring(1)}.hkxbhd", $@"Assets/{mapname}");
-                }
-            }*/
-            
-            GameObject ObjectModels = new GameObject("Objects");
-            ObjectModels.transform.parent = ModelsSection.transform;
-            foreach (var mod in msb.Models.Objects)
-            {
-                GameObject model = new GameObject(mod.Name);
-                model.AddComponent<MSB1ObjectModel>();
-                model.GetComponent<MSB1ObjectModel>().SetModel(mod);
-                model.transform.parent = ObjectModels.transform;
-            }
+            GameObject MapPieceModels = new GameObject("MapPieces");
+            MapPieceModels.transform.parent = ModelsSection.transform;
 
-            GameObject PlayerModels = new GameObject("Players");
-            PlayerModels.transform.parent = ModelsSection.transform;
-            foreach (var mod in msb.Models.Players)
-            {
-                GameObject model = new GameObject(mod.Name);
-                model.AddComponent<MSB1PlayerModel>();
-                model.GetComponent<MSB1PlayerModel>().SetModel(mod);
-                model.transform.parent = PlayerModels.transform;
-            }
-
-            GameObject EnemyModels = new GameObject("Enemies");
-            EnemyModels.transform.parent = ModelsSection.transform;
-            foreach (var mod in msb.Models.Characters)
-            {
-                GameObject model = new GameObject(mod.Name);
-                model.AddComponent<MSB1EnemyModel>();
-                model.GetComponent<MSB1EnemyModel>().SetModel(mod);
-                model.transform.parent = EnemyModels.transform;
-            }
+            InstantiateDS1Model<MSB1MapPieceModel, MSB1.Model>("MapPieces", ModelsSection, msb.Models.MapPieces);
+            InstantiateDS1Model<MSB1ObjectModel, MSB1.Model>("Objects", ModelsSection, msb.Models.Objects);
+            InstantiateDS1Model<MSB1PlayerModel, MSB1.Model>("Players", ModelsSection, msb.Models.Players);
+            InstantiateDS1Model<MSB1EnemyModel, MSB1.Model>("Enemies", ModelsSection, msb.Models.Enemies);
+            InstantiateDS1Model<MSB1NavimeshModel, MSB1.Model>("Navimeshes", ModelsSection, msb.Models.Navmeshes);
 
             GameObject CollisionModels = new GameObject("Collisions");
             CollisionModels.transform.parent = ModelsSection.transform;
@@ -2316,16 +2310,6 @@ public class DarkSoulsTools : EditorWindow
                 }
             }
             AssetDatabase.StopAssetEditing();
-    
-            GameObject NavModels = new GameObject("Navimeshes");
-            NavModels.transform.parent = ModelsSection.transform;
-            foreach (var mod in msb.Models.Navimeshes)
-            {
-                GameObject model = new GameObject(mod.Name);
-                model.AddComponent<MSB1NavimeshModel>();
-                model.GetComponent<MSB1NavimeshModel>().SetModel(mod);
-                model.transform.parent = NavModels.transform;
-            }
 
             //
             // Parts Section
@@ -2337,29 +2321,17 @@ public class DarkSoulsTools : EditorWindow
             foreach (var part in msb.Parts.MapPieces)
             {
                 GameObject src = LoadMapFlvers ? AssetDatabase.LoadAssetAtPath<GameObject>($@"Assets/DS1/{mapnameAdj}/{part.ModelName}.prefab") : null;
+                GameObject obj = null;
                 if (src != null)
                 {
-                    GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
+                    obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
                     obj.name = part.Name;
-                    obj.AddComponent<MSB1MapPiecePart>();
-                    obj.GetComponent<MSB1MapPiecePart>().SetPart(part);
-                    obj.transform.position = new Vector3(part.PosX, part.PosY, part.PosZ);
-                    obj.transform.rotation = Quaternion.Euler(part.RotX, part.RotY, part.RotZ);
-                    obj.transform.localScale = new Vector3(part.ScaleX, part.ScaleY, part.ScaleZ);
-                    obj.layer = 9;
-                    obj.transform.parent = MapPieces.transform;
                 }
                 else
                 {
-                    GameObject obj = new GameObject(part.Name);
-                    obj.AddComponent<MSB1MapPiecePart>();
-                    obj.GetComponent<MSB1MapPiecePart>().SetPart(part);
-                    obj.transform.position = new Vector3(part.PosX, part.PosY, part.PosZ);
-                    obj.transform.rotation = Quaternion.Euler(part.RotX, part.RotY, part.RotZ);
-                    obj.transform.localScale = new Vector3(part.ScaleX, part.ScaleY, part.ScaleZ);
-                    obj.layer = 9;
-                    obj.transform.parent = MapPieces.transform;
+                    obj = new GameObject(part.Name);
                 }
+                InitializeDS1Part<MSB1MapPiecePart>(obj, part, 9, MapPieces);
             }
 
             GameObject Objects = new GameObject("Objects");
@@ -2367,29 +2339,17 @@ public class DarkSoulsTools : EditorWindow
             foreach (var part in msb.Parts.Objects)
             {
                 GameObject src = AssetDatabase.LoadAssetAtPath<GameObject>($@"Assets/DS1/Obj/{part.ModelName}.prefab");
+                GameObject obj = null;
                 if (src != null)
                 {
-                    GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
+                    obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
                     obj.name = part.Name;
-                    obj.AddComponent<MSB1ObjectPart>();
-                    obj.GetComponent<MSB1ObjectPart>().SetPart(part);
-                    obj.transform.position = new Vector3(part.PosX, part.PosY, part.PosZ);
-                    obj.transform.rotation = Quaternion.Euler(part.RotX, part.RotY, part.RotZ);
-                    obj.transform.localScale = new Vector3(part.ScaleX, part.ScaleY, part.ScaleZ);
-                    obj.layer = 10;
-                    obj.transform.parent = Objects.transform;
                 }
                 else
                 {
-                    GameObject obj = new GameObject(part.Name);
-                    obj.AddComponent<MSB1ObjectPart>();
-                    obj.GetComponent<MSB1ObjectPart>().SetPart(part);
-                    obj.transform.position = new Vector3(part.PosX, part.PosY, part.PosZ);
-                    obj.transform.rotation = Quaternion.Euler(part.RotX, part.RotY, part.RotZ);
-                    obj.transform.localScale = new Vector3(part.ScaleX, part.ScaleY, part.ScaleZ);
-                    obj.layer = 10;
-                    obj.transform.parent = Objects.transform;
+                    obj = new GameObject(part.Name);
                 }
+                InitializeDS1Part<MSB1ObjectPart>(obj, part, 10, Objects);
             }
 
             GameObject DummyObjects = new GameObject("DummyObjects");
@@ -2397,135 +2357,88 @@ public class DarkSoulsTools : EditorWindow
             foreach (var part in msb.Parts.DummyObjects)
             {
                 GameObject src = AssetDatabase.LoadAssetAtPath<GameObject>($@"Assets/DS1/Obj/{part.ModelName}.prefab");
+                GameObject obj = null;
                 if (src != null)
                 {
-                    GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
+                    obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
                     obj.name = part.Name;
-                    obj.AddComponent<MSB1DummyObjectPart>();
-                    obj.GetComponent<MSB1DummyObjectPart>().SetPart(part);
-                    obj.transform.position = new Vector3(part.PosX, part.PosY, part.PosZ);
-                    obj.transform.rotation = Quaternion.Euler(part.RotX, part.RotY, part.RotZ);
-                    obj.transform.localScale = new Vector3(part.ScaleX, part.ScaleY, part.ScaleZ);
-                    obj.layer = 10;
-                    obj.transform.parent = DummyObjects.transform;
                 }
                 else
                 {
-                    GameObject obj = new GameObject(part.Name);
-                    obj.AddComponent<MSB1DummyObjectPart>();
-                    obj.GetComponent<MSB1DummyObjectPart>().SetPart(part);
-                    obj.transform.position = new Vector3(part.PosX, part.PosY, part.PosZ);
-                    obj.transform.rotation = Quaternion.Euler(part.RotX, part.RotY, part.RotZ);
-                    obj.transform.localScale = new Vector3(part.ScaleX, part.ScaleY, part.ScaleZ);
-                    obj.layer = 10;
-                    obj.transform.parent = DummyObjects.transform;
+                    obj = new GameObject(part.Name);
                 }
+                InitializeDS1Part<MSB1DummyObjectPart>(obj, part, 10, DummyObjects);
             }
 
-            GameObject NPCs = new GameObject("NPCs");
-            NPCs.transform.parent = PartsSection.transform;
-            foreach (var part in msb.Parts.NPCs)
+            GameObject Enemies = new GameObject("Enemies");
+            Enemies.transform.parent = PartsSection.transform;
+            foreach (var part in msb.Parts.Enemies)
             {
                 GameObject src = AssetDatabase.LoadAssetAtPath<GameObject>($@"Assets/DS1/Chr/{part.ModelName}.prefab");
+                GameObject obj = null;
                 if (src != null)
                 {
-                    GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
+                    obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
                     obj.name = part.Name;
-                    obj.AddComponent<MSB1NPCPart>();
-                    obj.GetComponent<MSB1NPCPart>().SetPart(part);
-                    obj.transform.position = new Vector3(part.PosX, part.PosY, part.PosZ);
-                    obj.transform.rotation = Quaternion.Euler(part.RotX, part.RotY, part.RotZ);
-                    obj.transform.localScale = new Vector3(part.ScaleX, part.ScaleY, part.ScaleZ);
-                    obj.layer = 11;
-                    obj.transform.parent = NPCs.transform;
                 }
                 else
                 {
-                    GameObject obj = new GameObject(part.Name);
-                    obj.AddComponent<MSB1NPCPart>();
-                    obj.GetComponent<MSB1NPCPart>().SetPart(part);
-                    obj.transform.position = new Vector3(part.PosX, part.PosY, part.PosZ);
-                    obj.transform.rotation = Quaternion.Euler(part.RotX, part.RotY, part.RotZ);
-                    obj.transform.localScale = new Vector3(part.ScaleX, part.ScaleY, part.ScaleZ);
-                    obj.layer = 11;
-                    obj.transform.parent = NPCs.transform;
+                    obj = new GameObject(part.Name);
                 }
+                InitializeDS1Part<MSB1EnemyPart>(obj, part, 11, Enemies);
             }
 
-            GameObject DummyNPCs = new GameObject("DummyNPCs");
-            DummyNPCs.transform.parent = PartsSection.transform;
-            foreach (var part in msb.Parts.DummyNPCs)
+            GameObject DummyEnemies = new GameObject("DummyEnemies");
+            DummyEnemies.transform.parent = PartsSection.transform;
+            foreach (var part in msb.Parts.DummyEnemies)
             {
                 GameObject src = AssetDatabase.LoadAssetAtPath<GameObject>($@"Assets/DS1/Obj/{part.ModelName}.prefab");
+                GameObject obj = null;
                 if (src != null)
                 {
-                    GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
+                    obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
                     obj.name = part.Name;
-                    obj.AddComponent<MSB1DummyNPCPart>();
-                    obj.GetComponent<MSB1DummyNPCPart>().SetPart(part);
-                    obj.transform.position = new Vector3(part.PosX, part.PosY, part.PosZ);
-                    obj.transform.rotation = Quaternion.Euler(part.RotX, part.RotY, part.RotZ);
-                    obj.transform.localScale = new Vector3(part.ScaleX, part.ScaleY, part.ScaleZ);
-                    obj.layer = 11;
-                    obj.transform.parent = DummyNPCs.transform;
                 }
                 else
                 {
-                    GameObject obj = new GameObject(part.Name);
-                    obj.AddComponent<MSB1DummyNPCPart>();
-                    obj.GetComponent<MSB1DummyNPCPart>().SetPart(part);
-                    obj.transform.position = new Vector3(part.PosX, part.PosY, part.PosZ);
-                    obj.transform.rotation = Quaternion.Euler(part.RotX, part.RotY, part.RotZ);
-                    obj.transform.localScale = new Vector3(part.ScaleX, part.ScaleY, part.ScaleZ);
-                    obj.layer = 11;
-                    obj.transform.parent = DummyNPCs.transform;
+                    obj = new GameObject(part.Name);
                 }
+                InitializeDS1Part<MSB1DummyEnemyPart>(obj, part, 11, DummyEnemies);
             }
 
             GameObject Collisions = new GameObject("Collisions");
             Collisions.transform.parent = PartsSection.transform;
-            foreach (var part in msb.Parts.Hits)
+            foreach (var part in msb.Parts.Collisions)
             {
                 string lowHigh = LoadHighResCol ? "h" : "l";
                 GameObject src = AssetDatabase.LoadAssetAtPath<GameObject>($@"Assets/DS1/{mapnameAdj}/{lowHigh}{part.ModelName.Substring(1)}.prefab");
+                GameObject obj = null;
                 if (src != null)
                 {
-                    GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
+                    obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
                     obj.name = part.Name;
-                    obj.AddComponent<MSB1CollisionPart>();
-                    obj.GetComponent<MSB1CollisionPart>().SetPart(part);
-                    obj.transform.position = new Vector3(part.PosX, part.PosY, part.PosZ);
-                    obj.transform.rotation = Quaternion.Euler(part.RotX, part.RotY, part.RotZ);
-                    obj.transform.localScale = new Vector3(part.ScaleX, part.ScaleY, part.ScaleZ);
-                    obj.layer = 12;
-                    obj.transform.parent = Collisions.transform;
                 }
+                else
+                {
+                    obj = new GameObject(part.Name);
+                }
+                InitializeDS1Part<MSB1CollisionPart>(obj, part, 12, Collisions);
             }
 
             GameObject ConnectCollisions = new GameObject("ConnectCollisions");
             ConnectCollisions.transform.parent = PartsSection.transform;
-            foreach (var part in msb.Parts.ConnectHits)
+            foreach (var part in msb.Parts.ConnectCollisions)
             {
                 GameObject obj = new GameObject(part.Name);
-                obj.AddComponent<MSB1ConnectCollisionPart>();
-                obj.GetComponent<MSB1ConnectCollisionPart>().SetPart(part);
-                obj.transform.position = new Vector3(part.PosX, part.PosY, part.PosZ);
-                EulerToTransform(new Vector3(part.RotX, part.RotY, part.RotZ), obj.transform);
-                obj.transform.localScale = new Vector3(part.ScaleX, part.ScaleY, part.ScaleZ);
-                obj.transform.parent = ConnectCollisions.transform;
+                InitializeDS1Part<MSB1ConnectCollisionPart>(obj, part, 12, ConnectCollisions);
             }
 
             GameObject Navimeshes = new GameObject("Navimeshes");
             Navimeshes.transform.parent = PartsSection.transform;
-            foreach (var part in msb.Parts.Navimeshes)
+            foreach (var part in msb.Parts.Navmeshes)
             {
                 GameObject obj = new GameObject(part.Name);
-                obj.AddComponent<MSB1NavimeshPart>();
-                obj.GetComponent<MSB1NavimeshPart>().SetPart(part);
-                obj.transform.position = new Vector3(part.PosX, part.PosY, part.PosZ);
-                EulerToTransform(new Vector3(part.RotX, part.RotY, part.RotZ), obj.transform);
-                obj.transform.localScale = new Vector3(part.ScaleX, part.ScaleY, part.ScaleZ);
-                obj.transform.parent = Navimeshes.transform;
+                InitializeDS1Part<MSB1NavimeshPart>(obj, part, 12, Navimeshes);
             }
 
             GameObject Players = new GameObject("Players");
@@ -2533,19 +2446,14 @@ public class DarkSoulsTools : EditorWindow
             foreach (var part in msb.Parts.Players)
             {
                 GameObject obj = new GameObject(part.Name);
-                obj.AddComponent<MSB1PlayerPart>();
-                obj.GetComponent<MSB1PlayerPart>().SetPart(part);
-                obj.transform.position = new Vector3(part.PosX, part.PosY, part.PosZ);
-                EulerToTransform(new Vector3(part.RotX, part.RotY, part.RotZ), obj.transform);
-                obj.transform.localScale = new Vector3(part.ScaleX, part.ScaleY, part.ScaleZ);
-                obj.transform.parent = Players.transform;
+                InitializeDS1Part<MSB1PlayerPart>(obj, part, 12, Players);
             }
 
             //
             // Regions section
             //
             GameObject Regions = new GameObject("MSBRegions");
-            foreach (var region in msb.Regions)
+            foreach (var region in msb.Regions.Regions)
             {
                 var reg = InstantiateRegion(region, Regions);
                 reg.AddComponent<MSB1Region>();
@@ -2557,135 +2465,19 @@ public class DarkSoulsTools : EditorWindow
             //
             GameObject Events = new GameObject("MSBEvents");
 
-            GameObject Environments = new GameObject("Environments");
-            Environments.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.EnvLightMapSpot)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSB1EnvironmentEvent>();
-                evt.GetComponent<MSB1EnvironmentEvent>().SetEvent(ev);
-                evt.transform.parent = Environments.transform;
-            }
-
-            GameObject Generators = new GameObject("Generators");
-            Generators.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.Generators)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSB1GeneratorEvent>();
-                evt.GetComponent<MSB1GeneratorEvent>().SetEvent(ev);
-                evt.transform.parent = Generators.transform;
-            }
-
-            GameObject Invasions = new GameObject("Invasions");
-            Invasions.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.NpcWorldInvitations)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSB1InvasionEvent>();
-                evt.GetComponent<MSB1InvasionEvent>().SetEvent(ev);
-                evt.transform.parent = Invasions.transform;
-            }
-
-            GameObject Lights = new GameObject("Lights");
-            Lights.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.Lights)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSB1LightEvent>();
-                evt.GetComponent<MSB1LightEvent>().SetEvent(ev);
-                evt.transform.parent = Lights.transform;
-            }
-
-            GameObject MapOffsets = new GameObject("MapOffsets");
-            MapOffsets.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.MapOffsets)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSB1MapOffsetEvent>();
-                evt.GetComponent<MSB1MapOffsetEvent>().SetEvent(ev);
-                evt.transform.parent = MapOffsets.transform;
-            }
-
-            GameObject Messages = new GameObject("Messages");
-            Messages.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.BloodMessages)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSB1MessageEvent>();
-                evt.GetComponent<MSB1MessageEvent>().SetEvent(ev);
-                evt.transform.parent = Messages.transform;
-            }
-
-            GameObject NavimeshEvents = new GameObject("Navimeshes");
-            NavimeshEvents.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.Navimeshes)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSB1NavimeshEvent>();
-                evt.GetComponent<MSB1NavimeshEvent>().SetEvent(ev);
-                evt.transform.parent = NavimeshEvents.transform;
-            }
-
-            GameObject ObjActs = new GameObject("ObjActs");
-            ObjActs.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.ObjActs)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSB1ObjActEvent>();
-                evt.GetComponent<MSB1ObjActEvent>().SetEvent(ev);
-                evt.transform.parent = ObjActs.transform;
-            }
-
-            GameObject SFX = new GameObject("SFX");
-            SFX.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.SFXs)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSB1SFXEvent>();
-                evt.GetComponent<MSB1SFXEvent>().SetEvent(ev);
-                evt.transform.parent = SFX.transform;
-            }
-
-            GameObject Sounds = new GameObject("Sounds");
-            Sounds.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.Sounds)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSB1SoundEvent>();
-                evt.GetComponent<MSB1SoundEvent>().SetEvent(ev);
-                evt.transform.parent = Sounds.transform;
-            }
-
-            GameObject SpawnPoints = new GameObject("SpawnPoints");
-            SpawnPoints.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.SpawnPoints)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSB1SpawnPointEvent>();
-                evt.GetComponent<MSB1SpawnPointEvent>().SetEvent(ev);
-                evt.transform.parent = SpawnPoints.transform;
-            }
-
-            GameObject Treasures = new GameObject("Treasures");
-            Treasures.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.Treasures)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSB1TreasureEvent>();
-                evt.GetComponent<MSB1TreasureEvent>().SetEvent(ev);
-                evt.transform.parent = Treasures.transform;
-            }
-
-            GameObject Winds = new GameObject("Winds");
-            Winds.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.WindSFXs)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSB1WindEvent>();
-                evt.GetComponent<MSB1WindEvent>().SetEvent(ev);
-                evt.transform.parent = Winds.transform;
-            }
+            InstantiateDS1Event<MSB1EnvironmentEvent, MSB1.Event.Environment>("Environments", Events, msb.Events.Environments);
+            InstantiateDS1Event<MSB1GeneratorEvent, MSB1.Event.Generator>("Generators", Events, msb.Events.Generators);
+            InstantiateDS1Event<MSB1InvasionEvent, MSB1.Event.PseudoMultiplayer>("Invasions", Events, msb.Events.PseudoMultiplayers);
+            InstantiateDS1Event<MSB1LightEvent, MSB1.Event.Light>("Lights", Events, msb.Events.Lights);
+            InstantiateDS1Event<MSB1MapOffsetEvent, MSB1.Event.MapOffset>("Mapoffsets", Events, msb.Events.MapOffsets);
+            InstantiateDS1Event<MSB1MessageEvent, MSB1.Event.Message>("Messages", Events, msb.Events.Messages);
+            InstantiateDS1Event<MSB1NavimeshEvent, MSB1.Event.Navmesh>("Navimeshes", Events, msb.Events.Navmeshes);
+            InstantiateDS1Event<MSB1ObjActEvent, MSB1.Event.ObjAct>("ObjActs", Events, msb.Events.ObjActs);
+            InstantiateDS1Event<MSB1SFXEvent, MSB1.Event.SFX>("SFX", Events, msb.Events.SFXs);
+            InstantiateDS1Event<MSB1SoundEvent, MSB1.Event.Sound>("Sounds", Events, msb.Events.Sounds);
+            InstantiateDS1Event<MSB1SpawnPointEvent, MSB1.Event.SpawnPoint>("SpawnPoints", Events, msb.Events.SpawnPoints);
+            InstantiateDS1Event<MSB1TreasureEvent, MSB1.Event.Treasure>("Treasures", Events, msb.Events.Treasures);
+            InstantiateDS1Event<MSB1WindEvent, MSB1.Event.WindSFX>("Winds", Events, msb.Events.WindSFXs);
         }
         catch (Exception e)
         {
@@ -3768,6 +3560,42 @@ public class DarkSoulsTools : EditorWindow
         AssetDatabase.StopAssetEditing();
     }
 
+    static void SerializeDS1Models<T, U>(List<U> exportList) where T : MSB1Model where U : MSB1.Model
+    {
+        var models = FindObjectsOfType<T>();
+        if (models != null)
+        {
+            foreach (var obj in models)
+            {
+                exportList.Add((U)obj.Serialize(obj.gameObject));
+            }
+        }
+    }
+
+    static void SerializeDS1Parts<T, U>(List<U> exportList) where T : MSB1Part where U : MSB1.Part
+    {
+        var parts = FindObjectsOfType<T>();
+        if (parts != null)
+        {
+            foreach (var obj in parts)
+            {
+                exportList.Add((U)obj.Serialize(obj.gameObject));
+            }
+        }
+    }
+
+    static void SerializeDS1Events<T, U>(List<U> exportList) where T : MSB1Event where U : MSB1.Event
+    {
+        var parts = FindObjectsOfType<T>();
+        if (parts != null)
+        {
+            foreach (var obj in parts)
+            {
+                exportList.Add((U)obj.Serialize(obj.gameObject));
+            }
+        }
+    }
+
     void ExportMapDS1()
     {
         var AssetLink = GameObject.Find("MSBAssetLink");
@@ -3776,324 +3604,51 @@ public class DarkSoulsTools : EditorWindow
             throw new Exception("Could not find a valid MSB asset link to a DS1 asset");
         }
 
-        MSB export = new MSB();
-        // Export the models
-        var Models = GameObject.Find("/MSBModelDeclarations");
-        if (Models != null)
+        MSB1 export = new MSB1();
+
+        // Models
+        SerializeDS1Models<MSB1MapPieceModel, MSB1.Model>(export.Models.MapPieces);
+        SerializeDS1Models<MSB1CollisionModel, MSB1.Model>(export.Models.Collisions);
+        SerializeDS1Models<MSB1EnemyModel, MSB1.Model>(export.Models.Enemies);
+        SerializeDS1Models<MSB1ObjectModel, MSB1.Model>(export.Models.Objects);
+        SerializeDS1Models<MSB1NavimeshModel, MSB1.Model>(export.Models.Navmeshes);
+        SerializeDS1Models<MSB1PlayerModel, MSB1.Model>(export.Models.Players);
+
+        // Parts
+        SerializeDS1Parts<MSB1MapPiecePart, MSB1.Part.MapPiece>(export.Parts.MapPieces);
+        SerializeDS1Parts<MSB1CollisionPart, MSB1.Part.Collision>(export.Parts.Collisions);
+        SerializeDS1Parts<MSB1ConnectCollisionPart, MSB1.Part.ConnectCollision>(export.Parts.ConnectCollisions);
+        SerializeDS1Parts<MSB1DummyEnemyPart, MSB1.Part.DummyEnemy>(export.Parts.DummyEnemies);
+        SerializeDS1Parts<MSB1DummyObjectPart, MSB1.Part.DummyObject>(export.Parts.DummyObjects);
+        SerializeDS1Parts<MSB1EnemyPart, MSB1.Part.Enemy>(export.Parts.Enemies);
+        SerializeDS1Parts<MSB1ObjectPart, MSB1.Part.Object>(export.Parts.Objects);
+        SerializeDS1Parts<MSB1PlayerPart, MSB1.Part.Player>(export.Parts.Players);
+        SerializeDS1Parts<MSB1NavimeshPart, MSB1.Part.Navmesh>(export.Parts.Navmeshes);
+
+        // Regions
+        var regions = FindObjectsOfType<MSB1Region>();
+        if (regions != null)
         {
-            // Export map pieces
-            var modelMapPieces = GetChild(Models, "MapPieces");
-            if (modelMapPieces != null)
+            foreach (var obj in regions)
             {
-                foreach (var obj in GetChildrenOfType<MSB1MapPieceModel>(modelMapPieces))
-                {
-                    export.Models.MapPieces.Add(obj.GetComponent<MSB1MapPieceModel>().Serialize(obj));
-                }
-            }
-
-            // Export collision
-            var modelCollision = GetChild(Models, "Collisions");
-            if (modelCollision != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB1CollisionModel>(modelCollision))
-                {
-                    export.Models.Collisions.Add(obj.GetComponent<MSB1CollisionModel>().Serialize(obj));
-                }
-            }
-
-            // Export enemies
-            var modelEnemy = GetChild(Models, "Enemies");
-            if (modelEnemy != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB1EnemyModel>(modelEnemy))
-                {
-                    export.Models.Characters.Add(obj.GetComponent<MSB1EnemyModel>().Serialize(obj));
-                }
-            }
-
-            // Export objects
-            var modelObject = GetChild(Models, "Objects");
-            if (modelObject != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB1ObjectModel>(modelObject))
-                {
-                    export.Models.Objects.Add(obj.GetComponent<MSB1ObjectModel>().Serialize(obj));
-                }
-            }
-
-            // Export navimeshes
-            var modelNavimeshes = GetChild(Models, "Navimeshes");
-            if (modelNavimeshes != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB1NavimeshModel>(modelNavimeshes))
-                {
-                    export.Models.Navimeshes.Add(obj.GetComponent<MSB1NavimeshModel>().Serialize(obj));
-                }
-            }
-
-            // Export players
-            var modelPlayer = GetChild(Models, "Players");
-            if (modelPlayer != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB1PlayerModel>(modelPlayer))
-                {
-                    export.Models.Players.Add(obj.GetComponent<MSB1PlayerModel>().Serialize(obj));
-                }
+                export.Regions.Regions.Add(obj.Serialize(new MSB1.Region(obj.name), obj.gameObject));
             }
         }
-        else
-        {
-            throw new Exception("MSB exporter requires a model declaration section");
-        }
 
-        // Export the models
-        var Parts = GameObject.Find("/MSBParts");
-        if (Parts != null)
-        {
-            // Export map pieces
-            var partMapPieces = GetChild(Parts, "MapPieces");
-            if (partMapPieces != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB1MapPiecePart>(partMapPieces))
-                {
-                    export.Parts.MapPieces.Add(obj.GetComponent<MSB1MapPiecePart>().Serialize(obj));
-                }
-            }
-
-            // Export collisions
-            var partCollisions = GetChild(Parts, "Collisions");
-            if (partCollisions != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB1CollisionPart>(partCollisions))
-                {
-                    export.Parts.Hits.Add(obj.GetComponent<MSB1CollisionPart>().Serialize(obj));
-                }
-            }
-
-            // Export connect collisions
-            var partConnectCollisions = GetChild(Parts, "ConnectCollisions");
-            if (partConnectCollisions != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB1ConnectCollisionPart>(partConnectCollisions))
-                {
-                    export.Parts.ConnectHits.Add(obj.GetComponent<MSB1ConnectCollisionPart>().Serialize(obj));
-                }
-            }
-
-            // Export dummy enemies
-            var partDummyEnemies = GetChild(Parts, "DummyNPCs");
-            if (partDummyEnemies != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB1DummyNPCPart>(partDummyEnemies))
-                {
-                    export.Parts.DummyNPCs.Add(obj.GetComponent<MSB1DummyNPCPart>().Serialize(obj));
-                }
-            }
-
-            var partDummyObjects = GetChild(Parts, "DummyObjects");
-            if (partDummyObjects != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB1DummyObjectPart>(partDummyObjects))
-                {
-                    export.Parts.DummyObjects.Add(obj.GetComponent<MSB1DummyObjectPart>().Serialize(obj));
-                }
-            }
-
-            var partEnemies = GetChild(Parts, "NPCs");
-            if (partEnemies != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB1NPCPart>(partEnemies))
-                {
-                    export.Parts.NPCs.Add(obj.GetComponent<MSB1NPCPart>().Serialize(obj));
-                }
-            }
-
-            var partObjects = GetChild(Parts, "Objects");
-            if (partObjects != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB1ObjectPart>(partObjects))
-                {
-                    export.Parts.Objects.Add(obj.GetComponent<MSB1ObjectPart>().Serialize(obj));
-                }
-            }
-
-            var partPlayers = GetChild(Parts, "Players");
-            if (partPlayers != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB1PlayerPart>(partPlayers))
-                {
-                    export.Parts.Players.Add(obj.GetComponent<MSB1PlayerPart>().Serialize(obj));
-                }
-            }
-
-            var partNavimeshes = GetChild(Parts, "Navimeshes");
-            if (partNavimeshes != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB1NavimeshPart>(partNavimeshes))
-                {
-                    export.Parts.Navimeshes.Add(obj.GetComponent<MSB1NavimeshPart>().Serialize(obj));
-                }
-            }
-        }
-        else
-        {
-            throw new Exception("MSB exporter requires a parts section");
-        }
-
-        // Export the points/regions
-        var Regions = GameObject.Find("/MSBRegions");
-        if (Regions != null)
-        {
-            foreach (var obj in GetChildrenOfType<MSB1Region>(Regions))
-            {
-                if (obj.GetComponent<SphereCollider>() != null && obj.GetComponent<MSB1Region>().IsPoint)
-                {
-                    export.Regions.Points.Add((MsbRegionPoint)obj.GetComponent<MSB1Region>().Serialize(new MsbRegionPoint(export.Regions), obj));
-                }
-                else if (obj.GetComponent<BoxCollider>() != null)
-                {
-                    export.Regions.Boxes.Add((MsbRegionBox)obj.GetComponent<MSB1Region>().Serialize(new MsbRegionBox(export.Regions), obj));
-                }
-                else if (obj.GetComponent<SphereCollider>() != null)
-                {
-                    export.Regions.Spheres.Add((MsbRegionSphere)obj.GetComponent<MSB1Region>().Serialize(new MsbRegionSphere(export.Regions), obj));
-                }
-                else if (obj.GetComponent<CapsuleCollider>() != null)
-                {
-                    export.Regions.Cylinders.Add((MsbRegionCylinder)obj.GetComponent<MSB1Region>().Serialize(new MsbRegionCylinder(export.Regions), obj));
-                }
-            }
-        }
-        else
-        {
-            throw new Exception("MSB exporter requires a regions section");
-        }
-
-        // Export the points/regions
-        var Events = GameObject.Find("/MSBEvents");
-        if (Events != null)
-        {
-            var eventTreasures = GetChild(Events, "Treasures");
-            if (eventTreasures != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB1TreasureEvent>(eventTreasures))
-                {
-                    export.Events.Treasures.Add(obj.GetComponent<MSB1TreasureEvent>().Serialize(obj));
-                }
-            }
-
-            var eventEnvironments = GetChild(Events, "Environments");
-            if (eventEnvironments != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB1EnvironmentEvent>(eventEnvironments))
-                {
-                    export.Events.EnvLightMapSpot.Add(obj.GetComponent<MSB1EnvironmentEvent>().Serialize(obj));
-                }
-            }
-
-            var eventGenerators = GetChild(Events, "Generators");
-            if (eventGenerators != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB1GeneratorEvent>(eventGenerators))
-                {
-                    export.Events.Generators.Add(obj.GetComponent<MSB1GeneratorEvent>().Serialize(obj));
-                }
-            }
-
-            var eventObjActs = GetChild(Events, "ObjActs");
-            if (eventObjActs != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB1ObjActEvent>(eventObjActs))
-                {
-                    export.Events.ObjActs.Add(obj.GetComponent<MSB1ObjActEvent>().Serialize(obj));
-                }
-            }
-
-            var eventMapOffsets = GetChild(Events, "MapOffsets");
-            if (eventMapOffsets != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB1MapOffsetEvent>(eventMapOffsets))
-                {
-                    export.Events.MapOffsets.Add(obj.GetComponent<MSB1MapOffsetEvent>().Serialize(obj));
-                }
-            }
-
-            var eventInvasions = GetChild(Events, "Invasions");
-            if (eventInvasions != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB1InvasionEvent>(eventInvasions))
-                {
-                    export.Events.NpcWorldInvitations.Add(obj.GetComponent<MSB1InvasionEvent>().Serialize(obj));
-                }
-            }
-
-            var eventLights = GetChild(Events, "Lights");
-            if (eventLights != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB1LightEvent>(eventLights))
-                {
-                    export.Events.Lights.Add(obj.GetComponent<MSB1LightEvent>().Serialize(obj));
-                }
-            }
-
-            var eventMessages = GetChild(Events, "Messages");
-            if (eventMessages != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB1MessageEvent>(eventMessages))
-                {
-                    export.Events.BloodMessages.Add(obj.GetComponent<MSB1MessageEvent>().Serialize(obj));
-                }
-            }
-
-            var eventNavimeshes = GetChild(Events, "Navimeshes");
-            if (eventNavimeshes != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB1NavimeshEvent>(eventNavimeshes))
-                {
-                    export.Events.Navimeshes.Add(obj.GetComponent<MSB1NavimeshEvent>().Serialize(obj));
-                }
-            }
-
-            var eventSFX = GetChild(Events, "SFX");
-            if (eventSFX != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB1SFXEvent>(eventSFX))
-                {
-                    export.Events.SFXs.Add(obj.GetComponent<MSB1SFXEvent>().Serialize(obj));
-                }
-            }
-
-            var eventSounds = GetChild(Events, "Sounds");
-            if (eventSounds != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB1SoundEvent>(eventSounds))
-                {
-                    export.Events.Sounds.Add(obj.GetComponent<MSB1SoundEvent>().Serialize(obj));
-                }
-            }
-
-            var eventSpawnPoints = GetChild(Events, "SpawnPoints");
-            if (eventSpawnPoints != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB1SpawnPointEvent>(eventSpawnPoints))
-                {
-                    export.Events.SpawnPoints.Add(obj.GetComponent<MSB1SpawnPointEvent>().Serialize(obj));
-                }
-            }
-
-            var eventWinds = GetChild(Events, "Winds");
-            if (eventWinds != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB1WindEvent>(eventWinds))
-                {
-                    export.Events.WindSFXs.Add(obj.GetComponent<MSB1WindEvent>().Serialize(obj));
-                }
-            }
-        }
-        else
-        {
-            throw new Exception("MSB exporter requires an events section");
-        }
+        // Events
+        SerializeDS1Events<MSB1TreasureEvent, MSB1.Event.Treasure>(export.Events.Treasures);
+        SerializeDS1Events<MSB1EnvironmentEvent, MSB1.Event.Environment>(export.Events.Environments);
+        SerializeDS1Events<MSB1GeneratorEvent, MSB1.Event.Generator>(export.Events.Generators);
+        SerializeDS1Events<MSB1ObjActEvent, MSB1.Event.ObjAct>(export.Events.ObjActs);
+        SerializeDS1Events<MSB1MapOffsetEvent, MSB1.Event.MapOffset>(export.Events.MapOffsets);
+        SerializeDS1Events<MSB1InvasionEvent, MSB1.Event.PseudoMultiplayer>(export.Events.PseudoMultiplayers);
+        SerializeDS1Events<MSB1LightEvent, MSB1.Event.Light>(export.Events.Lights);
+        SerializeDS1Events<MSB1MessageEvent, MSB1.Event.Message>(export.Events.Messages);
+        SerializeDS1Events<MSB1NavimeshEvent, MSB1.Event.Navmesh>(export.Events.Navmeshes);
+        SerializeDS1Events<MSB1SFXEvent, MSB1.Event.SFX>(export.Events.SFXs);
+        SerializeDS1Events<MSB1SoundEvent, MSB1.Event.Sound>(export.Events.Sounds);
+        SerializeDS1Events<MSB1SpawnPointEvent, MSB1.Event.SpawnPoint>(export.Events.SpawnPoints);
+        SerializeDS1Events<MSB1WindEvent, MSB1.Event.WindSFX>(export.Events.WindSFXs);
 
         // Directory setup for overrides
         if (ModProjectDirectory != null)
@@ -4121,9 +3676,7 @@ public class DarkSoulsTools : EditorWindow
         {
             File.Delete(mapPath + ".temp");
         }
-        //export.Write(AssetLink.GetComponent<MSBAssetLink>().MapPath + ".temp", SoulsFormats.DCX.Type.DarkSouls3);
-        export.IsDcxCompressed = false;
-        DataFile.SaveToFile<MSB>(export, mapPath + ".temp");
+        export.Write(mapPath + ".temp", SoulsFormats.DCX.Type.DarkSouls1);
 
         // Make a copy of the previous map
         File.Copy(mapPath, mapPath + ".prev", true);

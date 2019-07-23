@@ -4,19 +4,10 @@ using UnityEngine;
 using SoulsFormats;
 using System.Numerics;
 using System;
-using MeowDSIO.DataTypes.MSB;
-using MeowDSIO.DataTypes.MSB.POINT_PARAM_ST;
 
 [AddComponentMenu("Dark Souls 1/Region")]
 public class MSB1Region : MonoBehaviour
 {
-    public UnityEngine.Vector3 Rotation;
-
-    /// <summary>
-    /// The ID of this region.
-    /// </summary>
-    public int ID;
-
     /// <summary>
     /// An ID used to identify this region in event scripts.
     /// </summary>
@@ -25,29 +16,15 @@ public class MSB1Region : MonoBehaviour
     /// <summary>
     /// Used to disambiguate a point from a sphere
     /// </summary>
-    public bool IsPoint = false;
+    public bool IsPointOrCircle = false;
 
-    public void setBaseRegion(MsbRegionBase region)
+    public void setBaseRegion(MSB1.Region region)
     {
-        ID = region.Index;
-        if (region is MsbRegionBox)
+        EventEntityID = region.EntityID;
+        if (region.Shape is MSB1.Shape.Point || region.Shape is MSB1.Shape.Circle)
         {
-            EventEntityID = ((MsbRegionBox)region).EntityID;
+            IsPointOrCircle = true;
         }
-        if (region is MsbRegionCylinder)
-        {
-            EventEntityID = ((MsbRegionCylinder)region).EntityID;
-        }
-        if (region is MsbRegionPoint)
-        {
-            EventEntityID = ((MsbRegionPoint)region).EntityID;
-            IsPoint = true;
-        }
-        if (region is MsbRegionSphere)
-        {
-            EventEntityID = ((MsbRegionSphere)region).EntityID;
-        }
-        Rotation = new UnityEngine.Vector3(region.RotX, region.RotY, region.RotZ);
     }
 
     static System.Numerics.Vector3 ConvertEuler(UnityEngine.Vector3 r)
@@ -61,76 +38,81 @@ public class MSB1Region : MonoBehaviour
         System.Numerics.Matrix4x4 mat2 = System.Numerics.Matrix4x4.CreateRotationZ(z)
             * System.Numerics.Matrix4x4.CreateRotationX(x) * System.Numerics.Matrix4x4.CreateRotationY(y);
 
-        // XYZ
-        if (Mathf.Abs(mat2.M13) < 0.99999f)
+        // YZX
+        if (Mathf.Abs(mat2.M21) < 0.99999f)
         {
-            y = ((r.y >= 90.0f && r.y < 270.0f) ? Mathf.PI + Mathf.Asin(Mathf.Clamp(mat2.M13, -1.0f, 1.0f)) : -Mathf.Asin(Mathf.Clamp(mat2.M13, -1.0f, 1.0f)));
-            x = Mathf.Atan2(mat2.M23 / Mathf.Cos(y), mat2.M33 / Mathf.Cos(y));
-            z = Mathf.Atan2(mat2.M12 / Mathf.Cos(y), mat2.M11 / Mathf.Cos(y));
+            z = (float)((r.z >= 90.0f && r.z < 270.0f) ? Math.PI + Math.Asin(Math.Max(Math.Min((double)mat2.M21, 1.0), -1.0)) : -Math.Asin(Math.Max(Math.Min((double)mat2.M21, 1.0), -1.0)));
+            x = (float)Math.Atan2(mat2.M23 / Math.Cos(z), mat2.M22 / Math.Cos(z));
+            y = (float)Math.Atan2(mat2.M31 / Math.Cos(z), mat2.M11 / Math.Cos(z));
         }
         else
         {
-            if (mat2.M31 > 0)
+            if (mat2.M12 > 0)
             {
-                y = -Mathf.PI / 2.0f;
-                x = Mathf.Atan2(-mat2.M21, -mat2.M31);
-                z = 0.0f;
+                z = -Mathf.PI / 2.0f;
+                y = (float)Math.Atan2(-mat2.M13, -mat2.M33);
+                x = 0.0f;
             }
             else
             {
-                y = Mathf.PI / 2.0f;
-                x = Mathf.Atan2(mat2.M21, mat2.M31);
-                z = 0.0f;
+                z = Mathf.PI / 2.0f;
+                y = (float)Math.Atan2(mat2.M13, mat2.M33);
+                x = 0.0f;
             }
         }
 
         return new System.Numerics.Vector3(Mathf.Rad2Deg * x, Mathf.Rad2Deg * y, Mathf.Rad2Deg * z);
     }
 
-    public MsbRegionBase Serialize(MsbRegionBase region, GameObject parent)
+    public MSB1.Region Serialize(MSB1.Region region, GameObject parent)
     {
         region.Name = parent.name;
-        region.Index = ID;
 
-        region.PosX = parent.transform.position.x;
-        region.PosY = parent.transform.position.y;
-        region.PosZ = parent.transform.position.z;
+        var pos = new System.Numerics.Vector3();
+        pos.X = parent.transform.position.x;
+        pos.Y = parent.transform.position.y;
+        pos.Z = parent.transform.position.z;
+        region.Position = pos;
+
         var rot = ConvertEuler(parent.transform.rotation.eulerAngles);
-        //region.RotX = rot.X;
-        //region.RotY = rot.Y;
-        //region.RotZ = rot.Z;
-        region.RotX = Rotation.x;
-        region.RotY = Rotation.y;
-        region.RotZ = Rotation.z;
+        region.Rotation = rot;
 
-        if (region is MsbRegionBox)
+        region.EntityID = EventEntityID;
+
+        if (parent.GetComponent<SphereCollider>() != null && IsPointOrCircle)
         {
-            var shape = (MsbRegionBox)region;
-            var col = parent.GetComponent<BoxCollider>();
-            shape.WidthX = col.size.x;
-            shape.HeightY = col.size.y;
-            shape.DepthZ = col.size.z;
-            shape.EntityID = EventEntityID;
+            region.Shape = new MSB1.Shape.Point();
         }
-        else if (region is MsbRegionCylinder)
+        else if (parent.GetComponent<CapsuleCollider>() != null && IsPointOrCircle)
         {
-            var shape = (MsbRegionCylinder)region;
+            var shape = new MSB1.Shape.Circle();
+            var col = parent.GetComponent<CapsuleCollider>();
+            shape.Radius = col.radius;
+            region.Shape = shape;
+        }
+        else if (parent.GetComponent<BoxCollider>() != null)
+        {
+            var shape = new MSB1.Shape.Box();
+            var col = parent.GetComponent<BoxCollider>();
+            shape.Width = col.size.x;
+            shape.Height = col.size.y;
+            shape.Depth = col.size.z;
+            region.Shape = shape;
+        }
+        else if (parent.GetComponent<CapsuleCollider>() != null)
+        {
+            var shape = new MSB1.Shape.Cylinder();
             var col = parent.GetComponent<CapsuleCollider>();
             shape.Radius = col.radius;
             shape.Height = col.height;
-            shape.EntityID = EventEntityID;
+            region.Shape = shape;
         }
-        else if (region is MsbRegionSphere)
+        else if (parent.GetComponent<SphereCollider>() != null)
         {
-            var shape = (MsbRegionSphere)region;
+            var shape = new MSB1.Shape.Sphere();
             var col = parent.GetComponent<SphereCollider>();
             shape.Radius = col.radius;
-            shape.EntityID = EventEntityID;
-        }
-        else if (region is MsbRegionPoint)
-        {
-            var shape = (MsbRegionPoint)region;
-            shape.EntityID = EventEntityID;
+            region.Shape = shape;
         }
         return region;
     }

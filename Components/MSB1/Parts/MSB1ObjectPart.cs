@@ -2,38 +2,35 @@
 using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
-using MeowDSIO.DataTypes.MSB;
-using MeowDSIO.DataTypes.MSB.PARTS_PARAM_ST;
 
 [AddComponentMenu("Dark Souls 1/Parts/Object")]
 public class MSB1ObjectPart : MSB1Part
 {
     public string CollisionName;
-    public byte Unk1, Unk2;
-    public short Unk3, Unk4;
-    public int Unk5;
+    public int UnkT08;
+    public short UnkT0C, UnkT0E;
+    public int UnkT10;
 
-    public void SetPart(MsbPartsObject part)
+    public override void SetPart(MSB1.Part bpart)
     {
+        var part = (MSB1.Part.Object)bpart;
         setBasePart(part);
-        CollisionName = part.PartName;
-        Unk1 = part.SubUnk1;
-        Unk2 = part.SubUnk2;
-        Unk3 = part.SubUnk3;
-        Unk4 = part.SubUnk4;
-        Unk5 = part.SubUnk5;
+        CollisionName = part.CollisionName;
+        UnkT08 = part.UnkT08;
+        UnkT0C = part.UnkT0C;
+        UnkT0E = part.UnkT0E;
+        UnkT10 = part.UnkT10;
     }
 
-    public MsbPartsObject Serialize(GameObject parent)
+    public override MSB1.Part Serialize(GameObject parent)
     {
-        var part = new MsbPartsObject();
+        var part = new MSB1.Part.Object();
         _Serialize(part, parent);
-        part.PartName = (CollisionName == "") ? null : CollisionName;
-        part.SubUnk1 = Unk1;
-        part.SubUnk2 = Unk2;
-        part.SubUnk3 = Unk3;
-        part.SubUnk4 = Unk4;
-        part.SubUnk5 = Unk5;
+        part.CollisionName = (CollisionName == "") ? null : CollisionName;
+        part.UnkT08 = UnkT08;
+        part.UnkT0C = UnkT0C;
+        part.UnkT0E = UnkT0E;
+        part.UnkT10 = UnkT10;
         return part;
     }
 }

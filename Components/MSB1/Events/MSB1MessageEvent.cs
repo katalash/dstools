@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
-using MeowDSIO.DataTypes.MSB;
-using MeowDSIO.DataTypes.MSB.EVENT_PARAM_ST;
 
 [AddComponentMenu("Dark Souls 1/Events/Message")]
 public class MSB1MessageEvent : MSB1Event
@@ -19,19 +17,20 @@ public class MSB1MessageEvent : MSB1Event
     public short UnkT02;
 
 
-    public void SetEvent(MsbEventBloodMsg evt)
+    public override void SetEvent(MSB1.Event bevt)
     {
+        var evt = (MSB1.Event.Message)bevt;
         setBaseEvent(evt);
-        MessageID = evt.MsgID;
-        UnkT02 = evt.SubUnk1;
+        MessageID = evt.MessageID;
+        UnkT02 = evt.UnkT02;
     }
 
-    public MsbEventBloodMsg Serialize(GameObject parent)
+    public override MSB1.Event Serialize(GameObject parent)
     {
-        var evt = new MsbEventBloodMsg();
+        var evt = new MSB1.Event.Message();
         _Serialize(evt, parent);
-        evt.MsgID = MessageID;
-        evt.SubUnk1 = UnkT02;
+        evt.MessageID = MessageID;
+        evt.UnkT02 = UnkT02;
         return evt;
     }
 }

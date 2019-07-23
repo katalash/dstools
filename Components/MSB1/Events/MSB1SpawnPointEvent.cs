@@ -2,25 +2,24 @@
 using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
-using MeowDSIO.DataTypes.MSB;
-using MeowDSIO.DataTypes.MSB.EVENT_PARAM_ST;
 
 [AddComponentMenu("Dark Souls 1/Events/Spawn Point")]
 public class MSB1SpawnPointEvent : MSB1Event
 {
     public string SpawnPoint;
 
-    public void SetEvent(MsbEventSpawnPoint evt)
+    public override void SetEvent(MSB1.Event bevt)
     {
+        var evt = (MSB1.Event.SpawnPoint)bevt;
         setBaseEvent(evt);
-        SpawnPoint = evt.SpawnPoint;
+        SpawnPoint = evt.SpawnPointName;
     }
 
-    public MsbEventSpawnPoint Serialize(GameObject parent)
+    public override MSB1.Event Serialize(GameObject parent)
     {
-        var evt = new MsbEventSpawnPoint();
+        var evt = new MSB1.Event.SpawnPoint();
         _Serialize(evt, parent);
-        evt.SpawnPoint = (SpawnPoint == "") ? null : SpawnPoint;
+        evt.SpawnPointName = (SpawnPoint == "") ? null : SpawnPoint;
         return evt;
     }
 }

@@ -2,22 +2,19 @@
 using System.Collections.Generic;
 using UnityEngine;
 using SoulsFormats;
-using MeowDSIO.DataTypes.MSB;
-using MeowDSIO.DataTypes.MSB.PARTS_PARAM_ST;
 
 public class MSB1DummyObjectPart : MSB1ObjectPart
 {
     [AddComponentMenu("Dark Souls 1/Parts/Dummy Object")]
-    public new MsbPartsObjectDummy Serialize(GameObject parent)
+    public override MSB1.Part Serialize(GameObject parent)
     {
-        var part = new MsbPartsObjectDummy();
+        var part = new MSB1.Part.DummyObject();
         _Serialize(part, parent);
-        part.PartName = (CollisionName == "") ? null : CollisionName;
-        part.SubUnk1 = Unk1;
-        part.SubUnk2 = Unk2;
-        part.SubUnk3 = Unk3;
-        part.SubUnk4 = Unk4;
-        part.SubUnk5 = Unk5;
+        part.CollisionName = (CollisionName == "") ? null : CollisionName;
+        part.UnkT08 = UnkT08;
+        part.UnkT0C = UnkT0C;
+        part.UnkT0E = UnkT0E;
+        part.UnkT10 = UnkT10;
         return part;
     }
 }
