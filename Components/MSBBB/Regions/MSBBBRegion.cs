@@ -4,7 +4,6 @@ using UnityEngine;
 using SoulsFormats;
 using System.Numerics;
 using System;
-using MeowDSIO.DataTypes.MSB;
 
 [AddComponentMenu("Bloodborne/Region")]
 public class MSBBBRegion : MonoBehaviour
