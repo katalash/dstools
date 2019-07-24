@@ -254,13 +254,6 @@ public abstract class MSB3Part : MonoBehaviour
         }
     }
 
-    void Start()
-    {
-        
-    }
-
-    void Update()
-    {
-        
-    }
+    public abstract void SetPart(MSB3.Part part);
+    public abstract MSB3.Part Serialize(GameObject obj);
 }

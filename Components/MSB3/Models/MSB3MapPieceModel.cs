@@ -16,8 +16,9 @@ public class MSB3MapPieceModel : MSB3Model
     /// </summary>
     public bool UnkT02, UnkT03;
 
-    public void SetModel(MSB3.Model.MapPiece model)
+    public override void SetModel(MSB3.Model bmodel)
     {
+        var model = (MSB3.Model.MapPiece)bmodel;
         setBaseModel(model);
         UnkT00 = model.UnkT00;
         UnkT01 = model.UnkT01;
@@ -25,7 +26,7 @@ public class MSB3MapPieceModel : MSB3Model
         UnkT03 = model.UnkT03;
     }
 
-    public MSB3.Model.MapPiece Serialize(GameObject parent)
+    public override MSB3.Model Serialize(GameObject parent)
     {
         var model = new MSB3.Model.MapPiece(parent.name);
         _Serialize(model, parent);

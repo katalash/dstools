@@ -50,8 +50,9 @@ public class MSB3EnemyPart : MSB3Part
     /// </summary>
     public float UnkT84;
 
-    public void SetPart(MSB3.Part.Enemy part)
+    public override void SetPart(MSB3.Part bpart)
     {
+        var part = (MSB3.Part.Enemy)bpart;
         setBasePart(part);
         GParamConfig = gameObject.AddComponent<MSB3GParamConfig>();
         GParamConfig.setStruct(part.Gparam);
@@ -68,7 +69,7 @@ public class MSB3EnemyPart : MSB3Part
         UnkT84 = part.UnkT84;
     }
 
-    public MSB3.Part.Enemy Serialize(GameObject parent)
+    public override MSB3.Part Serialize(GameObject parent)
     {
         var part = new MSB3.Part.Enemy(parent.name);
 

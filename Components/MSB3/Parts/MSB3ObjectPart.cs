@@ -23,8 +23,9 @@ public class MSB3ObjectPart : MSB3Part
     /// </summary>
     public int UnkT20, UnkT24, UnkT28, UnkT2C;
 
-    public void SetPart(MSB3.Part.Object part)
+    public override void SetPart(MSB3.Part bpart)
     {
+        var part = (MSB3.Part.Object)bpart;
         setBasePart(part);
         GParamConfig = gameObject.AddComponent<MSB3GParamConfig>();
         GParamConfig.setStruct(part.Gparam);
@@ -41,7 +42,7 @@ public class MSB3ObjectPart : MSB3Part
         UnkT1E = part.UnkT1E;
     }
 
-    public MSB3.Part.Object Serialize(GameObject parent)
+    public override MSB3.Part Serialize(GameObject parent)
     {
         var part = new MSB3.Part.Object(parent.name);
         _Serialize(part, parent);

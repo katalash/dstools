@@ -16,8 +16,9 @@ public class MSB3ConnectCollisionPart : MSB3Part
     /// </summary>
     public byte MapID1, MapID2, MapID3, MapID4;
 
-    public void SetPart(MSB3.Part.ConnectCollision part)
+    public override void SetPart(MSB3.Part bpart)
     {
+        var part = (MSB3.Part.ConnectCollision)bpart;
         setBasePart(part);
         CollisionName = part.CollisionName;
         MapID1 = part.MapID1;
@@ -26,7 +27,7 @@ public class MSB3ConnectCollisionPart : MSB3Part
         MapID4 = part.MapID4;
     }
 
-    public MSB3.Part.ConnectCollision Serialize(GameObject parent)
+    public override MSB3.Part Serialize(GameObject parent)
     {
         var part = new MSB3.Part.ConnectCollision(parent.name);
         _Serialize(part, parent);

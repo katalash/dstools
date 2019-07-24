@@ -6,12 +6,12 @@ using SoulsFormats;
 [AddComponentMenu("Dark Souls 3/Model Declarations/Player")]
 public class MSB3PlayerModel : MSB3Model
 {
-    public void SetModel(MSB3.Model.Player model)
+    public override void SetModel(MSB3.Model model)
     {
         setBaseModel(model);
     }
 
-    public MSB3.Model.Player Serialize(GameObject parent)
+    public override MSB3.Model Serialize(GameObject parent)
     {
         var model = new MSB3.Model.Player(parent.name);
         _Serialize(model, parent);

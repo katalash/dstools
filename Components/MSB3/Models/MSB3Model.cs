@@ -22,13 +22,6 @@ public abstract class MSB3Model : MonoBehaviour
         model.Placeholder = Placeholder;
     }
 
-    void Start()
-    {
-        
-    }
-
-    void Update()
-    {
-        
-    }
+    public abstract void SetModel(MSB3.Model model);
+    public abstract MSB3.Model Serialize(GameObject obj);
 }

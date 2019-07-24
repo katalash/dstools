@@ -6,12 +6,12 @@ using SoulsFormats;
 [AddComponentMenu("Dark Souls 3/Parts/Player")]
 public class MSB3PlayerPart : MSB3Part
 {
-    public void SetPart(MSB3.Part.Player part)
+    public override void SetPart(MSB3.Part part)
     {
         setBasePart(part);
     }
 
-    public MSB3.Part.Player Serialize(GameObject parent)
+    public override MSB3.Part Serialize(GameObject parent)
     {
         var part = new MSB3.Part.Player(parent.name);
         _Serialize(part, parent);

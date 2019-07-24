@@ -6,7 +6,7 @@ using SoulsFormats;
 [AddComponentMenu("Dark Souls 3/Parts/Dummy Enemy")]
 public class MSB3DummyEnemyPart : MSB3EnemyPart
 {
-    public new MSB3.Part.DummyEnemy Serialize(GameObject parent)
+    public override MSB3.Part Serialize(GameObject parent)
     {
         var part = new MSB3.Part.DummyEnemy(parent.name);
         _Serialize(part, parent);

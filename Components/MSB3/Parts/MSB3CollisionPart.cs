@@ -68,8 +68,9 @@ public class MSB3CollisionPart : MSB3Part
 
     public MSB3.Part.Collision.MapVisiblity MapVisType;
 
-    public void SetPart(MSB3.Part.Collision part)
+    public override void SetPart(MSB3.Part bpart)
     {
+        var part = (MSB3.Part.Collision)bpart;
         setBasePart(part);
         GParamConfig = gameObject.AddComponent<MSB3GParamConfig>();
         GParamConfig.setStruct(part.Gparam);
@@ -93,7 +94,7 @@ public class MSB3CollisionPart : MSB3Part
         MapVisType = part.MapVisType;
     }
 
-    public MSB3.Part.Collision Serialize(GameObject parent)
+    public override MSB3.Part Serialize(GameObject parent)
     {
         var part = new MSB3.Part.Collision(parent.name);
         _Serialize(part, parent);
