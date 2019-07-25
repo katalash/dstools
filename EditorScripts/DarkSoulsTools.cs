@@ -917,7 +917,7 @@ public class DarkSoulsTools : EditorWindow
         window.Show();
     }
 
-    GameObject InstantiateRegion(MSB3.Region region, string type, GameObject parent)
+    static GameObject InstantiateRegion(MSB3.Region region, GameObject parent)
     {
         GameObject obj = new GameObject(region.Name);
         obj.transform.position = new Vector3(region.Position.X, region.Position.Y, region.Position.Z);
@@ -961,7 +961,7 @@ public class DarkSoulsTools : EditorWindow
         return obj;
     }
 
-    GameObject InstantiateRegion(MSBS.Region region, string type, GameObject parent)
+    static GameObject InstantiateRegion(MSBS.Region region, string type, GameObject parent)
     {
         GameObject obj = new GameObject(region.Name);
         obj.transform.position = new Vector3(region.Position.X, region.Position.Y, region.Position.Z);
@@ -1020,7 +1020,7 @@ public class DarkSoulsTools : EditorWindow
         return obj;
     }
 
-    GameObject InstantiateRegion(MSBBB.Region region, GameObject parent)
+    static GameObject InstantiateRegion(MSBBB.Region region, GameObject parent)
     {
         GameObject obj = new GameObject(region.Name);
         obj.transform.position = new Vector3(region.Position.X, region.Position.Y, region.Position.Z);
@@ -1077,7 +1077,7 @@ public class DarkSoulsTools : EditorWindow
         return obj;
     }
 
-    GameObject InstantiateRegion(MSB1.Region region, GameObject parent)
+    static GameObject InstantiateRegion(MSB1.Region region, GameObject parent)
     {
         GameObject obj = new GameObject(region.Name);
         obj.transform.position = new Vector3(region.Position.X, region.Position.Y, region.Position.Z);
@@ -1189,6 +1189,31 @@ public class DarkSoulsTools : EditorWindow
         obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
         obj.layer = layer;
         obj.transform.parent = parent.transform;
+    }
+
+    public static void InstantiateDS3Region<T, U>(string regionName, GameObject regionsRoot, List<U> regions) where T : MSB3Region where U : MSB3.Region
+    {
+        GameObject obj = new GameObject(regionName);
+        obj.transform.parent = regionsRoot.transform;
+        foreach (var region in regions)
+        {
+            var reg = InstantiateRegion(region, obj);
+            reg.AddComponent<T>();
+            reg.GetComponent<T>().SetRegion(region);
+        }
+    }
+
+    public static void InstantiateDS3Event<T, U>(string evtName, GameObject eventsRoot, List<U> events) where T : MSB3Event where U : MSB3.Event
+    {
+        GameObject obj = new GameObject(evtName);
+        obj.transform.parent = eventsRoot.transform;
+        foreach (var ev in events)
+        {
+            GameObject evt = new GameObject(ev.Name);
+            evt.AddComponent<T>();
+            evt.GetComponent<T>().SetEvent(ev);
+            evt.transform.parent = obj.transform;
+        }
     }
 
     void onImportDS3Map(object o)
@@ -1348,7 +1373,7 @@ public class DarkSoulsTools : EditorWindow
             foreach (var part in msb.Parts.Players)
             {
                 GameObject obj = new GameObject(part.Name);
-                InitializeDS3Part<MSB3ObjectPart>(obj, part, 11, Players);
+                InitializeDS3Part<MSB3PlayerPart>(obj, part, 11, Players);
             }
 
             GameObject DummyObjects = new GameObject("DummyObjects");
@@ -1370,254 +1395,39 @@ public class DarkSoulsTools : EditorWindow
             //
             // Regions section
             //
-            GameObject Regions = new GameObject("MSBRegions");
-
-            GameObject ActivationAreas = new GameObject("ActivationAreas");
-            ActivationAreas.transform.parent = Regions.transform;
-            foreach (var region in msb.Regions.ActivationAreas)
-            {
-                var reg = InstantiateRegion(region, "Activation Area", ActivationAreas);
-                reg.AddComponent<MSB3ActivationAreaRegion>();
-                reg.GetComponent<MSB3ActivationAreaRegion>().SetRegion(region);
-            }
-
-            GameObject EnvEffBoxes = new GameObject("EnvMapEffectBoxes");
-            EnvEffBoxes.transform.parent = Regions.transform;
-            foreach (var region in msb.Regions.EnvironmentMapEffectBoxes)
-            {
-                var reg = InstantiateRegion(region, "Env Map Effect Box", EnvEffBoxes);
-                reg.AddComponent<MSB3EnvironmentEffectBoxRegion>();
-                reg.GetComponent<MSB3EnvironmentEffectBoxRegion>().SetRegion(region);
-            }
-
-            GameObject EnvMapPoints = new GameObject("EnvMapPoints");
-            EnvMapPoints.transform.parent = Regions.transform;
-            foreach (var region in msb.Regions.EnvironmentMapPoints)
-            {
-                var reg = InstantiateRegion(region, "Env Map Point", EnvMapPoints);
-                reg.AddComponent<MSB3EnvironmentMapPointRegion>();
-                reg.GetComponent<MSB3EnvironmentMapPointRegion>().SetRegion(region);
-            }
-
-            GameObject EventRegions = new GameObject("Events");
-            EventRegions.transform.parent = Regions.transform;
-            foreach (var region in msb.Regions.Events)
-            {
-                var reg = InstantiateRegion(region, "Event", EventRegions);
-                reg.AddComponent<MSB3EventRegion>();
-                reg.GetComponent<MSB3EventRegion>().SetRegion(region);
-            }
-
-            GameObject GeneralRegions = new GameObject("GeneralRegions");
-            GeneralRegions.transform.parent = Regions.transform;
-            foreach (var region in msb.Regions.General)
-            {
-                var reg = InstantiateRegion(region, "General", GeneralRegions);
-                reg.AddComponent<MSB3GeneralRegion>();
-                reg.GetComponent<MSB3GeneralRegion>().SetRegion(region);
-            }
-
-            GameObject InvasionPoints = new GameObject("InvasionPoints");
-            InvasionPoints.transform.parent = Regions.transform;
-            foreach (var region in msb.Regions.InvasionPoints)
-            {
-                var reg = InstantiateRegion(region, "Invasion Point", InvasionPoints);
-                reg.AddComponent<MSB3InvasionPointRegion>();
-                reg.GetComponent<MSB3InvasionPointRegion>().SetRegion(region);
-            }
-
-            GameObject Messages = new GameObject("Messages");
-            Messages.transform.parent = Regions.transform;
-            foreach (var region in msb.Regions.Messages)
-            {
-                var reg = InstantiateRegion(region, "Message", Messages);
-                reg.AddComponent<MSB3MessageRegion>();
-                reg.GetComponent<MSB3MessageRegion>().SetRegion(region);
-            }
-
-            GameObject MuffBoxes = new GameObject("MufflingBox");
-            MuffBoxes.transform.parent = Regions.transform;
-            foreach (var region in msb.Regions.MufflingBoxes)
-            {
-                var reg = InstantiateRegion(region, "Muffling Box", MuffBoxes);
-                reg.AddComponent<MSB3MufflingBoxRegion>();
-                reg.GetComponent<MSB3MufflingBoxRegion>().SetRegion(region);
-            }
-
-            GameObject MuffPortals = new GameObject("MufflingPortals");
-            MuffPortals.transform.parent = Regions.transform;
-            foreach (var region in msb.Regions.MufflingPortals)
-            {
-                var reg = InstantiateRegion(region, "Muffling Portal", MuffPortals);
-                reg.AddComponent<MSB3MufflingPortal>();
-                reg.GetComponent<MSB3MufflingPortal>().SetRegion(region);
-            }
-
-            GameObject SFXRegions = new GameObject("SFX");
-            SFXRegions.transform.parent = Regions.transform;
-            foreach (var region in msb.Regions.SFX)
-            {
-                var reg = InstantiateRegion(region, "SFX", SFXRegions);
-                reg.AddComponent<MSB3SFXRegion>();
-                reg.GetComponent<MSB3SFXRegion>().SetRegion(region);
-            }
-
-            GameObject SoundRegions = new GameObject("Sounds");
-            SoundRegions.transform.parent = Regions.transform;
-            foreach (var region in msb.Regions.Sounds)
-            {
-                var reg = InstantiateRegion(region, "Sound", SoundRegions);
-                reg.AddComponent<MSB3SoundRegion>();
-                reg.GetComponent<MSB3SoundRegion>().SetRegion(region);
-            }
-
-            GameObject SpawnPoints = new GameObject("SpawnPoints");
-            SpawnPoints.transform.parent = Regions.transform;
-            foreach (var region in msb.Regions.SpawnPoints)
-            {
-                var reg = InstantiateRegion(region, "Spawn Point", SpawnPoints);
-                reg.AddComponent<MSB3SpawnPointRegion>();
-                reg.GetComponent<MSB3SpawnPointRegion>().SetRegion(region);
-            }
-
-            GameObject WalkRoutes = new GameObject("WalkRoutes");
-            WalkRoutes.transform.parent = Regions.transform;
-            foreach (var region in msb.Regions.WalkRoutes)
-            {
-                var reg = InstantiateRegion(region, "Walk Route", WalkRoutes);
-                reg.AddComponent<MSB3WalkRouteRegion>();
-                reg.GetComponent<MSB3WalkRouteRegion>().SetRegion(region);
-            }
-
-            GameObject WarpPoints = new GameObject("WarpPoints");
-            WarpPoints.transform.parent = Regions.transform;
-            foreach (var region in msb.Regions.WarpPoints)
-            {
-                var reg = InstantiateRegion(region, "Warp Point", WarpPoints);
-                reg.AddComponent<MSB3WarpPointRegion>();
-                reg.GetComponent<MSB3WarpPointRegion>().SetRegion(region);
-            }
-
-            GameObject WindAreas = new GameObject("WindAreas");
-            WindAreas.transform.parent = Regions.transform;
-            foreach (var region in msb.Regions.WindAreas)
-            {
-                var reg = InstantiateRegion(region, "Wind Area", WindAreas);
-                reg.AddComponent<MSB3WindAreaRegion>();
-                reg.GetComponent<MSB3WindAreaRegion>().SetRegion(region);
-            }
-
-            GameObject WindSFXs = new GameObject("WindSFXRegions");
-            WindSFXs.transform.parent = Regions.transform;
-            foreach (var region in msb.Regions.WindSFX)
-            {
-                var reg = InstantiateRegion(region, "Wind SFX", WindSFXs);
-                reg.AddComponent<MSB3WindSFXRegion>();
-                reg.GetComponent<MSB3WindSFXRegion>().SetRegion(region);
-            }
-
-            GameObject Unk00s = new GameObject("Unk00Regions");
-            Unk00s.transform.parent = Regions.transform;
-            foreach (var region in msb.Regions.Unk00s)
-            {
-                var reg = InstantiateRegion(region, "Unk00", Unk00s);
-                reg.AddComponent<MSB3Unk00Region>();
-                reg.GetComponent<MSB3Unk00Region>().SetRegion(region);
-            }
-
-            GameObject Unk12s = new GameObject("Unk12Regions");
-            Unk12s.transform.parent = Regions.transform;
-            foreach (var region in msb.Regions.Unk12s)
-            {
-                var reg = InstantiateRegion(region, "Unk12", Unk12s);
-                reg.AddComponent<MSB3Unk12Region>();
-                reg.GetComponent<MSB3Unk12Region>().SetRegion(region);
-            }
+            GameObject RegionsSection = new GameObject("MSBRegions");
+            InstantiateDS3Region<MSB3ActivationAreaRegion, MSB3.Region.ActivationArea>("ActivationAreas", RegionsSection, msb.Regions.ActivationAreas);
+            InstantiateDS3Region<MSB3EnvironmentEffectBoxRegion, MSB3.Region.EnvironmentMapEffectBox>("EnvMapEffectBoxes", RegionsSection, msb.Regions.EnvironmentMapEffectBoxes);
+            InstantiateDS3Region<MSB3EnvironmentMapPointRegion, MSB3.Region.EnvironmentMapPoint>("EnvMapPoints", RegionsSection, msb.Regions.EnvironmentMapPoints);
+            InstantiateDS3Region<MSB3EventRegion, MSB3.Region.Event>("Events", RegionsSection, msb.Regions.Events);
+            InstantiateDS3Region<MSB3GeneralRegion, MSB3.Region.General>("GeneralRegions", RegionsSection, msb.Regions.General);
+            InstantiateDS3Region<MSB3InvasionPointRegion, MSB3.Region.InvasionPoint>("InvasionPoints", RegionsSection, msb.Regions.InvasionPoints);
+            InstantiateDS3Region<MSB3MessageRegion, MSB3.Region.Message>("Messages", RegionsSection, msb.Regions.Messages);
+            InstantiateDS3Region<MSB3MufflingBoxRegion, MSB3.Region.MufflingBox>("MufflingBox", RegionsSection, msb.Regions.MufflingBoxes);
+            InstantiateDS3Region<MSB3MufflingPortal, MSB3.Region.MufflingPortal>("MufflingPortals", RegionsSection, msb.Regions.MufflingPortals);
+            InstantiateDS3Region<MSB3SFXRegion, MSB3.Region.SFX>("SFX", RegionsSection, msb.Regions.SFX);
+            InstantiateDS3Region<MSB3SoundRegion, MSB3.Region.Sound>("Sounds", RegionsSection, msb.Regions.Sounds);
+            InstantiateDS3Region<MSB3SpawnPointRegion, MSB3.Region.SpawnPoint>("SpawnPoints", RegionsSection, msb.Regions.SpawnPoints);
+            InstantiateDS3Region<MSB3WalkRouteRegion, MSB3.Region.WalkRoute>("WalkRoutes", RegionsSection, msb.Regions.WalkRoutes);
+            InstantiateDS3Region<MSB3WarpPointRegion, MSB3.Region.WarpPoint>("WarpPoints", RegionsSection, msb.Regions.WarpPoints);
+            InstantiateDS3Region<MSB3WindAreaRegion, MSB3.Region.WindArea>("WindAreas", RegionsSection, msb.Regions.WindAreas);
+            InstantiateDS3Region<MSB3WindSFXRegion, MSB3.Region.WindSFX>("WindSFXRegions", RegionsSection, msb.Regions.WindSFX);
+            InstantiateDS3Region<MSB3Unk00Region, MSB3.Region.Unk00>("Unk00Regions", RegionsSection, msb.Regions.Unk00s);
+            InstantiateDS3Region<MSB3Unk12Region, MSB3.Region.Unk12>("Unk12Regions", RegionsSection, msb.Regions.Unk12s);
 
             //
             // Events Section
             //
             GameObject Events = new GameObject("MSBEvents");
 
-            GameObject Treasures = new GameObject("Treasures");
-            Treasures.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.Treasures)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSB3TreasureEvent>();
-                evt.GetComponent<MSB3TreasureEvent>().SetEvent(ev);
-                evt.transform.parent = Treasures.transform;
-            }
-
-            GameObject Generators = new GameObject("Generators");
-            Generators.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.Generators)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSB3GeneratorEvent>();
-                evt.GetComponent<MSB3GeneratorEvent>().SetEvent(ev);
-                evt.transform.parent = Generators.transform;
-            }
-
-            GameObject ObjActs = new GameObject("ObjActs");
-            ObjActs.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.ObjActs)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSB3ObjActEvent>();
-                evt.GetComponent<MSB3ObjActEvent>().SetEvent(ev);
-                evt.transform.parent = ObjActs.transform;
-            }
-
-            GameObject MapOffsets = new GameObject("MapOffsets");
-            MapOffsets.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.MapOffsets)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSB3MapOffsetEvent>();
-                evt.GetComponent<MSB3MapOffsetEvent>().SetEvent(ev);
-                evt.transform.parent = MapOffsets.transform;
-            }
-
-            GameObject Invasions = new GameObject("Invasions");
-            Invasions.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.PseudoMultiplayers)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSB3InvasionEvent>();
-                evt.GetComponent<MSB3InvasionEvent>().SetEvent(ev);
-                evt.transform.parent = Invasions.transform;
-            }
-
-            GameObject WalkRouteEvents = new GameObject("WalkRoutes");
-            WalkRouteEvents.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.WalkRoutes)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSB3WalkRouteEvent>();
-                evt.GetComponent<MSB3WalkRouteEvent>().SetEvent(ev);
-                evt.transform.parent = WalkRouteEvents.transform;
-            }
-
-            GameObject GroupTours = new GameObject("GroupTours");
-            GroupTours.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.GroupTours)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSB3GroupTourEvent>();
-                evt.GetComponent<MSB3GroupTourEvent>().SetEvent(ev);
-                evt.transform.parent = GroupTours.transform;
-            }
-
-            GameObject Others = new GameObject("Others");
-            Others.transform.parent = Events.transform;
-            foreach (var ev in msb.Events.Others)
-            {
-                GameObject evt = new GameObject(ev.Name);
-                evt.AddComponent<MSB3OtherEvent>();
-                evt.GetComponent<MSB3OtherEvent>().SetEvent(ev);
-                evt.transform.parent = Others.transform;
-            }
+            InstantiateDS3Event<MSB3TreasureEvent, MSB3.Event.Treasure>("Treasures", Events, msb.Events.Treasures);
+            InstantiateDS3Event<MSB3GeneratorEvent, MSB3.Event.Generator>("Generators", Events, msb.Events.Generators);
+            InstantiateDS3Event<MSB3ObjActEvent, MSB3.Event.ObjAct>("ObjActs", Events, msb.Events.ObjActs);
+            InstantiateDS3Event<MSB3MapOffsetEvent, MSB3.Event.MapOffset>("MapOffsets", Events, msb.Events.MapOffsets);
+            InstantiateDS3Event<MSB3InvasionEvent, MSB3.Event.PseudoMultiplayer>("Invasions", Events, msb.Events.PseudoMultiplayers);
+            InstantiateDS3Event<MSB3WalkRouteEvent, MSB3.Event.WalkRoute>("WalkRoutes", Events, msb.Events.WalkRoutes);
+            InstantiateDS3Event<MSB3GroupTourEvent, MSB3.Event.GroupTour>("GroupTours", Events, msb.Events.GroupTours);
+            InstantiateDS3Event<MSB3OtherEvent, MSB3.Event.Other>("Others", Events, msb.Events.Others);
         }
         catch (Exception e)
         {
@@ -3738,6 +3548,30 @@ public class DarkSoulsTools : EditorWindow
         }
     }
 
+    static void SerializeDS3Regions<T, U>(List<U> exportList) where T : MSB3Region where U : MSB3.Region
+    {
+        var parts = FindObjectsOfType<T>();
+        if (parts != null)
+        {
+            foreach (var obj in parts)
+            {
+                exportList.Add((U)obj.Serialize(obj.gameObject));
+            }
+        }
+    }
+
+    static void SerializeDS3Events<T, U>(List<U> exportList) where T : MSB3Event where U : MSB3.Event
+    {
+        var parts = FindObjectsOfType<T>();
+        if (parts != null)
+        {
+            foreach (var obj in parts)
+            {
+                exportList.Add((U)obj.Serialize(obj.gameObject));
+            }
+        }
+    }
+
     void ExportMapDS3()
     {
         var AssetLink = GameObject.Find("MSBAssetLink");
@@ -3766,257 +3600,35 @@ public class DarkSoulsTools : EditorWindow
         SerializeDS3Parts<MSB3ObjectPart, MSB3.Part.Object>(export.Parts.Objects);
         SerializeDS3Parts<MSB3PlayerPart, MSB3.Part.Player>(export.Parts.Players);
 
-        // Export the points/regions
-        var Regions = GameObject.Find("/MSBRegions");
-        if (Regions != null)
-        {
-            var regionActAreas = GetChild(Regions, "ActivationAreas");
-            if (regionActAreas != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB3ActivationAreaRegion>(regionActAreas))
-                {
-                    export.Regions.ActivationAreas.Add(obj.GetComponent<MSB3ActivationAreaRegion>().Serialize(obj));
-                }
-            }
+        // Regions
+        SerializeDS3Regions<MSB3ActivationAreaRegion, MSB3.Region.ActivationArea>(export.Regions.ActivationAreas);
+        SerializeDS3Regions<MSB3EnvironmentEffectBoxRegion, MSB3.Region.EnvironmentMapEffectBox>(export.Regions.EnvironmentMapEffectBoxes);
+        SerializeDS3Regions<MSB3EnvironmentMapPointRegion, MSB3.Region.EnvironmentMapPoint>(export.Regions.EnvironmentMapPoints);
+        SerializeDS3Regions<MSB3EventRegion, MSB3.Region.Event>(export.Regions.Events);
+        SerializeDS3Regions<MSB3GeneralRegion, MSB3.Region.General>(export.Regions.General);
+        SerializeDS3Regions<MSB3InvasionPointRegion, MSB3.Region.InvasionPoint>(export.Regions.InvasionPoints);
+        SerializeDS3Regions<MSB3MessageRegion, MSB3.Region.Message>(export.Regions.Messages);
+        SerializeDS3Regions<MSB3MufflingBoxRegion, MSB3.Region.MufflingBox>(export.Regions.MufflingBoxes);
+        SerializeDS3Regions<MSB3MufflingPortal, MSB3.Region.MufflingPortal>(export.Regions.MufflingPortals);
+        SerializeDS3Regions<MSB3SFXRegion, MSB3.Region.SFX>(export.Regions.SFX);
+        SerializeDS3Regions<MSB3SoundRegion, MSB3.Region.Sound>(export.Regions.Sounds);
+        SerializeDS3Regions<MSB3SpawnPointRegion, MSB3.Region.SpawnPoint>(export.Regions.SpawnPoints);
+        SerializeDS3Regions<MSB3WalkRouteRegion, MSB3.Region.WalkRoute>(export.Regions.WalkRoutes);
+        SerializeDS3Regions<MSB3WarpPointRegion, MSB3.Region.WarpPoint>(export.Regions.WarpPoints);
+        SerializeDS3Regions<MSB3WindAreaRegion, MSB3.Region.WindArea>(export.Regions.WindAreas);
+        SerializeDS3Regions<MSB3WindSFXRegion, MSB3.Region.WindSFX>(export.Regions.WindSFX);
+        SerializeDS3Regions<MSB3Unk00Region, MSB3.Region.Unk00>(export.Regions.Unk00s);
+        SerializeDS3Regions<MSB3Unk12Region, MSB3.Region.Unk12>(export.Regions.Unk12s);
 
-            var regionEnvMapEffectBoxes = GetChild(Regions, "EnvMapEffectBoxes");
-            if (regionEnvMapEffectBoxes != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB3EnvironmentEffectBoxRegion>(regionEnvMapEffectBoxes))
-                {
-                    export.Regions.EnvironmentMapEffectBoxes.Add(obj.GetComponent<MSB3EnvironmentEffectBoxRegion>().Serialize(obj));
-                }
-            }
-
-            var regionEnvMapPoints = GetChild(Regions, "EnvMapPoints");
-            if (regionEnvMapPoints != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB3EnvironmentMapPointRegion>(regionEnvMapPoints))
-                {
-                    export.Regions.EnvironmentMapPoints.Add(obj.GetComponent<MSB3EnvironmentMapPointRegion>().Serialize(obj));
-                }
-            }
-
-            var regionEvents = GetChild(Regions, "Events");
-            if (regionEvents != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB3EventRegion>(regionEvents))
-                {
-                    export.Regions.Events.Add(obj.GetComponent<MSB3EventRegion>().Serialize(obj));
-                }
-            }
-
-            var regionGeneral = GetChild(Regions, "GeneralRegions");
-            if (regionGeneral != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB3GeneralRegion>(regionGeneral))
-                {
-                    export.Regions.General.Add(obj.GetComponent<MSB3GeneralRegion>().Serialize(obj));
-                }
-            }
-
-            var regionInvasionPoints = GetChild(Regions, "InvasionPoints");
-            if (regionInvasionPoints != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB3InvasionPointRegion>(regionInvasionPoints))
-                {
-                    export.Regions.InvasionPoints.Add(obj.GetComponent<MSB3InvasionPointRegion>().Serialize(obj));
-                }
-            }
-
-            var regionMessages = GetChild(Regions, "Messages");
-            if (regionMessages != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB3MessageRegion>(regionMessages))
-                {
-                    export.Regions.Messages.Add(obj.GetComponent<MSB3MessageRegion>().Serialize(obj));
-                }
-            }
-
-            var regionMufflingBox = GetChild(Regions, "MufflingBox");
-            if (regionMufflingBox != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB3MufflingBoxRegion>(regionMufflingBox))
-                {
-                    export.Regions.MufflingBoxes.Add(obj.GetComponent<MSB3MufflingBoxRegion>().Serialize(obj));
-                }
-            }
-
-            var regionMufflingPortals = GetChild(Regions, "MufflingPortals");
-            if (regionMufflingPortals != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB3MufflingPortal>(regionMufflingPortals))
-                {
-                    export.Regions.MufflingPortals.Add(obj.GetComponent<MSB3MufflingPortal>().Serialize(obj));
-                }
-            }
-
-            var regionSFX = GetChild(Regions, "SFX");
-            if (regionSFX != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB3SFXRegion>(regionSFX))
-                {
-                    export.Regions.SFX.Add(obj.GetComponent<MSB3SFXRegion>().Serialize(obj));
-                }
-            }
-
-            var regionSounds = GetChild(Regions, "Sounds");
-            if (regionSounds != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB3SoundRegion>(regionSounds))
-                {
-                    export.Regions.Sounds.Add(obj.GetComponent<MSB3SoundRegion>().Serialize(obj));
-                }
-            }
-
-            var regionSpawnPoints = GetChild(Regions, "SpawnPoints");
-            if (regionSpawnPoints != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB3SpawnPointRegion>(regionSpawnPoints))
-                {
-                    export.Regions.SpawnPoints.Add(obj.GetComponent<MSB3SpawnPointRegion>().Serialize(obj));
-                }
-            }
-
-            var regionWalkRoutes = GetChild(Regions, "WalkRoutes");
-            if (regionWalkRoutes != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB3WalkRouteRegion>(regionWalkRoutes))
-                {
-                    export.Regions.WalkRoutes.Add(obj.GetComponent<MSB3WalkRouteRegion>().Serialize(obj));
-                }
-            }
-
-            var regionWarpPoints = GetChild(Regions, "WarpPoints");
-            if (regionWarpPoints != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB3WarpPointRegion>(regionWarpPoints))
-                {
-                    export.Regions.WarpPoints.Add(obj.GetComponent<MSB3WarpPointRegion>().Serialize(obj));
-                }
-            }
-
-            var regionWindAreas = GetChild(Regions, "WindAreas");
-            if (regionWindAreas != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB3WindAreaRegion>(regionWindAreas))
-                {
-                    export.Regions.WindAreas.Add(obj.GetComponent<MSB3WindAreaRegion>().Serialize(obj));
-                }
-            }
-
-            var regionWindSFX = GetChild(Regions, "WindSFXRegions");
-            if (regionWindSFX != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB3WindSFXRegion>(regionWindSFX))
-                {
-                    export.Regions.WindSFX.Add(obj.GetComponent<MSB3WindSFXRegion>().Serialize(obj));
-                }
-            }
-
-            var regionUnk00 = GetChild(Regions, "Unk00Regions");
-            if (regionUnk00 != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB3Unk00Region>(regionUnk00))
-                {
-                    export.Regions.Unk00s.Add(obj.GetComponent<MSB3Unk00Region>().Serialize(obj));
-                }
-            }
-
-            var regionUnk12 = GetChild(Regions, "Unk12Regions");
-            if (regionUnk12 != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB3Unk12Region>(regionUnk12))
-                {
-                    export.Regions.Unk12s.Add(obj.GetComponent<MSB3Unk12Region>().Serialize(obj));
-                }
-            }
-        }
-        else
-        {
-            throw new Exception("MSB exporter requires a regions section");
-        }
-
-        // Export the points/regions
-        var Events = GameObject.Find("/MSBEvents");
-        if (Events != null)
-        {
-            var eventTreasures = GetChild(Events, "Treasures");
-            if (eventTreasures != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB3TreasureEvent>(eventTreasures))
-                {
-                    export.Events.Treasures.Add(obj.GetComponent<MSB3TreasureEvent>().Serialize(obj));
-                }
-            }
-
-            var eventGenerators = GetChild(Events, "Generators");
-            if (eventGenerators != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB3GeneratorEvent>(eventGenerators))
-                {
-                    export.Events.Generators.Add(obj.GetComponent<MSB3GeneratorEvent>().Serialize(obj));
-                }
-            }
-
-            var eventObjActs = GetChild(Events, "ObjActs");
-            if (eventObjActs != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB3ObjActEvent>(eventObjActs))
-                {
-                    export.Events.ObjActs.Add(obj.GetComponent<MSB3ObjActEvent>().Serialize(obj));
-                }
-            }
-
-            var eventMapOffsets = GetChild(Events, "MapOffsets");
-            if (eventMapOffsets != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB3MapOffsetEvent>(eventMapOffsets))
-                {
-                    export.Events.MapOffsets.Add(obj.GetComponent<MSB3MapOffsetEvent>().Serialize(obj));
-                }
-            }
-
-            var eventInvasions = GetChild(Events, "Invasions");
-            if (eventInvasions != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB3InvasionEvent>(eventInvasions))
-                {
-                    export.Events.PseudoMultiplayers.Add(obj.GetComponent<MSB3InvasionEvent>().Serialize(obj));
-                }
-            }
-
-            var eventWalkRoutes = GetChild(Events, "WalkRoutes");
-            if (eventWalkRoutes != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB3WalkRouteEvent>(eventWalkRoutes))
-                {
-                    export.Events.WalkRoutes.Add(obj.GetComponent<MSB3WalkRouteEvent>().Serialize(obj));
-                }
-            }
-
-            var eventGroupTours = GetChild(Events, "GroupTours");
-            if (eventGroupTours != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB3GroupTourEvent>(eventGroupTours))
-                {
-                    export.Events.GroupTours.Add(obj.GetComponent<MSB3GroupTourEvent>().Serialize(obj));
-                }
-            }
-
-            var eventOthers = GetChild(Events, "Others");
-            if (eventOthers != null)
-            {
-                foreach (var obj in GetChildrenOfType<MSB3OtherEvent>(eventOthers))
-                {
-                    export.Events.Others.Add(obj.GetComponent<MSB3OtherEvent>().Serialize(obj));
-                }
-            }
-        }
-        else
-        {
-            throw new Exception("MSB exporter requires an events section");
-        }
+        // Events
+        SerializeDS3Events<MSB3TreasureEvent, MSB3.Event.Treasure>(export.Events.Treasures);
+        SerializeDS3Events<MSB3GeneratorEvent, MSB3.Event.Generator>(export.Events.Generators);
+        SerializeDS3Events<MSB3ObjActEvent, MSB3.Event.ObjAct>(export.Events.ObjActs);
+        SerializeDS3Events<MSB3MapOffsetEvent, MSB3.Event.MapOffset>(export.Events.MapOffsets);
+        SerializeDS3Events<MSB3InvasionEvent, MSB3.Event.PseudoMultiplayer>(export.Events.PseudoMultiplayers);
+        SerializeDS3Events<MSB3WalkRouteEvent, MSB3.Event.WalkRoute>(export.Events.WalkRoutes);
+        SerializeDS3Events<MSB3GroupTourEvent, MSB3.Event.GroupTour>(export.Events.GroupTours);
+        SerializeDS3Events<MSB3OtherEvent, MSB3.Event.Other>(export.Events.Others);
 
         // Attempt to restore parts pose section from backup map if needed
         if (PreservePartsPose)

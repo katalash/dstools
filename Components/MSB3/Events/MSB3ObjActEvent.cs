@@ -31,8 +31,9 @@ public class MSB3ObjActEvent : MSB3Event
     /// </summary>
     public int EventFlagID;
 
-    public void SetEvent(MSB3.Event.ObjAct evt)
+    public override void SetEvent(MSB3.Event bevt)
     {
+        var evt = (MSB3.Event.ObjAct)bevt;
         setBaseEvent(evt);
         ObjActEntityID = evt.ObjActEntityID;
         PartName2 = evt.PartName2;
@@ -41,7 +42,7 @@ public class MSB3ObjActEvent : MSB3Event
         EventFlagID = evt.EventFlagID;
     }
 
-    public MSB3.Event.ObjAct Serialize(GameObject parent)
+    public override MSB3.Event Serialize(GameObject parent)
     {
         var evt = new MSB3.Event.ObjAct(parent.name);
         _Serialize(evt, parent);

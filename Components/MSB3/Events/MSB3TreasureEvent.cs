@@ -31,8 +31,9 @@ public class MSB3TreasureEvent : MSB3Event
     /// </summary>
     public bool StartDisabled;
 
-    public void SetEvent(MSB3.Event.Treasure evt)
+    public override void SetEvent(MSB3.Event bevt)
     {
+        var evt = (MSB3.Event.Treasure)bevt;
         setBaseEvent(evt);
         PartName2 = evt.PartName2;
         ItemLot1 = evt.ItemLot1;
@@ -42,7 +43,7 @@ public class MSB3TreasureEvent : MSB3Event
         StartDisabled = evt.StartDisabled;
     }
 
-    public MSB3.Event.Treasure Serialize(GameObject parent)
+    public override MSB3.Event Serialize(GameObject parent)
     {
         var evt = new MSB3.Event.Treasure(parent.name);
         _Serialize(evt, parent);

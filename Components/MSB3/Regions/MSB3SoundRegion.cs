@@ -21,15 +21,16 @@ public class MSB3SoundRegion : MSB3Region
     /// </summary>
     public string[] ChildRegionNames;
 
-    public void SetRegion(MSB3.Region.Sound region)
+    public override void SetRegion(MSB3.Region bregion)
     {
+        var region = (MSB3.Region.Sound)bregion;
         setBaseRegion(region);
         SoundType = region.SoundType;
         SoundID = region.SoundID;
         ChildRegionNames = region.ChildRegionNames;
     }
 
-    public MSB3.Region.Sound Serialize(GameObject parent)
+    public override MSB3.Region Serialize(GameObject parent)
     {
         var region = new MSB3.Region.Sound(parent.name);
         _Serialize(region, parent);

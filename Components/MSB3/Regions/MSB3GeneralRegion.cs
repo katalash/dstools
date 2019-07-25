@@ -6,12 +6,12 @@ using SoulsFormats;
 [AddComponentMenu("Dark Souls 3/Regions/General")]
 public class MSB3GeneralRegion : MSB3Region
 {
-    public void SetRegion(MSB3.Region.General region)
+    public override void SetRegion(MSB3.Region region)
     {
         setBaseRegion(region);
     }
 
-    public MSB3.Region.General Serialize(GameObject parent)
+    public override MSB3.Region Serialize(GameObject parent)
     {
         var region = new MSB3.Region.General(parent.name);
         _Serialize(region, parent);

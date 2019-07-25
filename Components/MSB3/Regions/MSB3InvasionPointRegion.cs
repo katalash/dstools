@@ -11,13 +11,14 @@ public class MSB3InvasionPointRegion : MSB3Region
     /// </summary>
     public int Priority;
 
-    public void SetRegion(MSB3.Region.InvasionPoint region)
+    public override void SetRegion(MSB3.Region bregion)
     {
+        var region = (MSB3.Region.InvasionPoint)bregion;
         setBaseRegion(region);
         Priority = region.Priority;
     }
 
-    public MSB3.Region.InvasionPoint Serialize(GameObject parent)
+    public override MSB3.Region Serialize(GameObject parent)
     {
         var region = new MSB3.Region.InvasionPoint(parent.name);
         _Serialize(region, parent);

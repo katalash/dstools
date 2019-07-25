@@ -11,13 +11,14 @@ public class MSB3EnvironmentMapPointRegion : MSB3Region
     /// </summary>
     public int UnkFlags;
 
-    public void SetRegion(MSB3.Region.EnvironmentMapPoint region)
+    public override void SetRegion(MSB3.Region bregion)
     {
+        var region = (MSB3.Region.EnvironmentMapPoint)bregion;
         setBaseRegion(region);
         UnkFlags = region.UnkFlags;
     }
 
-    public MSB3.Region.EnvironmentMapPoint Serialize(GameObject parent)
+    public override MSB3.Region Serialize(GameObject parent)
     {
         var region = new MSB3.Region.EnvironmentMapPoint(parent.name);
         _Serialize(region, parent);

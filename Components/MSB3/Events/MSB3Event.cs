@@ -42,4 +42,7 @@ public abstract class MSB3Event : MonoBehaviour
         evt.PointName = (PointName == "") ? null : PointName;
         evt.EventEntityID = EventEntityID;
     }
+
+    public abstract void SetEvent(MSB3.Event evt);
+    public abstract MSB3.Event Serialize(GameObject obj);
 }

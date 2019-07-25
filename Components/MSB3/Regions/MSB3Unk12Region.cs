@@ -6,12 +6,12 @@ using SoulsFormats;
 [AddComponentMenu("Dark Souls 3/Regions/Unk 12")]
 public class MSB3Unk12Region : MSB3Region
 {
-    public void SetRegion(MSB3.Region.Unk12 region)
+    public override void SetRegion(MSB3.Region region)
     {
         setBaseRegion(region);
     }
 
-    public MSB3.Region.Unk12 Serialize(GameObject parent)
+    public override MSB3.Region Serialize(GameObject parent)
     {
         var part = new MSB3.Region.Unk12(parent.name);
         _Serialize(part, parent);

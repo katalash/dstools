@@ -16,14 +16,15 @@ public class MSB3WalkRouteEvent : MSB3Event
     /// </summary>
     public string[] WalkPointNames;
 
-    public void SetEvent(MSB3.Event.WalkRoute evt)
+    public override void SetEvent(MSB3.Event bevt)
     {
+        var evt = (MSB3.Event.WalkRoute)bevt;
         setBaseEvent(evt);
         UnkT00 = evt.UnkT00;
         WalkPointNames = evt.WalkPointNames;
     }
 
-    public MSB3.Event.WalkRoute Serialize(GameObject parent)
+    public override MSB3.Event Serialize(GameObject parent)
     {
         var evt = new MSB3.Event.WalkRoute(parent.name);
         _Serialize(evt, parent);

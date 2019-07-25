@@ -31,8 +31,9 @@ public class MSB3EnvironmentEffectBoxRegion : MSB3Region
     /// </summary>
     public short UnkT0A;
 
-    public void SetRegion(MSB3.Region.EnvironmentMapEffectBox region)
+    public override void SetRegion(MSB3.Region bregion)
     {
+        var region = (MSB3.Region.EnvironmentMapEffectBox)bregion;
         setBaseRegion(region);
         UnkT00 = region.UnkT00;
         Compare = region.Compare;
@@ -41,7 +42,7 @@ public class MSB3EnvironmentEffectBoxRegion : MSB3Region
         UnkT0A = region.UnkT0A;
     }
 
-    public MSB3.Region.EnvironmentMapEffectBox Serialize(GameObject parent)
+    public override MSB3.Region Serialize(GameObject parent)
     {
         var region = new MSB3.Region.EnvironmentMapEffectBox(parent.name);
         _Serialize(region, parent);

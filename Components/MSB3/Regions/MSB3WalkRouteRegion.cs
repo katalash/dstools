@@ -6,12 +6,12 @@ using SoulsFormats;
 [AddComponentMenu("Dark Souls 3/Regions/Walk Route")]
 public class MSB3WalkRouteRegion : MSB3Region
 {
-    public void SetRegion(MSB3.Region.WalkRoute region)
+    public override void SetRegion(MSB3.Region region)
     {
         setBaseRegion(region);
     }
 
-    public MSB3.Region.WalkRoute Serialize(GameObject parent)
+    public override MSB3.Region Serialize(GameObject parent)
     {
         var part = new MSB3.Region.WalkRoute(parent.name);
         _Serialize(part, parent);

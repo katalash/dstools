@@ -6,12 +6,12 @@ using SoulsFormats;
 [AddComponentMenu("Dark Souls 3/Regions/Wind Area")]
 public class MSB3WindAreaRegion : MSB3Region
 {
-    public void SetRegion(MSB3.Region.WindArea region)
+    public override void SetRegion(MSB3.Region region)
     {
         setBaseRegion(region);
     }
 
-    public MSB3.Region.WindArea Serialize(GameObject parent)
+    public override MSB3.Region Serialize(GameObject parent)
     {
         var part = new MSB3.Region.WindArea(parent.name);
         _Serialize(part, parent);

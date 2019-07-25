@@ -16,14 +16,15 @@ public class MSB3OtherEvent : MSB3Event
     /// </summary>
     public int SoundIDMaybe;
 
-    public void SetEvent(MSB3.Event.Other evt)
+    public override void SetEvent(MSB3.Event bevt)
     {
+        var evt = (MSB3.Event.Other)bevt;
         setBaseEvent(evt);
         SoundTypeMaybe = evt.SoundTypeMaybe;
         SoundIDMaybe = evt.SoundIDMaybe;
     }
 
-    public MSB3.Event.Other Serialize(GameObject parent)
+    public override MSB3.Event Serialize(GameObject parent)
     {
         var evt = new MSB3.Event.Other(parent.name);
         _Serialize(evt, parent);

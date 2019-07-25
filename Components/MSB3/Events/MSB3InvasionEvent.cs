@@ -41,8 +41,9 @@ public class MSB3InvasionEvent : MSB3Event
     /// </summary>
     public int UnkT18;
 
-    public void SetEvent(MSB3.Event.PseudoMultiplayer evt)
+    public override void SetEvent(MSB3.Event bevt)
     {
+        var evt = (MSB3.Event.PseudoMultiplayer)bevt;
         setBaseEvent(evt);
         HostEventEntityID = evt.HostEventEntityID;
         InvasionEventEntityID = evt.InvasionEventEntityID;
@@ -53,7 +54,7 @@ public class MSB3InvasionEvent : MSB3Event
         UnkT18 = evt.UnkT18;
     }
 
-    public MSB3.Event.PseudoMultiplayer Serialize(GameObject parent)
+    public override MSB3.Event Serialize(GameObject parent)
     {
         var evt = new MSB3.Event.PseudoMultiplayer(parent.name);
         _Serialize(evt, parent);

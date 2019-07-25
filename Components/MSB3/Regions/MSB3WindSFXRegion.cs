@@ -16,14 +16,15 @@ public class MSB3WindSFXRegion : MSB3Region
     /// </summary>
     public string WindAreaName;
 
-    public void SetRegion(MSB3.Region.WindSFX region)
+    public override void SetRegion(MSB3.Region bregion)
     {
+        var region = (MSB3.Region.WindSFX)bregion;
         setBaseRegion(region);
         FFXID = region.FFXID;
         WindAreaName = region.WindAreaName;
     }
 
-    public MSB3.Region.WindSFX Serialize(GameObject parent)
+    public override MSB3.Region Serialize(GameObject parent)
     {
         var region = new MSB3.Region.WindSFX(parent.name);
         _Serialize(region, parent);

@@ -16,15 +16,16 @@ public class MSB3GroupTourEvent : MSB3Event
     /// </summary>
     public string[] GroupPartsNames;
 
-    public void SetEvent(MSB3.Event.GroupTour evt)
+    public override void SetEvent(MSB3.Event bevt)
     {
+        var evt = (MSB3.Event.GroupTour)bevt;
         setBaseEvent(evt);
         PlatoonIDScriptActivate = evt.PlatoonIDScriptActivate;
         State = evt.State;
         GroupPartsNames = evt.GroupPartsNames;
     }
 
-    public MSB3.Event.GroupTour Serialize(GameObject parent)
+    public override MSB3.Event Serialize(GameObject parent)
     {
         var evt = new MSB3.Event.GroupTour(parent.name);
         _Serialize(evt, parent);

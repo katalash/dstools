@@ -11,13 +11,14 @@ public class MSB3SpawnPointRegion : MSB3Region
     /// </summary>
     public int UnkT00;
 
-    public void SetRegion(MSB3.Region.SpawnPoint region)
+    public override void SetRegion(MSB3.Region bregion)
     {
+        var region = (MSB3.Region.SpawnPoint)bregion;
         setBaseRegion(region);
         UnkT00 = region.UnkT00;
     }
 
-    public MSB3.Region.SpawnPoint Serialize(GameObject parent)
+    public override MSB3.Region Serialize(GameObject parent)
     {
         var part = new MSB3.Region.SpawnPoint(parent.name);
         _Serialize(part, parent);

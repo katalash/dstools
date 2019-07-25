@@ -147,4 +147,7 @@ public abstract class MSB3Region : MonoBehaviour
             throw new Exception($@"Region {parent.name} has no shape. Attach a spherical, box, or capsule collider.");
         }
     }
+
+    public abstract void SetRegion(MSB3.Region region);
+    public abstract MSB3.Region Serialize(GameObject obj);
 }

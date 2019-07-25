@@ -16,14 +16,15 @@ public class MSB3SFXRegion : MSB3Region
     /// </summary>
     public bool StartDisabled;
 
-    public void SetRegion(MSB3.Region.SFX region)
+    public override void SetRegion(MSB3.Region bregion)
     {
+        var region = (MSB3.Region.SFX)bregion;
         setBaseRegion(region);
         FFXID = region.FFXID;
         StartDisabled = region.StartDisabled;
     }
 
-    public MSB3.Region.SFX Serialize(GameObject parent)
+    public override MSB3.Region Serialize(GameObject parent)
     {
         var region = new MSB3.Region.SFX(parent.name);
         _Serialize(region, parent);

@@ -16,14 +16,15 @@ public class MSB3MapOffsetEvent : MSB3Event
     /// </summary>
     public float Degree;
 
-    public void SetEvent(MSB3.Event.MapOffset evt)
+    public override void SetEvent(MSB3.Event bevt)
     {
+        var evt = (MSB3.Event.MapOffset)bevt;
         setBaseEvent(evt);
         Position = new Vector3(evt.Position.X, evt.Position.Y, evt.Position.Z);
         Degree = evt.Degree;
     }
 
-    public MSB3.Event.MapOffset Serialize(GameObject parent)
+    public override MSB3.Event Serialize(GameObject parent)
     {
         var evt = new MSB3.Event.MapOffset(parent.name);
         _Serialize(evt, parent);

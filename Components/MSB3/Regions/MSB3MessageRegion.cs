@@ -21,15 +21,16 @@ public class MSB3MessageRegion : MSB3Region
     /// </summary>
     public bool Hidden;
 
-    public void SetRegion(MSB3.Region.Message region)
+    public override void SetRegion(MSB3.Region bregion)
     {
+        var region = (MSB3.Region.Message)bregion;
         setBaseRegion(region);
         MessageID = region.MessageID;
         UnkT02 = region.UnkT02;
         Hidden = region.Hidden;
     }
 
-    public MSB3.Region.Message Serialize(GameObject parent)
+    public override MSB3.Region Serialize(GameObject parent)
     {
         var region = new MSB3.Region.Message(parent.name);
         _Serialize(region, parent);

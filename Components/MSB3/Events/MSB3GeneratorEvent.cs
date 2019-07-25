@@ -56,8 +56,9 @@ public class MSB3GeneratorEvent : MSB3Event
     /// </summary>
     public float UnkT14, UnkT18;
 
-    public void SetEvent(MSB3.Event.Generator evt)
+    public override void SetEvent(MSB3.Event bevt)
     {
+        var evt = (MSB3.Event.Generator)bevt;
         setBaseEvent(evt);
         MaxNum = evt.MaxNum;
         LimitNum = evt.LimitNum;
@@ -72,7 +73,7 @@ public class MSB3GeneratorEvent : MSB3Event
         UnkT18 = evt.UnkT18;
     }
 
-    public MSB3.Event.Generator Serialize(GameObject parent)
+    public override MSB3.Event Serialize(GameObject parent)
     {
         var evt = new MSB3.Event.Generator(parent.name);
         _Serialize(evt, parent);
