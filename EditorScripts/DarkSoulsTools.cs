@@ -3110,7 +3110,8 @@ public class DarkSoulsTools : EditorWindow
             }
 
             // Save a backup if one doesn't exist
-            if (ModProjectDirectory == null && !File.Exists(btlal.BTLPath + ".gibhd.backup"))
+            if (ModProjectDirectory == null && (!File.Exists(btlal.BTLPath + ".gibhd.backup")
+                && !File.Exists(btlal.BTLPath + ".backup")))
             {
                 if (type == GameType.DarkSoulsIISOTFS)
                 {
@@ -3280,6 +3281,8 @@ public class DarkSoulsTools : EditorWindow
             {
                 exportList.Add((U)obj.Serialize(obj.gameObject));
             }
+            // Sort because engine acts weird if model names aren't in order
+            exportList.Sort((o1, o2) => o1.ModelName.CompareTo(o2.ModelName));
         }
     }
 
@@ -3292,6 +3295,7 @@ public class DarkSoulsTools : EditorWindow
             {
                 exportList.Add((U)obj.Serialize(obj.gameObject));
             }
+            exportList.Sort((o1, o2) => o1.Name.CompareTo(o2.Name));
         }
     }
 
@@ -3394,6 +3398,7 @@ public class DarkSoulsTools : EditorWindow
             {
                 exportList.Add((U)obj.Serialize(obj.gameObject));
             }
+            exportList.Sort((o1, o2) => o1.Name.CompareTo(o2.Name));
         }
     }
 
@@ -3406,6 +3411,8 @@ public class DarkSoulsTools : EditorWindow
             {
                 exportList.Add((U)obj.Serialize(obj.gameObject));
             }
+            // Sort because engine acts weird if model names aren't in order
+            exportList.Sort((o1, o2) => o1.ModelName.CompareTo(o2.ModelName));
         }
     }
 
@@ -3533,6 +3540,7 @@ public class DarkSoulsTools : EditorWindow
             {
                 exportList.Add((U)obj.Serialize(obj.gameObject));
             }
+            exportList.Sort((o1, o2) => o1.Name.CompareTo(o2.Name));
         }
     }
 
@@ -3545,6 +3553,8 @@ public class DarkSoulsTools : EditorWindow
             {
                 exportList.Add((U)obj.Serialize(obj.gameObject));
             }
+            // Sort because engine acts weird if model names aren't in order
+            exportList.Sort((o1, o2) => o1.ModelName.CompareTo(o2.ModelName));
         }
     }
 
