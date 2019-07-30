@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Numerics;
@@ -863,20 +864,6 @@ namespace SoulsFormats
         }
 
         /// <summary>
-        /// Reads a length-prefixed Shift JIS string, asserts the specified terminator, and aligns the stream to 0x4.
-        /// </summary>
-        public string ReadShiftJISLengthPrefixed(byte terminator)
-        {
-            int length = ReadInt32();
-            string result = "";
-            if (length > 0)
-                result = ReadChars(ShiftJIS, length);
-            AssertByte(terminator);
-            Pad(4);
-            return result;
-        }
-
-        /// <summary>
         /// Reads a null-terminated Shift JIS string from the specified position without advancing the stream.
         /// </summary>
         public string GetShiftJIS(long offset)
@@ -1012,6 +999,54 @@ namespace SoulsFormats
                 if (bytes[i] != pattern)
                     throw new InvalidDataException($"Expected {length} 0x{pattern:X2}, got {bytes[i]:X2} at position {i}");
             }
+        }
+
+        /// <summary>
+        /// Reads a 4-byte color in ARGB order.
+        /// </summary>
+        public Color ReadARGB()
+        {
+            byte a = br.ReadByte();
+            byte r = br.ReadByte();
+            byte g = br.ReadByte();
+            byte b = br.ReadByte();
+            return Color.FromArgb(a, r, g, b);
+        }
+
+        /// <summary>
+        /// Reads a 4-byte color in ABGR order.
+        /// </summary>
+        public Color ReadABGR()
+        {
+            byte a = br.ReadByte();
+            byte b = br.ReadByte();
+            byte g = br.ReadByte();
+            byte r = br.ReadByte();
+            return Color.FromArgb(a, r, g, b);
+        }
+
+        /// <summary>
+        /// Reads a 4-byte color in RGBA order.
+        /// </summary>
+        public Color ReadRGBA()
+        {
+            byte r = br.ReadByte();
+            byte g = br.ReadByte();
+            byte b = br.ReadByte();
+            byte a = br.ReadByte();
+            return Color.FromArgb(a, r, g, b);
+        }
+
+        /// <summary>
+        /// Reads a 4-byte color in BGRA order.
+        /// </summary>
+        public Color ReadBGRA()
+        {
+            byte b = br.ReadByte();
+            byte g = br.ReadByte();
+            byte r = br.ReadByte();
+            byte a = br.ReadByte();
+            return Color.FromArgb(a, r, g, b);
         }
         #endregion
     }

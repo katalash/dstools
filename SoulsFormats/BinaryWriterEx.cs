@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Numerics;
 using System.Text;
@@ -605,19 +606,6 @@ namespace SoulsFormats
         }
 
         /// <summary>
-        /// Writes a length-prefixed Shift JIS stream with the specified terminator and aligns the stream to 0x4.
-        /// </summary>
-        public void WriteShiftJISLengthPrefixed(string text, byte terminator)
-        {
-            byte[] bytes = ShiftJIS.GetBytes(text);
-            WriteInt32(bytes.Length);
-            if (bytes.Length > 0)
-                WriteBytes(bytes);
-            WriteByte(terminator);
-            Pad(4);
-        }
-
-        /// <summary>
         /// Writes a UTF-16 string, with null terminator if specified.
         /// </summary>
         public void WriteUTF16(string text, bool terminate = false)
@@ -704,6 +692,50 @@ namespace SoulsFormats
                     bytes[i] = pattern;
             }
             WriteBytes(bytes);
+        }
+
+        /// <summary>
+        /// Writes a 4-byte color in ARGB order.
+        /// </summary>
+        public void WriteARGB(Color color)
+        {
+            bw.Write(color.A);
+            bw.Write(color.R);
+            bw.Write(color.G);
+            bw.Write(color.B);
+        }
+
+        /// <summary>
+        /// Writes a 4-byte color in ABGR order.
+        /// </summary>
+        public void WriteABGR(Color color)
+        {
+            bw.Write(color.A);
+            bw.Write(color.B);
+            bw.Write(color.G);
+            bw.Write(color.R);
+        }
+
+        /// <summary>
+        /// Writes a 4-byte color in RGBA order.
+        /// </summary>
+        public void WriteRGBA(Color color)
+        {
+            bw.Write(color.R);
+            bw.Write(color.G);
+            bw.Write(color.B);
+            bw.Write(color.A);
+        }
+
+        /// <summary>
+        /// Writes a 4-byte color in BGRA order.
+        /// </summary>
+        public void WriteBGRA(Color color)
+        {
+            bw.Write(color.B);
+            bw.Write(color.G);
+            bw.Write(color.R);
+            bw.Write(color.A);
         }
         #endregion
     }

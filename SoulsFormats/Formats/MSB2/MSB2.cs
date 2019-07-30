@@ -1,143 +1,261 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.IO;
+using System.Text.RegularExpressions;
 
 namespace SoulsFormats
 {
     /// <summary>
-    /// Extremely barebones support for DS2 MSBs, reading only models and part positions.
+    /// A map layout file used in DS2: SotFS. Extension: .msb
     /// </summary>
     public partial class MSB2 : SoulsFile<MSB2>
     {
         /// <summary>
-        /// Models in this MSB.
+        /// Model files available for parts to use.
         /// </summary>
-        public ModelSection Models;
+        public ModelParam Models { get; set; }
 
         /// <summary>
-        /// Parts in this MSB.
+        /// Abstract entities that set map properties or control behaviors.
         /// </summary>
-        public PartsSection Parts;
+        public EventParam Events { get; set; }
+
+        /// <summary>
+        /// Points or volumes that trigger certain behaviors.
+        /// </summary>
+        public PointParam Regions { get; set; }
+
+        /// <summary>
+        /// Concrete entities in the map.
+        /// </summary>
+        public PartsParam Parts { get; set; }
+
+        /// <summary>
+        /// Predetermined poses applied to objects such as corpses.
+        /// </summary>
+        public List<PartPose> PartPoses { get; set; }
+
+        /// <summary>
+        /// Creates an empty MSB2.
+        /// </summary>
+        public MSB2()
+        {
+            Models = new ModelParam();
+            Events = new EventParam();
+            Regions = new PointParam();
+            Parts = new PartsParam();
+            PartPoses = new List<PartPose>();
+        }
 
         internal override bool Is(BinaryReaderEx br)
         {
-            string magic = br.GetASCII(0, 4);
-            return magic == "MSB ";
-        }
+            if (br.Length < 0x14)
+                return false;
 
-        internal struct Entries
-        {
-            public List<Model> Models;
-            //public List<Event> Events;
-            //public List<Region> Regions;
-            //public List<Route> Routes;
-            //public List<Layer> Layers;
-            public List<Part> Parts;
-            //public List<string> BoneNames;
+            br.BigEndian = false;
+            string magic = br.GetASCII(0, 4);
+            int modelVersion = br.GetInt32(0x10);
+            return magic == "MSB " && modelVersion == 5;
         }
 
         internal override void Read(BinaryReaderEx br)
         {
             br.BigEndian = false;
-
             br.AssertASCII("MSB ");
             br.AssertInt32(1);
-            // Header size/data start
             br.AssertInt32(0x10);
+            br.AssertBoolean(false); // isBigEndian
+            br.AssertBoolean(false); // isBitBigEndian
+            br.AssertByte(1); // textEncoding
+            br.AssertSByte(-1); // is64BitOffset
 
-            // Probably bytes, just guessing
-            br.AssertByte(0);
-            br.AssertByte(0);
-            br.AssertByte(1);
-            br.AssertByte(0xFF);
+            Entries entries;
+            Models = new ModelParam();
+            entries.Models = Models.Read(br);
+            Events = new EventParam();
+            entries.Events = Events.Read(br);
+            Regions = new PointParam();
+            entries.Regions = Regions.Read(br);
+            new RouteParam().Read(br);
+            new LayerParam().Read(br);
+            Parts = new PartsParam();
+            entries.Parts = Parts.Read(br);
+            PartPoses = new MapstudioPartsPose().Read(br);
+            entries.BoneNames = new MapstudioBoneName().Read(br);
 
-            Entries entries = default;
+            if (br.Position != 0)
+                throw new InvalidDataException($"The next param offset of the final param should be 0, but it was 0x{br.Position:X}.");
 
-            long nextSectionOffset = br.Position;
-            while (nextSectionOffset != 0)
-            {
-                br.Position = nextSectionOffset;
-
-                int unk1 = br.ReadInt32();
-                int offsets = br.ReadInt32() - 1;
-                long typeOffset = br.ReadInt64();
-                string type = br.GetUTF16(typeOffset);
-
-                switch (type)
-                {
-                    case "MODEL_PARAM_ST":
-                        Models = new ModelSection(br, unk1);
-                        entries.Models = Models.Read(br, offsets);
-                        break;
-
-                    //case "EVENT_PARAM_ST":
-                    //    Events = new EventSection(br, unk1);
-                    //    entries.Events = Events.Read(br, offsets);
-                    //    break;
-
-                    //case "POINT_PARAM_ST":
-                    //    Regions = new PointSection(br, unk1);
-                    //    entries.Regions = Regions.Read(br, offsets);
-                    //    break;
-
-                    //case "ROUTE_PARAM_ST":
-                    //    Routes = new RouteSection(br, unk1);
-                    //    entries.Routes = Routes.Read(br, offsets);
-                    //    break;
-
-                    //case "LAYER_PARAM_ST":
-                    //    Layers = new LayerSection(br, unk1);
-                    //    entries.Layers = Layers.Read(br, offsets);
-                    //    break;
-
-                    case "PARTS_PARAM_ST":
-                        Parts = new PartsSection(br, unk1);
-                        entries.Parts = Parts.Read(br, offsets);
-                        break;
-
-                    //case "MAPSTUDIO_PARTS_POSE_ST":
-                    //    PartsPoses = new PartsPoseSection(br, unk1, offsets);
-                    //    break;
-
-                    //case "MAPSTUDIO_BONE_NAME_STRING":
-                    //    BoneNames = new BoneNameSection(br, unk1);
-                    //    entries.BoneNames = BoneNames.Read(br, offsets);
-                    //    break;
-
-                    default:
-                        //throw new NotImplementedException($"Unimplemented section: {type}");
-                        br.Skip(offsets * 8);
-                        break;
-                }
-
-                nextSectionOffset = br.ReadInt64();
-            }
-
-            //DisambiguateNames(entries.Events);
             DisambiguateNames(entries.Models);
             DisambiguateNames(entries.Parts);
-            //DisambiguateNames(entries.Regions);
+            DisambiguateNames(entries.BoneNames);
 
-            //Events.GetNames(this, entries);
-            Parts.GetNames(this, entries);
-            //Regions.GetNames(this, entries);
+            foreach (Part part in entries.Parts)
+                part.GetNames(this, entries);
+            foreach (PartPose pose in PartPoses)
+                pose.GetNames(entries);
         }
 
         internal override void Write(BinaryWriterEx bw)
         {
-            throw new NotImplementedException();
+            Entries entries;
+            entries.Models = Models.GetEntries();
+            entries.Events = Events.GetEntries();
+            entries.Regions = Regions.GetEntries();
+            entries.Parts = Parts.GetEntries();
+            entries.BoneNames = new List<BoneName>();
+
+            Lookups lookups;
+            lookups.Models = MakeNameLookup(entries.Models);
+            lookups.Parts = MakeNameLookup(entries.Parts);
+            lookups.Collisions = MakeNameLookup(Parts.Collisions);
+            lookups.BoneNames = new Dictionary<string, int>();
+
+            Models.DiscriminateModels();
+            foreach (Part part in entries.Parts)
+                part.GetIndices(lookups);
+            foreach (PartPose pose in PartPoses)
+                pose.GetIndices(lookups, entries);
+
+            bw.BigEndian = false;
+            bw.WriteASCII("MSB ");
+            bw.WriteInt32(1);
+            bw.WriteInt32(0x10);
+            bw.WriteBoolean(false);
+            bw.WriteBoolean(false);
+            bw.WriteByte(1);
+            bw.WriteByte(0xFF);
+
+            Models.Write(bw, entries.Models);
+            bw.FillInt64("NextParamOffset", bw.Position);
+            Events.Write(bw, entries.Events);
+            bw.FillInt64("NextParamOffset", bw.Position);
+            Regions.Write(bw, entries.Regions);
+            bw.FillInt64("NextParamOffset", bw.Position);
+            new RouteParam().Write(bw, new List<Entry>());
+            bw.FillInt64("NextParamOffset", bw.Position);
+            new LayerParam().Write(bw, new List<Entry>());
+            bw.FillInt64("NextParamOffset", bw.Position);
+            Parts.Write(bw, entries.Parts);
+            bw.FillInt64("NextParamOffset", bw.Position);
+            new MapstudioPartsPose().Write(bw, PartPoses);
+            bw.FillInt64("NextParamOffset", bw.Position);
+            new MapstudioBoneName().Write(bw, entries.BoneNames);
+            bw.FillInt64("NextParamOffset", 0);
         }
 
-        private static void DisambiguateNames<T>(List<T> entries) where T : Entry
+        internal struct Entries
+        {
+            public List<Model> Models;
+            public List<Event> Events;
+            public List<Region> Regions;
+            public List<Part> Parts;
+            public List<BoneName> BoneNames;
+        }
+
+        internal struct Lookups
+        {
+            public Dictionary<string, int> Models;
+            public Dictionary<string, int> Parts;
+            public Dictionary<string, int> Collisions;
+            public Dictionary<string, int> BoneNames;
+        }
+
+        /// <summary>
+        /// A generic entry in an MSB param.
+        /// </summary>
+        public abstract class Entry
+        {
+            internal abstract void Write(BinaryWriterEx bw, int index);
+        }
+
+        /// <summary>
+        /// A generic entry in an MSB param that has a name.
+        /// </summary>
+        public abstract class NamedEntry : Entry
+        {
+            /// <summary>
+            /// The name of this entry; should generally be unique.
+            /// </summary>
+            public string Name { get; set; }
+        }
+
+        /// <summary>
+        /// A collection of entries in the MSB that share common properties.
+        /// </summary>
+        public abstract class Param<T> where T : Entry
+        {
+            internal abstract string Name { get; }
+            internal abstract int Version { get; }
+
+            internal List<T> Read(BinaryReaderEx br)
+            {
+                br.AssertInt32(Version);
+                int offsetCount = br.ReadInt32();
+                long nameOffset = br.ReadInt64();
+                long[] entryOffsets = br.ReadInt64s(offsetCount - 1);
+                long nextParamOffset = br.ReadInt64();
+
+                string name = br.GetUTF16(nameOffset);
+                if (name != Name)
+                    throw new InvalidDataException($"Expected param \"{Name}\", got param \"{name}\"");
+
+                var entries = new List<T>(offsetCount - 1);
+                foreach (long offset in entryOffsets)
+                {
+                    br.Position = offset;
+                    entries.Add(ReadEntry(br));
+                }
+                br.Position = nextParamOffset;
+                return entries;
+            }
+
+            internal abstract T ReadEntry(BinaryReaderEx br);
+
+            internal virtual void Write(BinaryWriterEx bw, List<T> entries)
+            {
+                bw.WriteInt32(Version);
+                bw.WriteInt32(entries.Count + 1);
+                bw.ReserveInt64("ParamNameOffset");
+                for (int i = 0; i < entries.Count; i++)
+                    bw.ReserveInt64($"EntryOffset{i}");
+                bw.ReserveInt64("NextParamOffset");
+
+                bw.FillInt64("ParamNameOffset", bw.Position);
+                bw.WriteUTF16(Name, true);
+                bw.Pad(8);
+
+                int index = 0;
+                Type type = null;
+                for (int i = 0; i < entries.Count; i++)
+                {
+                    if (type != entries[i].GetType())
+                    {
+                        type = entries[i].GetType();
+                        index = 0;
+                    }
+
+                    bw.FillInt64($"EntryOffset{i}", bw.Position);
+                    entries[i].Write(bw, index);
+                    bw.Pad(8);
+                    index++;
+                }
+            }
+
+            /// <summary>
+            /// Returns every entry in the order they'll be written.
+            /// </summary>
+            public abstract List<T> GetEntries();
+        }
+
+        private static void DisambiguateNames<T>(List<T> entries) where T : NamedEntry
         {
             bool ambiguous;
             do
             {
                 ambiguous = false;
                 var nameCounts = new Dictionary<string, int>();
-                foreach (Entry entry in entries)
+                foreach (NamedEntry entry in entries)
                 {
                     string name = entry.Name;
                     if (!nameCounts.ContainsKey(name))
@@ -148,14 +266,19 @@ namespace SoulsFormats
                     {
                         ambiguous = true;
                         nameCounts[name]++;
-                        entry.Name = $"{name} ({nameCounts[name]})";
+                        entry.Name = $"{name} {{{nameCounts[name]}}}";
                     }
                 }
             }
             while (ambiguous);
         }
 
-        private static string GetName<T>(List<T> list, int index) where T : Entry
+        private static string ReambiguateName(string name)
+        {
+            return Regex.Replace(name, @" \{\d+\}", "");
+        }
+
+        private static string FindName<T>(List<T> list, int index) where T : NamedEntry
         {
             if (index == -1)
                 return null;
@@ -163,93 +286,42 @@ namespace SoulsFormats
                 return list[index].Name;
         }
 
-        private static int GetIndex<T>(List<T> list, string name) where T : Entry
+        //private static string[] FindNames<T>(List<T> list, int[] indices) where T : NamedEntry
+        //{
+        //    var names = new string[indices.Length];
+        //    for (int i = 0; i < indices.Length; i++)
+        //        names[i] = FindName(list, indices[i]);
+        //    return names;
+        //}
+
+        private static int FindIndex(Dictionary<string, int> lookup, string name)
         {
             if (name == null)
+            {
                 return -1;
+            }
             else
             {
-                int result = list.FindIndex(entry => entry.Name == name);
-                if (result == -1)
-                    throw new KeyNotFoundException("No items found in list.");
-                return result;
+                if (!lookup.ContainsKey(name))
+                    throw new KeyNotFoundException($"Name not found: {name}");
+                return lookup[name];
             }
         }
 
-        /// <summary>
-        /// A generic MSB section containing a list of entries.
-        /// </summary>
-        public abstract class Section<T>
+        //private static int[] FindIndices(Dictionary<string, int> lookup, string[] names)
+        //{
+        //    var indices = new int[names.Length];
+        //    for (int i = 0; i < names.Length; i++)
+        //        indices[i] = FindIndex(lookup, names[i]);
+        //    return indices;
+        //}
+
+        private static Dictionary<string, int> MakeNameLookup<T>(List<T> list) where T : NamedEntry
         {
-            /// <summary>
-            /// Unknown.
-            /// </summary>
-            public int Unk1;
-
-            internal abstract string Type { get; }
-
-            internal Section(BinaryReaderEx br, int unk1)
-            {
-                Unk1 = unk1;
-            }
-
-            /// <summary>
-            /// Returns every entry in this section in the order they will be written.
-            /// </summary>
-            public abstract List<T> GetEntries();
-
-            internal List<T> Read(BinaryReaderEx br, int offsets)
-            {
-                var entries = new List<T>(offsets);
-                for (int i = 0; i < offsets; i++)
-                {
-                    long offset = br.ReadInt64();
-                    br.StepIn(offset);
-                    entries.Add(ReadEntry(br));
-                    br.StepOut();
-                }
-                return entries;
-            }
-
-            internal abstract T ReadEntry(BinaryReaderEx br);
-
-            internal void Write(BinaryWriterEx bw, List<T> entries)
-            {
-                bw.WriteInt32(Unk1);
-                bw.WriteInt32(entries.Count + 1);
-                bw.ReserveInt64("TypeOffset");
-                for (int i = 0; i < entries.Count; i++)
-                {
-                    bw.ReserveInt64($"Offset{i}");
-                }
-                bw.ReserveInt64("NextOffset");
-
-                bw.FillInt64("TypeOffset", bw.Position);
-                bw.WriteUTF16(Type, true);
-                bw.Pad(8);
-                WriteEntries(bw, entries);
-            }
-
-            internal abstract void WriteEntries(BinaryWriterEx bw, List<T> entries);
-
-            /// <summary>
-            /// Returns the type string, unknown value and number of entries in this section.
-            /// </summary>
-            public override string ToString()
-            {
-                return $"{Type}:{Unk1}[{GetEntries().Count}]";
-            }
-        }
-
-        /// <summary>
-        /// A generic entry in an MSB section.
-        /// </summary>
-        public abstract class Entry
-        {
-            /// <summary>
-            /// The name of this entry.
-            /// </summary>
-            public abstract string Name { get; set; }
+            var lookup = new Dictionary<string, int>();
+            for (int i = 0; i < list.Count; i++)
+                lookup[list[i].Name] = i;
+            return lookup;
         }
     }
 }

@@ -177,12 +177,16 @@ public class DarkSoulsTools : EditorWindow
         {
             path = $@"{objpath}\{objid}.objbnd";
         }
+        else if (File.Exists($@"{objpath}\{objid}.bnd"))
+        {
+            path = $@"{objpath}\{objid}.bnd";
+        }
         else
         {
             throw new FileNotFoundException("Could not find bnd for object " + objid);
         }
 
-        if (type == GameType.DarkSoulsIII || type == GameType.Bloodborne || type == GameType.Sekiro)
+        if (type == GameType.DarkSoulsIISOTFS || type == GameType.DarkSoulsIII || type == GameType.Bloodborne || type == GameType.Sekiro)
         {
             objbnd = BND4.Read(GetOverridenPath(path));
         }
@@ -224,12 +228,16 @@ public class DarkSoulsTools : EditorWindow
         {
             path = $@"{objpath}\{objid}.objbnd";
         }
+        else if (File.Exists($@"{objpath}\{objid}.bnd"))
+        {
+            path = $@"{objpath}\{objid}.bnd";
+        }
         else
         {
             throw new FileNotFoundException("Could not find bnd for object " + objid);
         }
 
-        if (type == GameType.DarkSoulsIII || type == GameType.Bloodborne || type == GameType.Sekiro)
+        if (type == GameType.DarkSoulsIISOTFS || type == GameType.DarkSoulsIII || type == GameType.Bloodborne || type == GameType.Sekiro)
         {
             objbnd = BND4.Read(GetOverridenPath(path));
         }
@@ -239,11 +247,12 @@ public class DarkSoulsTools : EditorWindow
         }
 
         // Should only be one flver in a bnd
-        var flver = FLVER.Read(objbnd.Files.Where(x => x.Name.ToUpper().EndsWith(".FLVER")).First().Bytes);
+        var ext = (type == GameType.DarkSoulsIISOTFS) ? ".FLV" : ".FLVER";
+        var flver = FLVER.Read(objbnd.Files.Where(x => x.Name.ToUpper().EndsWith(ext)).First().Bytes);
         FLVERAssetLink link = ScriptableObject.CreateInstance<FLVERAssetLink>();
         link.Type = FLVERAssetLink.ContainerType.Objbnd;
         link.ArchivePath = objpath;
-        link.FlverPath = objbnd.Files.Where(x => x.Name.ToUpper().EndsWith(".FLVER")).First().Name;
+        link.FlverPath = objbnd.Files.Where(x => x.Name.ToUpper().EndsWith(ext)).First().Name;
         FlverUtilities.ImportFlver(flver, link, type, $@"Assets/{gameFolder}/Obj/{objid}", $@"Assets/{gameFolder}/Obj/{objid}");
     }
 
@@ -257,6 +266,12 @@ public class DarkSoulsTools : EditorWindow
         {
             objFiles = Directory.GetFiles(objpath, @"*.objbnd")
                     .Select(Path.GetFileNameWithoutExtension) //Remove .objbnd
+                    .ToArray();
+        }
+        if (objFiles.Count() == 0)
+        {
+            objFiles = Directory.GetFiles(objpath, @"*.bnd")
+                    .Select(Path.GetFileNameWithoutExtension) //Remove .bnd
                     .ToArray();
         }
         try
@@ -961,6 +976,49 @@ public class DarkSoulsTools : EditorWindow
         return obj;
     }
 
+    static GameObject InstantiateRegion(MSB2.Region region, GameObject parent)
+    {
+        GameObject obj = new GameObject(region.Name);
+        obj.transform.position = new Vector3(region.Position.X, region.Position.Y, region.Position.Z);
+        EulerToTransform(new Vector3(region.Rotation.X, region.Rotation.Y, region.Rotation.Z), obj.transform);
+        if (region.Shape is MSB2.Shape.Box)
+        {
+            var shape = (MSB2.Shape.Box)region.Shape;
+            obj.AddComponent<BoxCollider>();
+            var col = obj.GetComponent<BoxCollider>();
+            col.isTrigger = true;
+            col.size = new Vector3(shape.Width, shape.Height, shape.Depth);
+        }
+        else if (region.Shape is MSB2.Shape.Sphere)
+        {
+            var shape = (MSB2.Shape.Sphere)region.Shape;
+            obj.AddComponent<SphereCollider>();
+            var col = obj.GetComponent<SphereCollider>();
+            col.isTrigger = true;
+            col.radius = shape.Radius;
+        }
+        else if (region.Shape is MSB2.Shape.Point)
+        {
+            var shape = (MSB2.Shape.Point)region.Shape;
+            obj.AddComponent<SphereCollider>();
+            var col = obj.GetComponent<SphereCollider>();
+            col.isTrigger = true;
+            col.radius = 1.0f;
+        }
+        else if (region.Shape is MSB2.Shape.Cylinder)
+        {
+            var shape = (MSB2.Shape.Cylinder)region.Shape;
+            obj.AddComponent<CapsuleCollider>();
+            var col = obj.GetComponent<CapsuleCollider>();
+            col.isTrigger = true;
+            col.radius = shape.Radius;
+            col.height = shape.Height;
+        }
+        obj.layer = 13;
+        obj.transform.parent = parent.transform;
+        return obj;
+    }
+
     static GameObject InstantiateRegion(MSBS.Region region, string type, GameObject parent)
     {
         GameObject obj = new GameObject(region.Name);
@@ -1419,7 +1477,6 @@ public class DarkSoulsTools : EditorWindow
             // Events Section
             //
             GameObject Events = new GameObject("MSBEvents");
-
             InstantiateDS3Event<MSB3TreasureEvent, MSB3.Event.Treasure>("Treasures", Events, msb.Events.Treasures);
             InstantiateDS3Event<MSB3GeneratorEvent, MSB3.Event.Generator>("Generators", Events, msb.Events.Generators);
             InstantiateDS3Event<MSB3ObjActEvent, MSB3.Event.ObjAct>("ObjActs", Events, msb.Events.ObjActs);
@@ -1432,6 +1489,55 @@ public class DarkSoulsTools : EditorWindow
         catch (Exception e)
         {
             EditorUtility.DisplayDialog("Import failed", e.Message + "\n" + e.StackTrace, "Ok");
+        }
+    }
+
+    public static void InstantiateDS2Model<T, U>(string mdlName, GameObject modelsRoot, List<U> models) where T : MSB2Model where U : MSB2.Model
+    {
+        GameObject obj = new GameObject(mdlName);
+        obj.transform.parent = modelsRoot.transform;
+        foreach (var md in models)
+        {
+            GameObject mdl = new GameObject(md.Name);
+            mdl.AddComponent<T>();
+            mdl.GetComponent<T>().SetModel(md);
+            mdl.transform.parent = obj.transform;
+        }
+    }
+
+    public static void InitializeDS2Part<T>(GameObject obj, MSB2.Part part, int layer, GameObject parent) where T : MSB2Part
+    {
+        obj.AddComponent<T>();
+        obj.GetComponent<T>().SetPart(part);
+        obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
+        EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
+        obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
+        obj.layer = layer;
+        obj.transform.parent = parent.transform;
+    }
+
+    public static void InstantiateDS2Region<T, U>(string regionName, GameObject regionsRoot, List<U> regions) where T : MSB2Region where U : MSB2.Region
+    {
+        GameObject obj = new GameObject(regionName);
+        obj.transform.parent = regionsRoot.transform;
+        foreach (var region in regions)
+        {
+            var reg = InstantiateRegion(region, obj);
+            reg.AddComponent<T>();
+            reg.GetComponent<T>().SetRegion(region);
+        }
+    }
+
+    public static void InstantiateDS2Event<T, U>(string evtName, GameObject eventsRoot, List<U> events) where T : MSB2Event where U : MSB2.Event
+    {
+        GameObject obj = new GameObject(evtName);
+        obj.transform.parent = eventsRoot.transform;
+        foreach (var ev in events)
+        {
+            GameObject evt = new GameObject(ev.Name);
+            evt.AddComponent<T>();
+            evt.GetComponent<T>().SetEvent(ev);
+            evt.transform.parent = obj.transform;
         }
     }
 
@@ -1455,44 +1561,10 @@ public class DarkSoulsTools : EditorWindow
             AssetLink.GetComponent<MSBAssetLink>().MapID = mapname;
             AssetLink.GetComponent<MSBAssetLink>().MapPath = $@"{Interroot}\map\{mapname}\{mapname}.msb";
 
-            //
-            // Models section
-            //
-            GameObject ModelsSection = new GameObject("MSBModelDeclarations");
-
-            GameObject MapPieceModels = new GameObject("MapPieces");
-            MapPieceModels.transform.parent = ModelsSection.transform;
-
-            // Do a preload of all the flvers
-            /*try
-            {
-                AssetDatabase.StartAssetEditing();
-                foreach (var mappiece in msb.Models.MapPieces)
-                {
-                    var assetname = mappiece.Name;
-                    if (AssetDatabase.FindAssets($@"Assets/DS3/{mapname}/{assetname}.prefab").Length == 0 && LoadMapFlvers)
-                    {
-                        if (File.Exists(Interroot + $@"\map\{mapname}\{mapname}_{assetname.Substring(1)}.mapbnd.dcx"))
-                            FlverUtilities.ImportFlver(type, Interroot + $@"\map\{mapname}\{mapname}_{assetname.Substring(1)}.mapbnd.dcx", $@"Assets/DS3/{mapname}/{assetname}", $@"Assets/DS3/{mapname.Substring(0, 3)}");
-                    }
-                }
-            }
-            finally
-            {
-                AssetDatabase.StopAssetEditing();
-            }*/
-
             // Do a preload of all the flvers
             if (File.Exists($@"{Interroot}\model\map\{mapname}.mapbhd") && LoadMapFlvers)
             {
                 ImportMapBDT($@"{Interroot}\model\map\{mapname}", $@"Assets/DS2SOTFS/{mapname}", mapname);
-            }
-
-            foreach (var mappiece in msb.Models.MapPieces)
-            {
-                var assetname = mappiece.Name;
-                GameObject model = new GameObject(mappiece.Name);
-                model.transform.parent = MapPieceModels.transform;
             }
 
             // Load low res hkx assets
@@ -1514,67 +1586,110 @@ public class DarkSoulsTools : EditorWindow
             }
 
             //
+            // Models section
+            //
+            GameObject ModelsSection = new GameObject("MSBModelDeclarations");
+            InstantiateDS2Model<MSB2MapPieceModel, MSB2.Model>("MapPieces", ModelsSection, msb.Models.MapPieces);
+            InstantiateDS2Model<MSB2ObjectModel, MSB2.Model>("Objects", ModelsSection, msb.Models.Objects);
+            InstantiateDS2Model<MSB2CollisionModel, MSB2.Model>("Collisions", ModelsSection, msb.Models.Collisions);
+            InstantiateDS2Model<MSB2NavimeshModel, MSB2.Model>("Navimeshes", ModelsSection, msb.Models.Navmeshes);
+
+            //
             // Parts Section
             //
             GameObject PartsSection = new GameObject("MSBParts");
-
             GameObject MapPieces = new GameObject("MapPieces");
             MapPieces.transform.parent = PartsSection.transform;
             foreach (var part in msb.Parts.MapPieces)
             {
                 GameObject src = true ? AssetDatabase.LoadAssetAtPath<GameObject>($@"Assets/DS2SOTFS/{mapname}/{part.ModelName}.prefab") : null;
+                GameObject obj = null;
                 if (src != null)
                 {
-                    GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
+                    obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
                     obj.name = part.Name;
-                    obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
-                    //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
-                    EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
-                    obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
-                    obj.layer = 9;
-                    obj.transform.parent = MapPieces.transform;
                 }
                 else
                 {
-                    GameObject obj = new GameObject(part.Name);
-                    obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
-                    //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
-                    EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
-                    obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
-                    obj.layer = 9;
-                    obj.transform.parent = MapPieces.transform;
+                    obj = new GameObject(part.Name);
                 }
+                InitializeDS2Part<MSB2MapPiecePart>(obj, part, 9, MapPieces);
+            }
+
+            GameObject Objects = new GameObject("Objects");
+            Objects.transform.parent = PartsSection.transform;
+            foreach (var part in msb.Parts.Objects)
+            {
+                GameObject src = AssetDatabase.LoadAssetAtPath<GameObject>($@"Assets/DS2SOTFS/Obj/{part.ModelName}.prefab");
+                GameObject obj = null;
+                if (src != null)
+                {
+                    obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
+                    obj.name = part.Name;
+                }
+                else
+                {
+                    obj = new GameObject(part.Name);
+                }
+                InitializeDS2Part<MSB2ObjectPart>(obj, part, 10, Objects);
             }
 
             GameObject Collisions = new GameObject("Collisions");
             Collisions.transform.parent = PartsSection.transform;
-            // "Items" section because ds2 msb isn't known well
-            foreach (var part in msb.Parts.Items)
+            foreach (var part in msb.Parts.Collisions)
             {
                 string lowHigh = LoadHighResCol ? "h" : "l";
                 GameObject src = AssetDatabase.LoadAssetAtPath<GameObject>($@"Assets/DS2SOTFS/{mapname}/{lowHigh}{part.ModelName.Substring(1)}.prefab");
+                GameObject obj = null;
                 if (src != null)
                 {
-                    GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
+                    obj = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
                     obj.name = part.Name;
-                    obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
-                    //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
-                    EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
-                    obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
-                    obj.layer = 12;
-                    obj.transform.parent = Collisions.transform;
                 }
                 else
                 {
-                    GameObject obj = new GameObject(part.Name);
-                    obj.transform.position = new Vector3(part.Position.X, part.Position.Y, part.Position.Z);
-                    //obj.transform.rotation = Quaternion.Euler(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
-                    EulerToTransform(new Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z), obj.transform);
-                    obj.transform.localScale = new Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z);
-                    obj.layer = 12;
-                    obj.transform.parent = Collisions.transform;
+                    obj = new GameObject(part.Name);
                 }
+                InitializeDS2Part<MSB2CollisionPart>(obj, part, 12, Collisions);
             }
+
+            GameObject ConnectCollisions = new GameObject("ConnectCollisions");
+            ConnectCollisions.transform.parent = PartsSection.transform;
+            foreach (var part in msb.Parts.ConnectCollisions)
+            {
+                GameObject obj = new GameObject(part.Name);
+                InitializeDS2Part<MSB2ConnectCollisionPart>(obj, part, 12, ConnectCollisions);
+            }
+
+            GameObject Navimeshes = new GameObject("Navimeshes");
+            Navimeshes.transform.parent = PartsSection.transform;
+            foreach (var part in msb.Parts.Navmeshes)
+            {
+                GameObject obj = new GameObject(part.Name);
+                InitializeDS2Part<MSB2NavimeshPart>(obj, part, 12, Navimeshes);
+            }
+
+            //
+            // Regions section
+            //
+            GameObject RegionsSection = new GameObject("MSBRegions");
+            InstantiateDS2Region<MSB2EnvLightRegion, MSB2.Region.EnvLight>("EnvLights", RegionsSection, msb.Regions.EnvLights);
+            InstantiateDS2Region<MSB2FogRegion, MSB2.Region.Fog>("Fogs", RegionsSection, msb.Regions.Fogs);
+            InstantiateDS2Region<MSB2LightRegion, MSB2.Region.Light>("Lights", RegionsSection, msb.Regions.Lights);
+            InstantiateDS2Region<MSB2SFXRegion, MSB2.Region.SFX>("SFX", RegionsSection, msb.Regions.SFXs);
+            InstantiateDS2Region<MSB2SoundRegion, MSB2.Region.Sound>("Sounds", RegionsSection, msb.Regions.Sounds);
+            InstantiateDS2Region<MSB2StartPointRegion, MSB2.Region.StartPoint>("StartPoints", RegionsSection, msb.Regions.StartPoints);
+            InstantiateDS2Region<MSB2WindRegion, MSB2.Region.Wind>("Winds", RegionsSection, msb.Regions.Winds);
+            InstantiateDS2Region<MSB2Unk00Region, MSB2.Region.Region0>("Unk00Regions", RegionsSection, msb.Regions.Region0s);
+
+            //
+            // Events Section
+            //
+            GameObject Events = new GameObject("MSBEvents");
+            InstantiateDS2Event<MSB2BGColorEvent, MSB2.Event.BGColor>("BGColors", Events, msb.Events.BGColors);
+            InstantiateDS2Event<MSB2CheapModeEvent, MSB2.Event.CheapMode>("CheapModes", Events, msb.Events.CheapModes);
+            InstantiateDS2Event<MSB2MapOffsetEvent, MSB2.Event.MapOffset>("MapOffsets", Events, msb.Events.MapOffsets);
+            InstantiateDS2Event<MSB2WarpEvent, MSB2.Event.Warp>("Warps", Events, msb.Events.Warps);
         }
         catch (Exception e)
         {
@@ -3389,6 +3504,154 @@ public class DarkSoulsTools : EditorWindow
         File.Move(mapPath + ".temp", mapPath);
     }
 
+    static void SerializeDS2Models<T, U>(List<U> exportList) where T : MSB2Model where U : MSB2.Model
+    {
+        var models = FindObjectsOfType<T>();
+        if (models != null)
+        {
+            foreach (var obj in models)
+            {
+                exportList.Add((U)obj.Serialize(obj.gameObject));
+            }
+            exportList.Sort((o1, o2) => o1.Name.CompareTo(o2.Name));
+        }
+    }
+
+    static void SerializeDS2Parts<T, U>(List<U> exportList) where T : MSB2Part where U : MSB2.Part
+    {
+        var parts = FindObjectsOfType<T>();
+        if (parts != null)
+        {
+            foreach (var obj in parts)
+            {
+                exportList.Add((U)obj.Serialize(obj.gameObject));
+            }
+            // Sort because engine acts weird if model names aren't in order
+            exportList.Sort((o1, o2) => o1.ModelName.CompareTo(o2.ModelName));
+        }
+    }
+
+    static void SerializeDS2Regions<T, U>(List<U> exportList) where T : MSB2Region where U : MSB2.Region
+    {
+        var parts = FindObjectsOfType<T>();
+        if (parts != null)
+        {
+            foreach (var obj in parts)
+            {
+                exportList.Add((U)obj.Serialize(obj.gameObject));
+            }
+        }
+    }
+
+    static void SerializeDS2Events<T, U>(List<U> exportList) where T : MSB2Event where U : MSB2.Event
+    {
+        var parts = FindObjectsOfType<T>();
+        if (parts != null)
+        {
+            foreach (var obj in parts)
+            {
+                exportList.Add((U)obj.Serialize(obj.gameObject));
+            }
+        }
+    }
+
+    void ExportMapDS2()
+    {
+        var AssetLink = GameObject.Find("MSBAssetLink");
+        if (AssetLink == null || AssetLink.GetComponent<MSBAssetLink>() == null)
+        {
+            throw new Exception("Could not find a valid MSB asset link to a DS2 asset");
+        }
+
+        MSB2 export = new MSB2();
+
+        // Models
+        SerializeDS2Models<MSB2MapPieceModel, MSB2.Model>(export.Models.MapPieces);
+        SerializeDS2Models<MSB2CollisionModel, MSB2.Model>(export.Models.Collisions);
+        SerializeDS2Models<MSB2ObjectModel, MSB2.Model>(export.Models.Objects);
+        SerializeDS2Models<MSB2NavimeshModel, MSB2.Model>(export.Models.Navmeshes);
+
+        // Parts
+        SerializeDS2Parts<MSB2MapPiecePart, MSB2.Part.MapPiece>(export.Parts.MapPieces);
+        SerializeDS2Parts<MSB2CollisionPart, MSB2.Part.Collision>(export.Parts.Collisions);
+        SerializeDS2Parts<MSB2ConnectCollisionPart, MSB2.Part.ConnectCollision>(export.Parts.ConnectCollisions);
+        SerializeDS2Parts<MSB2ObjectPart, MSB2.Part.Object>(export.Parts.Objects);
+        SerializeDS2Parts<MSB2NavimeshPart, MSB2.Part.Navmesh>(export.Parts.Navmeshes);
+
+        // Regions
+        SerializeDS2Regions<MSB2EnvLightRegion, MSB2.Region.EnvLight>(export.Regions.EnvLights);
+        SerializeDS2Regions<MSB2FogRegion, MSB2.Region.Fog>(export.Regions.Fogs);
+        SerializeDS2Regions<MSB2LightRegion, MSB2.Region.Light>(export.Regions.Lights);
+        SerializeDS2Regions<MSB2SFXRegion, MSB2.Region.SFX>(export.Regions.SFXs);
+        SerializeDS2Regions<MSB2SoundRegion, MSB2.Region.Sound>(export.Regions.Sounds);
+        SerializeDS2Regions<MSB2StartPointRegion, MSB2.Region.StartPoint>(export.Regions.StartPoints);
+        SerializeDS2Regions<MSB2WindRegion, MSB2.Region.Wind>(export.Regions.Winds);
+        SerializeDS2Regions<MSB2Unk00Region, MSB2.Region.Region0>(export.Regions.Region0s);
+
+        // Events
+        SerializeDS2Events<MSB2BGColorEvent, MSB2.Event.BGColor>(export.Events.BGColors);
+        SerializeDS2Events<MSB2CheapModeEvent, MSB2.Event.CheapMode>(export.Events.CheapModes);
+        SerializeDS2Events<MSB2MapOffsetEvent, MSB2.Event.MapOffset>(export.Events.MapOffsets);
+        SerializeDS2Events<MSB2WarpEvent, MSB2.Event.Warp>(export.Events.Warps);
+
+        // Attempt to restore parts pose section from backup map if needed
+        if (PreservePartsPose)
+        {
+            string backupMap = AssetLink.GetComponent<MSBAssetLink>().MapPath + ".backup";
+            if (!File.Exists(backupMap))
+            {
+                backupMap = AssetLink.GetComponent<MSBAssetLink>().MapPath;
+                if (!File.Exists(backupMap))
+                {
+                    backupMap = null;
+                }
+            }
+            if (backupMap != null)
+            {
+                var back = MSB2.Read(backupMap);
+                export.PartPoses = back.PartPoses;
+            }
+        }
+
+        // Directory setup for overrides
+        if (ModProjectDirectory != null)
+        {
+            if (!Directory.Exists($@"{ModProjectDirectory}\map\{AssetLink.GetComponent<MSBAssetLink>().MapID}"))
+            {
+                Directory.CreateDirectory($@"{ModProjectDirectory}\map\{AssetLink.GetComponent<MSBAssetLink>().MapID}");
+            }
+        }
+
+        // Save a backup if one doesn't exist
+        if (ModProjectDirectory == null && !File.Exists(AssetLink.GetComponent<MSBAssetLink>().MapPath + ".backup"))
+        {
+            File.Copy(AssetLink.GetComponent<MSBAssetLink>().MapPath, AssetLink.GetComponent<MSBAssetLink>().MapPath + ".backup");
+        }
+
+        // Write as a temporary file to make sure there are no errors before overwriting current file 
+        string mapPath = AssetLink.GetComponent<MSBAssetLink>().MapPath;
+        if (GetModProjectPathForFile(mapPath) != null)
+        {
+            mapPath = GetModProjectPathForFile(mapPath);
+        }
+
+        if (File.Exists(mapPath + ".temp"))
+        {
+            File.Delete(mapPath + ".temp");
+        }
+        export.Write(mapPath + ".temp", SoulsFormats.DCX.Type.None);
+
+        // Make a copy of the previous map
+        if (File.Exists(mapPath))
+        {
+            File.Copy(mapPath, mapPath + ".prev", true);
+        }
+
+        // Move temp file as new map file
+        File.Delete(mapPath);
+        File.Move(mapPath + ".temp", mapPath);
+    }
+
     static void SerializeBBModels<T, U>(List<U> exportList) where T : MSBBBModel where U : MSBBB.Model
     {
         var models = FindObjectsOfType<T>();
@@ -4251,6 +4514,10 @@ public class DarkSoulsTools : EditorWindow
         {
             ExportMapDS1();
         }
+        else if (type == GameType.DarkSoulsIISOTFS)
+        {
+            ExportMapDS2();
+        }
         else if (type == GameType.Bloodborne)
         {
             ExportMapBB();
@@ -4458,7 +4725,14 @@ public class DarkSoulsTools : EditorWindow
             {
                 try
                 {
-                    ImportObjs(Interroot + $@"\obj", type);
+                    if (type == GameType.DarkSoulsIISOTFS)
+                    {
+                        ImportObjs(Interroot + $@"\model\obj", type);
+                    }
+                    else
+                    {
+                        ImportObjs(Interroot + $@"\obj", type);
+                    }
                 }
                 catch (Exception e)
                 {

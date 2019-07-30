@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text;
 
 namespace SoulsFormats
 {
@@ -21,15 +23,15 @@ namespace SoulsFormats
         /// <summary>
         /// Values determining material properties.
         /// </summary>
-        public List<Param> Params;
+        public List<Param> Params { get; set; }
 
         /// <summary>
         /// Texture types required by the material shader.
         /// </summary>
-        public List<Texture> Textures;
+        public List<Texture> Textures { get; set; }
 
         /// <summary>
-        /// Creates a new MTD with default values.
+        /// Creates an MTD with default values.
         /// </summary>
         public MTD()
         {
@@ -41,8 +43,9 @@ namespace SoulsFormats
 
         internal override bool Is(BinaryReaderEx br)
         {
-            if (br.Stream.Length < 0x30)
+            if (br.Length < 0x30)
                 return false;
+
             string magic = br.GetASCII(0x2C, 4);
             return magic == "MTD ";
         }
@@ -50,121 +53,91 @@ namespace SoulsFormats
         internal override void Read(BinaryReaderEx br)
         {
             br.BigEndian = false;
+            Block.Read(br, 0, 3, 0x01); // File
+            {
+                Block.Read(br, 1, 2, 0xB0); // Header
+                {
+                    AssertMarkedString(br, 0x34, "MTD ");
+                    br.AssertInt32(1000);
+                }
+                AssertMarker(br, 0x01);
 
-            br.AssertInt32(0);
-            int fileSize = br.ReadInt32();
-            br.AssertInt32(0);
-            br.AssertInt32(3);
-            AssertMarker(br, 0x01);
-            br.AssertInt32(0);
-            br.AssertInt32(0x1C);
-            br.AssertInt32(1);
-            br.AssertInt32(2);
-            AssertMarker(br, 0xB0);
-            br.AssertInt32(4);
-            br.AssertASCII("MTD ");
-            AssertMarker(br, 0x34);
-            br.AssertInt32(0x3E8);
-            AssertMarker(br, 0x01);
-            br.AssertInt32(0);
-            int dataSize = br.ReadInt32();
-            br.AssertInt32(2);
-            br.AssertInt32(4);
-            AssertMarker(br, 0xA3);
+                Block.Read(br, 2, 4, 0xA3); // Data
+                {
+                    ShaderPath = ReadMarkedString(br, 0xA3);
+                    Description = ReadMarkedString(br, 0x03);
+                    br.AssertInt32(1);
 
-            ShaderPath = br.ReadShiftJISLengthPrefixed(0xA3);
-            Description = br.ReadShiftJISLengthPrefixed(0x03);
+                    Block.Read(br, 3, 4, 0xA3); // Lists
+                    {
+                        br.AssertInt32(0);
+                        AssertMarker(br, 0x03);
 
-            br.AssertInt32(1);
-            br.AssertInt32(0);
-            int paramSize = br.ReadInt32();
-            br.AssertInt32(3);
-            br.AssertInt32(4);
-            AssertMarker(br, 0xA3);
-            br.AssertInt32(0);
-            AssertMarker(br, 0x03);
+                        int paramCount = br.ReadInt32();
+                        Params = new List<Param>(paramCount);
+                        for (int i = 0; i < paramCount; i++)
+                            Params.Add(new Param(br));
+                        AssertMarker(br, 0x03);
 
-            int paramCount = br.ReadInt32();
-            Params = new List<Param>(paramCount);
-            for (int i = 0; i < paramCount; i++)
-                Params.Add(new Param(br));
-
-            AssertMarker(br, 0x03);
-
-            int textureCount = br.ReadInt32();
-            Textures = new List<Texture>(textureCount);
-            for (int i = 0; i < textureCount; i++)
-                Textures.Add(new Texture(br));
-
-            AssertMarker(br, 0x04);
-            br.AssertInt32(0);
-            AssertMarker(br, 0x04);
-            br.AssertInt32(0);
-            AssertMarker(br, 0x04);
-            br.AssertInt32(0);
+                        int textureCount = br.ReadInt32();
+                        Textures = new List<Texture>(textureCount);
+                        for (int i = 0; i < textureCount; i++)
+                            Textures.Add(new Texture(br));
+                        AssertMarker(br, 0x04);
+                        br.AssertInt32(0);
+                    }
+                    AssertMarker(br, 0x04);
+                    br.AssertInt32(0);
+                }
+                AssertMarker(br, 0x04);
+                br.AssertInt32(0);
+            }
         }
 
         internal override void Write(BinaryWriterEx bw)
         {
             bw.BigEndian = false;
+            var fileBlock = Block.Write(bw, 0, 3, 0x01);
+            {
+                var headerBlock = Block.Write(bw, 1, 2, 0xB0);
+                {
+                    WriteMarkedString(bw, 0x34, "MTD ");
+                    bw.WriteInt32(1000);
+                }
+                headerBlock.Finish(bw);
+                WriteMarker(bw, 0x01);
 
-            bw.WriteInt32(0);
-            bw.ReserveInt32("FileSize");
-            int fileStart = (int)bw.Position;
-            bw.WriteInt32(0);
-            bw.WriteInt32(3);
-            WriteMarker(bw, 0x01);
-            bw.WriteInt32(0);
-            bw.WriteInt32(0x1C);
-            bw.WriteInt32(1);
-            bw.WriteInt32(2);
-            WriteMarker(bw, 0xB0);
-            bw.WriteInt32(4);
-            bw.WriteASCII("MTD ");
-            WriteMarker(bw, 0x34);
-            bw.WriteInt32(0x3E8);
-            WriteMarker(bw, 0x01);
-            bw.WriteInt32(0);
-            bw.ReserveInt32("DataSize");
-            bw.WriteInt32(2);
-            bw.WriteInt32(4);
-            int dataStart = (int)bw.Position;
-            WriteMarker(bw, 0xA3);
+                var dataBlock = Block.Write(bw, 2, 4, 0xA3);
+                {
+                    WriteMarkedString(bw, 0xA3, ShaderPath);
+                    WriteMarkedString(bw, 0x03, Description);
+                    bw.WriteInt32(1);
 
-            bw.WriteShiftJISLengthPrefixed(ShaderPath, 0xA3);
-            bw.WriteShiftJISLengthPrefixed(Description, 0x03);
+                    var listsBlock = Block.Write(bw, 3, 4, 0xA3);
+                    {
+                        bw.WriteInt32(0);
+                        WriteMarker(bw, 0x03);
 
-            bw.WriteInt32(1);
-            bw.WriteInt32(0);
-            bw.ReserveInt32("ParamSize");
-            bw.WriteInt32(3);
-            bw.WriteInt32(4);
-            WriteMarker(bw, 0xA3);
-            bw.WriteInt32(0);
-            int paramStart = (int)bw.Position;
-            WriteMarker(bw, 0x03);
+                        bw.WriteInt32(Params.Count);
+                        foreach (Param internalEntry in Params)
+                            internalEntry.Write(bw);
+                        WriteMarker(bw, 0x03);
 
-            bw.WriteInt32(Params.Count);
-            foreach (Param internalEntry in Params)
-                internalEntry.Write(bw);
-
-            WriteMarker(bw, 0x03);
-
-            bw.WriteInt32(Textures.Count);
-            foreach (Texture externalEntry in Textures)
-                externalEntry.Write(bw);
-
-            WriteMarker(bw, 0x04);
-            bw.WriteInt32(0);
-            WriteMarker(bw, 0x04);
-            bw.WriteInt32(0);
-            WriteMarker(bw, 0x04);
-            bw.WriteInt32(0);
-
-            int position = (int)bw.Position;
-            bw.FillInt32("FileSize", position - fileStart);
-            bw.FillInt32("DataSize", position - dataStart);
-            bw.FillInt32("ParamSize", position - paramStart);
+                        bw.WriteInt32(Textures.Count);
+                        foreach (Texture externalEntry in Textures)
+                            externalEntry.Write(bw);
+                        WriteMarker(bw, 0x04);
+                        bw.WriteInt32(0);
+                    }
+                    listsBlock.Finish(bw);
+                    WriteMarker(bw, 0x04);
+                    bw.WriteInt32(0);
+                }
+                dataBlock.Finish(bw);
+                WriteMarker(bw, 0x04);
+                bw.WriteInt32(0);
+            }
+            fileBlock.Finish(bw);
         }
 
         /// <summary>
@@ -175,144 +148,133 @@ namespace SoulsFormats
             /// <summary>
             /// The name of the param.
             /// </summary>
-            public string Name;
+            public string Name { get; set; }
 
             /// <summary>
             /// The type of this value.
             /// </summary>
-            public ParamType Type;
+            public ParamType Type { get; }
 
             /// <summary>
             /// The value itself.
             /// </summary>
-            public object Value;
+            public object Value { get; set; }
 
             /// <summary>
-            /// Unknown; often seems like the size of this struct, but varies.
+            /// Creates a new Param with the specified values.
             /// </summary>
-            public int Unk04;
+            public Param(string name, ParamType type, object value = null)
+            {
+                Name = name;
+                Type = type;
+                Value = value;
+                if (Value == null)
+                {
+                    switch (type)
+                    {
+                        case ParamType.Bool: Value = false; break;
+                        case ParamType.Float: Value = 0f; break;
+                        case ParamType.Float2: Value = new float[2]; break;
+                        case ParamType.Float3: Value = new float[3]; break;
+                        case ParamType.Float4: Value = new float[4]; break;
+                        case ParamType.Int: Value = 0; break;
+                        case ParamType.Int2: Value = new int[2]; break;
+                    }
+                }
+            }
 
             internal Param(BinaryReaderEx br)
             {
-                br.AssertInt32(0);
-                Unk04 = br.ReadInt32();
-                br.AssertInt32(4);
-                br.AssertInt32(4);
-                AssertMarker(br, 0xA3);
-                Name = br.ReadShiftJISLengthPrefixed(0xA3);
-                string type = br.ReadShiftJISLengthPrefixed(0x04);
-                Type = (ParamType)Enum.Parse(typeof(ParamType), type, true);
-                br.AssertInt32(1);
-                br.AssertInt32(0);
-                int valueSize = br.ReadInt32();
-
-                if (Type == ParamType.Bool)
-                    br.AssertByte(0);
-                else if (Type == ParamType.Int || Type == ParamType.Int2)
-                    br.AssertByte(1);
-                else if (Type == ParamType.Float || Type == ParamType.Float2 || Type == ParamType.Float3 || Type == ParamType.Float4)
-                    br.AssertByte(2);
-                br.AssertByte(0x10);
-                br.AssertByte(0);
-                br.AssertByte(0);
-
-                br.AssertInt32(1);
-                if (Type == ParamType.Bool)
-                    AssertMarker(br, 0xC0);
-                else if (Type == ParamType.Int || Type == ParamType.Int2)
-                    AssertMarker(br, 0xC5);
-                else if (Type == ParamType.Float || Type == ParamType.Float2 || Type == ParamType.Float3 || Type == ParamType.Float4)
-                    AssertMarker(br, 0xCA);
-
-                if (Type == ParamType.Bool || Type == ParamType.Float || Type == ParamType.Int)
+                Block.Read(br, 4, 4, 0xA3); // Param
+                {
+                    Name = ReadMarkedString(br, 0xA3);
+                    string type = ReadMarkedString(br, 0x04);
+                    Type = (ParamType)Enum.Parse(typeof(ParamType), type, true);
                     br.AssertInt32(1);
-                else if (Type == ParamType.Float2 || Type == ParamType.Int2)
-                    br.AssertInt32(2);
-                else if (Type == ParamType.Float3)
-                    br.AssertInt32(3);
-                else if (Type == ParamType.Float4)
-                    br.AssertInt32(4);
 
-                if (Type == ParamType.Int)
-                    Value = br.ReadInt32();
-                else if (Type == ParamType.Int2)
-                    Value = br.ReadInt32s(2);
-                else if (Type == ParamType.Bool)
-                    Value = br.ReadBoolean();
-                else if (Type == ParamType.Float)
-                    Value = br.ReadSingle();
-                else if (Type == ParamType.Float2)
-                    Value = br.ReadSingles(2);
-                else if (Type == ParamType.Float3)
-                    Value = br.ReadSingles(3);
-                else if (Type == ParamType.Float4)
-                    Value = br.ReadSingles(4);
+                    Block.Read(br, null, 1, null); // Value
+                    {
+                        br.ReadInt32(); // Value count
 
-                br.AssertByte(4);
-                br.Pad(4);
-                br.AssertInt32(0);
+                        if (Type == ParamType.Int)
+                            Value = br.ReadInt32();
+                        else if (Type == ParamType.Int2)
+                            Value = br.ReadInt32s(2);
+                        else if (Type == ParamType.Bool)
+                            Value = br.ReadBoolean();
+                        else if (Type == ParamType.Float)
+                            Value = br.ReadSingle();
+                        else if (Type == ParamType.Float2)
+                            Value = br.ReadSingles(2);
+                        else if (Type == ParamType.Float3)
+                            Value = br.ReadSingles(3);
+                        else if (Type == ParamType.Float4)
+                            Value = br.ReadSingles(4);
+                    }
+                    AssertMarker(br, 0x04);
+                    br.AssertInt32(0);
+                }
             }
 
             internal void Write(BinaryWriterEx bw)
             {
-                bw.WriteInt32(0);
-                bw.WriteInt32(Unk04);
-                bw.WriteInt32(4);
-                bw.WriteInt32(4);
-                WriteMarker(bw, 0xA3);
-                bw.WriteShiftJISLengthPrefixed(Name, 0xA3);
-                bw.WriteShiftJISLengthPrefixed(Type.ToString().ToLower(), 0x04);
-                bw.WriteInt32(1);
-                bw.WriteInt32(0);
-                bw.ReserveInt32("ValueSize");
-                int valueStart = (int)bw.Position;
-
-                if (Type == ParamType.Bool)
-                    bw.WriteByte(0);
-                else if (Type == ParamType.Int || Type == ParamType.Int2)
-                    bw.WriteByte(1);
-                else if (Type == ParamType.Float || Type == ParamType.Float2 || Type == ParamType.Float3 || Type == ParamType.Float4)
-                    bw.WriteByte(2);
-                bw.WriteByte(0x10);
-                bw.WriteByte(0);
-                bw.WriteByte(0);
-
-                bw.WriteInt32(1);
-                if (Type == ParamType.Bool)
-                    WriteMarker(bw, 0xC0);
-                else if (Type == ParamType.Int || Type == ParamType.Int2)
-                    WriteMarker(bw, 0xC5);
-                else if (Type == ParamType.Float || Type == ParamType.Float2 || Type == ParamType.Float3 || Type == ParamType.Float4)
-                    WriteMarker(bw, 0xCA);
-
-                if (Type == ParamType.Bool || Type == ParamType.Float || Type == ParamType.Int)
+                var paramBlock = Block.Write(bw, 4, 4, 0xA3);
+                {
+                    WriteMarkedString(bw, 0xA3, Name);
+                    WriteMarkedString(bw, 0x04, Type.ToString().ToLower());
                     bw.WriteInt32(1);
-                else if (Type == ParamType.Float2 || Type == ParamType.Int2)
-                    bw.WriteInt32(2);
-                else if (Type == ParamType.Float3)
-                    bw.WriteInt32(3);
-                else if (Type == ParamType.Float4)
-                    bw.WriteInt32(4);
 
-                if (Type == ParamType.Int)
-                    bw.WriteInt32((int)Value);
-                else if (Type == ParamType.Int2)
-                    bw.WriteInt32s((int[])Value);
-                else if (Type == ParamType.Bool)
-                    bw.WriteBoolean((bool)Value);
-                else if (Type == ParamType.Float)
-                    bw.WriteSingle((float)Value);
-                else if (Type == ParamType.Float2)
-                    bw.WriteSingles((float[])Value);
-                else if (Type == ParamType.Float3)
-                    bw.WriteSingles((float[])Value);
-                else if (Type == ParamType.Float4)
-                    bw.WriteSingles((float[])Value);
+                    int valueBlockType = -1;
+                    byte valueBlockMarker = 0xFF;
+                    if (Type == ParamType.Bool)
+                    {
+                        valueBlockType = 0x1000;
+                        valueBlockMarker = 0xC0;
+                    }
+                    else if (Type == ParamType.Int || Type == ParamType.Int2)
+                    {
+                        valueBlockType = 0x1001;
+                        valueBlockMarker = 0xC5;
+                    }
+                    else if (Type == ParamType.Float || Type == ParamType.Float2 || Type == ParamType.Float3 || Type == ParamType.Float4)
+                    {
+                        valueBlockType = 0x1002;
+                        valueBlockMarker = 0xCA;
+                    }
 
-                bw.FillInt32("ValueSize", (int)bw.Position - valueStart);
-                bw.WriteByte(4);
-                bw.Pad(4);
-                bw.WriteInt32(0);
+                    var valueBlock = Block.Write(bw, valueBlockType, 1, valueBlockMarker);
+                    {
+                        int valueCount = -1;
+                        if (Type == ParamType.Bool || Type == ParamType.Int || Type == ParamType.Float)
+                            valueCount = 1;
+                        else if (Type == ParamType.Int2 || Type == ParamType.Float2)
+                            valueCount = 2;
+                        else if (Type == ParamType.Float3)
+                            valueCount = 3;
+                        else if (Type == ParamType.Float4)
+                            valueCount = 4;
+                        bw.WriteInt32(valueCount);
+
+                        if (Type == ParamType.Int)
+                            bw.WriteInt32((int)Value);
+                        else if (Type == ParamType.Int2)
+                            bw.WriteInt32s((int[])Value);
+                        else if (Type == ParamType.Bool)
+                            bw.WriteBoolean((bool)Value);
+                        else if (Type == ParamType.Float)
+                            bw.WriteSingle((float)Value);
+                        else if (Type == ParamType.Float2)
+                            bw.WriteSingles((float[])Value);
+                        else if (Type == ParamType.Float3)
+                            bw.WriteSingles((float[])Value);
+                        else if (Type == ParamType.Float4)
+                            bw.WriteSingles((float[])Value);
+                    }
+                    valueBlock.Finish(bw);
+                    WriteMarker(bw, 0x04);
+                    bw.WriteInt32(0);
+                }
+                paramBlock.Finish(bw);
             }
 
             /// <summary>
@@ -332,12 +294,23 @@ namespace SoulsFormats
         /// <summary>
         /// Value types of MTD params.
         /// </summary>
+        // I believe the engine supports Bool2-4 and Int3-4 as well, but they're never used so I won't bother yet.
         public enum ParamType
         {
             /// <summary>
             /// A one-byte boolean value.
             /// </summary>
             Bool,
+
+            /// <summary>
+            /// A four-byte integer.
+            /// </summary>
+            Int,
+
+            /// <summary>
+            /// An array of two four-byte integers.
+            /// </summary>
+            Int2,
 
             /// <summary>
             /// A four-byte floating point number.
@@ -358,16 +331,6 @@ namespace SoulsFormats
             /// An array of four four-byte floating point numbers.
             /// </summary>
             Float4,
-
-            /// <summary>
-            /// A four-byte integer.
-            /// </summary>
-            Int,
-
-            /// <summary>
-            /// An array of two four-byte integers.
-            /// </summary>
-            Int2
         }
 
         /// <summary>
@@ -379,11 +342,6 @@ namespace SoulsFormats
             /// The type of texture (g_Diffuse, g_Specular, etc).
             /// </summary>
             public string Type { get; set; }
-
-            /// <summary>
-            /// Unknown; often seems like the size of this struct, but varies.
-            /// </summary>
-            public int Unk04 { get; set; }
 
             /// <summary>
             /// Whether the texture has extended information for Sekiro.
@@ -408,53 +366,67 @@ namespace SoulsFormats
             /// <summary>
             /// Floats for an unknown purpose, only used in Sekiro.
             /// </summary>
-            public float[] UnkFloats { get; set; }
+            public List<float> UnkFloats { get; set; }
+
+            /// <summary>
+            /// Creates a Texture with default values.
+            /// </summary>
+            public Texture()
+            {
+                Type = "g_DiffuseTexture";
+                Path = "";
+                UnkFloats = new List<float>();
+            }
 
             internal Texture(BinaryReaderEx br)
             {
-                br.AssertInt32(0);
-                Unk04 = br.ReadInt32();
-                br.AssertInt32(0x2000);
-                Extended = br.AssertInt32(3, 5) == 5;
-                AssertMarker(br, 0xA3);
-                Type = br.ReadShiftJISLengthPrefixed(0x35);
-                UVNumber = br.ReadInt32();
-                AssertMarker(br, 0x35);
-                ShaderDataIndex = br.ReadInt32();
+                var textureBlock = Block.Read(br, 0x2000, null, 0xA3);
+                {
+                    if (textureBlock.Version == 3)
+                        Extended = false;
+                    else if (textureBlock.Version == 5)
+                        Extended = true;
+                    else
+                        throw new InvalidDataException($"Texture block version is expected to be 3 or 5, but it was {textureBlock.Version}.");
 
-                if (Extended)
-                {
-                    br.AssertInt32(0xA3);
-                    Path = br.ReadShiftJISLengthPrefixed(0xBA);
-                    int floatCount = br.ReadInt32();
-                    UnkFloats = br.ReadSingles(floatCount);
-                }
-                else
-                {
-                    Path = null;
-                    UnkFloats = null;
+                    Type = ReadMarkedString(br, 0x35);
+                    UVNumber = br.ReadInt32();
+                    AssertMarker(br, 0x35);
+                    ShaderDataIndex = br.ReadInt32();
+
+                    if (Extended)
+                    {
+                        br.AssertInt32(0xA3);
+                        Path = ReadMarkedString(br, 0xBA);
+                        int floatCount = br.ReadInt32();
+                        UnkFloats = new List<float>(br.ReadSingles(floatCount));
+                    }
+                    else
+                    {
+                        Path = "";
+                        UnkFloats = new List<float>();
+                    }
                 }
             }
 
             internal void Write(BinaryWriterEx bw)
             {
-                bw.WriteInt32(0);
-                bw.WriteInt32(Unk04);
-                bw.WriteInt32(0x2000);
-                bw.WriteInt32(Extended ? 5 : 3);
-                WriteMarker(bw, 0xA3);
-                bw.WriteShiftJISLengthPrefixed(Type, 0x35);
-                bw.WriteInt32(UVNumber);
-                WriteMarker(bw, 0x35);
-                bw.WriteInt32(ShaderDataIndex);
-
-                if (Extended)
+                var textureBlock = Block.Write(bw, 0x2000, Extended ? 5 : 3, 0xA3);
                 {
-                    bw.WriteInt32(0xA3);
-                    bw.WriteShiftJISLengthPrefixed(Path, 0xBA);
-                    bw.WriteInt32(UnkFloats.Length);
-                    bw.WriteSingles(UnkFloats);
+                    WriteMarkedString(bw, 0x35, Type);
+                    bw.WriteInt32(UVNumber);
+                    WriteMarker(bw, 0x35);
+                    bw.WriteInt32(ShaderDataIndex);
+
+                    if (Extended)
+                    {
+                        bw.WriteInt32(0xA3);
+                        WriteMarkedString(bw, 0xBA, Path);
+                        bw.WriteInt32(UnkFloats.Count);
+                        bw.WriteSingles(UnkFloats);
+                    }
                 }
+                textureBlock.Finish(bw);
             }
 
             /// <summary>
@@ -507,25 +479,96 @@ namespace SoulsFormats
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
         }
 
-        /// <summary>
-        /// Reads weird markers throughout the file that start with the same byte and then
-        /// have what is almost definitely just uninitialized memory for the next three.
-        /// </summary>
-        private static void AssertMarker(BinaryReaderEx br, byte start)
+        #region Read/Write utilities
+        private static byte ReadMarker(BinaryReaderEx br)
         {
-            br.AssertByte(start);
-            br.Skip(3);
+            byte marker = br.ReadByte();
+            br.Pad(4);
+            return marker;
         }
 
-        /// <summary>
-        /// Writes the given byte and three zeroes.
-        /// </summary>
-        private static void WriteMarker(BinaryWriterEx bw, byte start)
+        private static byte AssertMarker(BinaryReaderEx br, byte marker)
         {
-            bw.WriteByte(start);
-            bw.WriteByte(0);
-            bw.WriteByte(0);
-            bw.WriteByte(0);
+            br.AssertByte(marker);
+            br.Pad(4);
+            return marker;
         }
+
+        private static void WriteMarker(BinaryWriterEx bw, byte marker)
+        {
+            bw.WriteByte(marker);
+            bw.Pad(4);
+        }
+
+        private static string ReadMarkedString(BinaryReaderEx br, byte marker)
+        {
+            int length = br.ReadInt32();
+            string str = br.ReadShiftJIS(length);
+            AssertMarker(br, marker);
+            return str;
+        }
+
+        private static string AssertMarkedString(BinaryReaderEx br, byte marker, string assert)
+        {
+            string str = ReadMarkedString(br, marker);
+            if (str != assert)
+                throw new InvalidDataException($"Read marked string: {str} | Expected: {assert} | Ending position: 0x{br.Position:X}");
+            return str;
+        }
+
+        private static void WriteMarkedString(BinaryWriterEx bw, byte marker, string str)
+        {
+            byte[] bytes = Encoding.GetEncoding("shift-jis").GetBytes(str);
+            bw.WriteInt32(bytes.Length);
+            bw.WriteBytes(bytes);
+            WriteMarker(bw, marker);
+        }
+
+        private class Block
+        {
+            public long Start;
+            public uint Length;
+            public int Type;
+            public int Version;
+            public byte Marker;
+
+            private Block(long start, uint length, int type, int version, byte marker)
+            {
+                Start = start;
+                Length = length;
+                Type = type;
+                Version = version;
+                Marker = marker;
+            }
+
+            public static Block Read(BinaryReaderEx br, int? assertType, int? assertVersion, byte? assertMarker)
+            {
+                br.AssertInt32(0);
+                uint length = br.ReadUInt32();
+                long start = br.Position;
+                int type = assertType.HasValue ? br.AssertInt32(assertType.Value) : br.ReadInt32();
+                int version = assertVersion.HasValue ? br.AssertInt32(assertVersion.Value) : br.ReadInt32();
+                byte marker = assertMarker.HasValue ? AssertMarker(br, assertMarker.Value) : ReadMarker(br);
+                return new Block(start, length, type, version, marker);
+            }
+
+            public static Block Write(BinaryWriterEx bw, int type, int version, byte marker)
+            {
+                bw.WriteInt32(0);
+                long start = bw.Position + 4;
+                bw.ReserveUInt32($"Block{start:X}");
+                bw.WriteInt32(type);
+                bw.WriteInt32(version);
+                WriteMarker(bw, marker);
+                return new Block(start, 0, type, version, marker);
+            }
+
+            public void Finish(BinaryWriterEx bw)
+            {
+                Length = (uint)(bw.Position - Start);
+                bw.FillUInt32($"Block{Start:X}", Length);
+            }
+        }
+        #endregion
     }
 }

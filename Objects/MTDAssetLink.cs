@@ -48,11 +48,6 @@ class MTDAssetLink : ScriptableObject
         /// Unknown
         /// </summary>
         public int ShaderDataIndex;
-
-        /// <summary>
-        /// Unknown
-        /// </summary>
-        public int Unk;
     }
 
     public List<TextureDefinition> Textures = new List<TextureDefinition>();
@@ -68,7 +63,6 @@ class MTDAssetLink : ScriptableObject
             def.Name = tex.Type;
             def.UVNumber = tex.UVNumber;
             def.ShaderDataIndex = tex.ShaderDataIndex;
-            def.Unk = tex.Unk04;
             if (tex.Extended)
             {
                 def.TexturePath = tex.Path;
