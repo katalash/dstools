@@ -102,7 +102,8 @@ public abstract class MSBSRegion : MonoBehaviour
         //region.Rotation.X = parent.transform.eulerAngles.x;
         //region.Rotation.Y = parent.transform.eulerAngles.y;
         //region.Rotation.Z = parent.transform.eulerAngles.z;
-        region.Rotation = ConvertEuler(parent.transform.rotation.eulerAngles);
+        //region.Rotation = ConvertEuler(parent.transform.rotation.eulerAngles);
+        region.Rotation = EulerUtils.quaternion2EulerDeg(parent.transform.rotation.normalized, EulerUtils.RotSeq.yzx);
 
         region.MapStudioLayer = MapStudioLayer;
         region.Unk2C = Unk2C;

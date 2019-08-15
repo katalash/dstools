@@ -43,6 +43,8 @@ public abstract class MSB2Part : MonoBehaviour
     /// </summary>
     public int Unk6C;
 
+    //public UnityEngine.Vector3 Rotation;
+
     public void setBasePart(MSB2.Part part)
     {
         ModelName = part.ModelName;
@@ -61,6 +63,8 @@ public abstract class MSB2Part : MonoBehaviour
         Unk64 = part.Unk64;
         Unk68 = part.Unk68;
         Unk6C = part.Unk6C;
+
+        //Rotation = new UnityEngine.Vector3(part.Rotation.X, part.Rotation.Y, part.Rotation.Z);
     }
 
     static System.Numerics.Vector3 ConvertEuler(UnityEngine.Vector3 r)
@@ -71,28 +75,38 @@ public abstract class MSB2Part : MonoBehaviour
         var y = (r.y > 180.0f ? r.y - 360.0f : r.y) * Mathf.Deg2Rad;
         var z = (r.z > 180.0f ? r.z - 360.0f : r.z) * Mathf.Deg2Rad;
 
-        System.Numerics.Matrix4x4 mat2 = System.Numerics.Matrix4x4.CreateRotationZ(z)
-            * System.Numerics.Matrix4x4.CreateRotationX(x) * System.Numerics.Matrix4x4.CreateRotationY(y);
+        //System.Numerics.Matrix4x4 mat2 = System.Numerics.Matrix4x4.CreateRotationY(y)
+        //    * System.Numerics.Matrix4x4.CreateRotationX(x) * System.Numerics.Matrix4x4.CreateRotationZ(z);
+        double M11 = Math.Cos(z) * Math.Cos(y) - Math.Sin(z) * Math.Sin(x) * Math.Sin(y);
+        double M13 = Math.Cos(z) * Math.Sin(y) + Math.Cos(y) * Math.Sin(x) * Math.Sin(x);
+        double M21 = Math.Cos(y) * Math.Sin(z) + Math.Cos(z) * Math.Sin(x) * Math.Sin(y);
+        double M22 = Math.Cos(z) * Math.Cos(x);
+        double M23 = Math.Sin(z) * Math.Sin(y) - Math.Cos(z) * Math.Cos(y) * Math.Sin(x);
+        double M31 = -Math.Cos(x) * Math.Sin(y);
+        double M33 = Math.Cos(x) * Math.Cos(y);
 
         // YZX
-        if (Mathf.Abs(mat2.M21) < 0.99999f)
+        if (Math.Abs(M21) < 0.99999f)
         {
-            z = (float)((r.z >= 90.0f && r.z < 270.0f) ? Math.PI + Math.Asin(Math.Max(Math.Min((double)mat2.M21, 1.0), -1.0)) : -Math.Asin(Math.Max(Math.Min((double)mat2.M21, 1.0), -1.0)));
-            x = (float)Math.Atan2(mat2.M23 / Math.Cos(z), mat2.M22 / Math.Cos(z));
-            y = (float)Math.Atan2(mat2.M31 / Math.Cos(z), mat2.M11 / Math.Cos(z));
+            /*z = (float)((r.z >= 90.0f && r.z < 270.0f) ? Math.PI + Math.Asin(Math.Max(Math.Min((double)mat2.M21, 1.0), -1.0)) : -Math.Asin(Math.Max(Math.Min((double)mat2.M21, 1.0), -1.0)));
+            x = -(float)Math.Atan2(-mat2.M23 / Math.Cos(z), mat2.M22 / Math.Cos(z));
+            y = -(float)Math.Atan2(-mat2.M31 / Math.Cos(z), mat2.M11 / Math.Cos(z));*/
+            z = (float)Math.Asin(Math.Max(Math.Min(M21, 1.0), -1.0));
+            x = (float)Math.Atan2(-M23, M22);
+            y = (float)Math.Atan2(-M31, M11);
         }
         else
         {
-            if (mat2.M12 > 0)
+            if (M21 > 0)
             {
-                z = -Mathf.PI / 2.0f;
-                y = (float)Math.Atan2(-mat2.M13, -mat2.M33);
+                z = Mathf.PI / 2.0f;
+                y = (float)Math.Atan2(M13, M33);
                 x = 0.0f;
             }
             else
             {
-                z = Mathf.PI / 2.0f;
-                y = (float)Math.Atan2(mat2.M13, mat2.M33);
+                z = -Mathf.PI / 2.0f;
+                y = (float)Math.Atan2(M13, M33);
                 x = 0.0f;
             }
         }
@@ -110,7 +124,20 @@ public abstract class MSB2Part : MonoBehaviour
         pos.Z = parent.transform.position.z;
         part.Position = pos;
 
-        part.Rotation = ConvertEuler(parent.transform.eulerAngles);
+        //part.Rotation = ConvertEuler(parent.transform.eulerAngles);
+        part.Rotation = EulerUtils.quaternion2EulerDeg(parent.transform.rotation.normalized, EulerUtils.RotSeq.yzx);
+        //Debug.Log($@"{part.Name}: {Rotation}, {parent.transform.eulerAngles} -> {part.Rotation}");
+        /*if (Mathf.Abs(Rotation.x - part.Rotation.X) > 0.01f ||
+            Mathf.Abs(Rotation.y - part.Rotation.Y) > 0.01f ||
+            Mathf.Abs(Rotation.z - part.Rotation.Z) > 0.01f)
+        {
+            Debug.Log($@"{part.Name}: {Rotation}, {parent.transform.eulerAngles} -> {part.Rotation} Q: {parent.transform.rotation.normalized}");
+        }*/
+        //var rotation = new System.Numerics.Vector3();
+        //rotation.X = parent.transform.eulerAngles.x;
+        //rotation.Y = parent.transform.eulerAngles.y;
+        //rotation.Z = parent.transform.eulerAngles.z;
+        //part.Rotation = rotation;
 
         var scale = new System.Numerics.Vector3();
         scale.X = parent.transform.localScale.x;

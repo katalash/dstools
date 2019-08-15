@@ -22,6 +22,8 @@ public abstract class MSB2Region : MonoBehaviour
     /// </summary>
     public bool IsPointOrCircle = false;
 
+    //public UnityEngine.Vector3 Rotation;
+
     public void setBaseRegion(MSB2.Region region)
     {
         Unk08 = region.Unk08;
@@ -30,6 +32,7 @@ public abstract class MSB2Region : MonoBehaviour
         {
             IsPointOrCircle = true;
         }
+        //Rotation = new UnityEngine.Vector3(region.Rotation.X, region.Rotation.Y, region.Rotation.Z);
     }
 
     static System.Numerics.Vector3 ConvertEuler(UnityEngine.Vector3 r)
@@ -79,8 +82,14 @@ public abstract class MSB2Region : MonoBehaviour
         pos.Z = parent.transform.position.z;
         region.Position = pos;
 
-        var rot = ConvertEuler(parent.transform.rotation.eulerAngles);
-        region.Rotation = rot;
+        //var rot = ConvertEuler(parent.transform.rotation.eulerAngles);
+        region.Rotation = EulerUtils.quaternion2EulerDeg(parent.transform.rotation.normalized, EulerUtils.RotSeq.yzx);
+        /*if (Mathf.Abs(Rotation.x - region.Rotation.X) > 0.01f ||
+            Mathf.Abs(Rotation.y - region.Rotation.Y) > 0.01f ||
+            Mathf.Abs(Rotation.z - region.Rotation.Z) > 0.01f)
+        {
+            Debug.Log($@"{region.Name}: {Rotation}, {parent.transform.eulerAngles} -> {region.Rotation} Q: {parent.transform.rotation.normalized}");
+        }*/
 
         region.Unk08 = Unk08;
         region.Unk0E = Unk0E;

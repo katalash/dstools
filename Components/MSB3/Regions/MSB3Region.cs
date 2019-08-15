@@ -110,7 +110,8 @@ public abstract class MSB3Region : MonoBehaviour
         //region.Rotation.Y = parent.transform.eulerAngles.y;
         //region.Rotation.Z = parent.transform.eulerAngles.z;
         //region.Rotation = ConvertEuler(parent.transform.rotation.eulerAngles);
-        region.Rotation = new System.Numerics.Vector3(Rotation.x, Rotation.y, Rotation.z);
+        //region.Rotation = new System.Numerics.Vector3(Rotation.x, Rotation.y, Rotation.z);
+        region.Rotation = EulerUtils.quaternion2EulerDeg(parent.transform.rotation.normalized, EulerUtils.RotSeq.yzx);
 
         region.HasTypeData = HasTypeData;
         region.Unk2 = Unk2;

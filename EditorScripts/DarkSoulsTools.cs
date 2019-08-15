@@ -1210,9 +1210,13 @@ public class DarkSoulsTools : EditorWindow
                               cy * cp * cr + sy * sp * sr);*/
 
         // Apply in YZX order
-        t.Rotate(new Vector3(0, 1, 0), e.y, Space.World);
-        t.Rotate(new Vector3(0, 0, 1), e.z, Space.World);
-        t.Rotate(new Vector3(1, 0, 0), e.x, Space.World);
+        //t.Rotate(new Vector3(1, 0, 0), -e.x, Space.World);
+        //t.Rotate(new Vector3(0, 0, 1), -e.z, Space.World);
+        //t.Rotate(new Vector3(0, 1, 0), -e.y, Space.World);
+        Quaternion qy = Quaternion.AngleAxis(e.y, new Vector3(0, 1, 0));
+        Quaternion qz = Quaternion.AngleAxis(e.z, new Vector3(0, 0, 1));
+        Quaternion qx = Quaternion.AngleAxis(e.x, new Vector3(1, 0, 0));
+        t.rotation = qy * qz * qx;
     }
 
     static void EulerToTransformBTL(Vector3 e, Transform t)
@@ -3513,7 +3517,8 @@ public class DarkSoulsTools : EditorWindow
             {
                 exportList.Add((U)obj.Serialize(obj.gameObject));
             }
-            exportList.Sort((o1, o2) => o1.Name.CompareTo(o2.Name));
+            //exportList.Sort((o1, o2) => o1.Name.CompareTo(o2.Name));
+            exportList.Reverse();
         }
     }
 
@@ -3527,7 +3532,8 @@ public class DarkSoulsTools : EditorWindow
                 exportList.Add((U)obj.Serialize(obj.gameObject));
             }
             // Sort because engine acts weird if model names aren't in order
-            exportList.Sort((o1, o2) => o1.ModelName.CompareTo(o2.ModelName));
+            exportList.Sort((o1, o2) => StringComparer.Ordinal.Compare(o1.Name, o2.Name));
+            //exportList.Reverse();
         }
     }
 
@@ -3540,6 +3546,7 @@ public class DarkSoulsTools : EditorWindow
             {
                 exportList.Add((U)obj.Serialize(obj.gameObject));
             }
+            exportList.Reverse();
         }
     }
 
@@ -3552,6 +3559,7 @@ public class DarkSoulsTools : EditorWindow
             {
                 exportList.Add((U)obj.Serialize(obj.gameObject));
             }
+            exportList.Reverse();
         }
     }
 
@@ -4926,7 +4934,7 @@ public class DarkSoulsTools : EditorWindow
             }
         }
 
-        if (type == GameType.DarkSoulsIII)
+        if (type == GameType.DarkSoulsIII || type == GameType.DarkSoulsIISOTFS)
         {
             PreservePartsPose = GUILayout.Toggle(PreservePartsPose, "Preserve parts pose (will restore from backup if needed)");
         }

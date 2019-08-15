@@ -117,7 +117,8 @@ public abstract class MSB1Part : MonoBehaviour
         rot.X = Rotation.x;
         rot.Y = Rotation.y;
         rot.Z = Rotation.z;
-        part.Rotation = rot;
+        //part.Rotation = rot;
+        part.Rotation = EulerUtils.quaternion2EulerDeg(parent.transform.rotation.normalized, EulerUtils.RotSeq.yzx);
 
         var scale = new System.Numerics.Vector3();
         scale.X = parent.transform.localScale.x;

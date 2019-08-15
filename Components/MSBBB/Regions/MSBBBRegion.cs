@@ -79,10 +79,11 @@ public class MSBBBRegion : MonoBehaviour
         region.Position.X = parent.transform.position.x;
         region.Position.Y = parent.transform.position.y;
         region.Position.Z = parent.transform.position.z;
-        var rot = ConvertEuler(parent.transform.rotation.eulerAngles);
-        region.Rotation.X = rot.X;
-        region.Rotation.Y = rot.Y;
-        region.Rotation.Z = rot.Z;
+        //var rot = ConvertEuler(parent.transform.rotation.eulerAngles);
+        //region.Rotation.X = rot.X;
+        //region.Rotation.Y = rot.Y;
+        //region.Rotation.Z = rot.Z;
+        region.Rotation = EulerUtils.quaternion2EulerDeg(parent.transform.rotation.normalized, EulerUtils.RotSeq.yzx);
 
         region.Unk2 = Unk2;
         region.Unk3 = Unk3;

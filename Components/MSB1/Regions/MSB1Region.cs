@@ -74,8 +74,9 @@ public class MSB1Region : MonoBehaviour
         pos.Z = parent.transform.position.z;
         region.Position = pos;
 
-        var rot = ConvertEuler(parent.transform.rotation.eulerAngles);
-        region.Rotation = rot;
+        //var rot = ConvertEuler(parent.transform.rotation.eulerAngles);
+        //region.Rotation = rot;
+        region.Rotation = EulerUtils.quaternion2EulerDeg(parent.transform.rotation.normalized, EulerUtils.RotSeq.yzx);
 
         region.EntityID = EventEntityID;
 

@@ -186,7 +186,8 @@ public abstract class MSB3Part : MonoBehaviour
         //part.Rotation.X = parent.transform.rotation.eulerAngles.x;
         //part.Rotation.Y = parent.transform.rotation.eulerAngles.z;
         //part.Rotation.Z = -parent.transform.rotation.eulerAngles.y;
-        part.Rotation = ConvertEuler(parent.transform.eulerAngles);
+        //part.Rotation = ConvertEuler(parent.transform.eulerAngles);
+        part.Rotation = EulerUtils.quaternion2EulerDeg(parent.transform.rotation.normalized, EulerUtils.RotSeq.yzx);
         //part.Rotation = ConvertQuatEuler(parent.transform.rotation);
         //part.Rotation = new System.Numerics.Vector3(Rotation.x, Rotation.y, Rotation.z);
         //print($@"{part.Name}: {Rotation}, {parent.transform.eulerAngles} -> {part.Rotation}");
