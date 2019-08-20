@@ -3159,6 +3159,60 @@ public class DarkSoulsTools : EditorWindow
         }
     }
 
+    void ImportDS2Generators()
+    {
+        var assetLink = GameObject.Find("MSBAssetLink");
+        var alc = assetLink.GetComponent<MSBAssetLink>();
+        var mapid = alc.MapID;
+
+        // Attempt to load the params
+        var basePath = $@"{Interroot}\Param\";
+        //var generatorParam = PARAM.Read(GetOverridenPath($@"{basePath}\generatorparam_{mapid}.param"));
+        var locationParam = PARAM.Read(GetOverridenPath($@"{basePath}\generatorlocation_{mapid}.param"));
+        //var registParam = PARAM.Read(GetOverridenPath($@"{basePath}\generatorregistparam_{mapid}.param"));
+
+        // Load the layouts and apply them
+        //var generatorLayout = PARAM.Layout.ReadXMLFile($@"{Application.dataPath.Replace('/', '\\')}\dstools\ParamLayouts\DS2SOTFS\{generatorParam.ID}.xml");
+        var locationLayout = PARAM.Layout.ReadXMLFile($@"{Application.dataPath.Replace('/', '\\')}\dstools\ParamLayouts\DS2SOTFS\{locationParam.ID}.xml");
+        //var registLayout = PARAM.Layout.ReadXMLFile($@"{Application.dataPath.Replace('/', '\\')}\dstools\ParamLayouts\DS2SOTFS\{registParam.ID}.xml");
+        //generatorParam.SetLayout(generatorLayout);
+        locationParam.SetLayout(locationLayout);
+        //registParam.SetLayout(registLayout);
+
+        // Create a folder for Enemies
+        var genroot = GameObject.Find("/EnemyGenerators");
+        if (genroot == null)
+        {
+            genroot = new GameObject("EnemyGenerators");
+        }
+
+        // Attempt to find a MapOffset object to transform the generators
+        var mapoffset = GameObject.Find($@"/MSBEvents/MapOffsets");
+        if (mapoffset != null)
+        {
+            var mo = mapoffset.GetComponentsInChildren<MSB2MapOffsetEvent>().FirstOrDefault();
+            if (mo != null)
+            {
+                genroot.transform.position = new Vector3(mo.Position.x, mo.Position.y, mo.Position.z);
+            }
+        }
+
+        // Deserialize the generators. All the rows should be the same ids with the same orders
+        for (int row = 0; row < locationParam.Rows.Count; row++)
+        {
+            var locationRow = locationParam.Rows[row];
+
+            var gen = new GameObject($@"{locationRow.ID}");
+            gen.transform.parent = genroot.transform;
+            gen.transform.localPosition = new Vector3((float)locationRow["PosX"].Value,
+                (float)locationRow["PosY"].Value, (float)locationRow["PosZ"].Value);
+            gen.transform.localRotation = Quaternion.Euler(0.0f, (float)locationRow["RotY"].Value, 0.0f);
+
+            gen.AddComponent<EnemyGeneratorParam>();
+            gen.GetComponent<EnemyGeneratorParam>().SetFromGeneratorParam(locationRow.ID, null, null, locationRow);
+        }
+    }
+
     void ExportBTLs()
     {
         var AssetLink = GameObject.Find("MSBAssetLink");
@@ -3388,6 +3442,7 @@ public class DarkSoulsTools : EditorWindow
             {
                 exportList.Add((U)obj.Serialize(obj.gameObject));
             }
+            exportList.Reverse();
         }
     }
 
@@ -3398,10 +3453,12 @@ public class DarkSoulsTools : EditorWindow
         {
             foreach (var obj in parts)
             {
-                exportList.Add((U)obj.Serialize(obj.gameObject));
+                if (!obj.GetType().IsSubclassOf(typeof(T)))
+                    exportList.Add((U)obj.Serialize(obj.gameObject));
             }
             // Sort because engine acts weird if model names aren't in order
-            exportList.Sort((o1, o2) => o1.ModelName.CompareTo(o2.ModelName));
+            //exportList.Sort((o1, o2) => o1.ModelName.CompareTo(o2.ModelName));
+            exportList.Reverse();
         }
     }
 
@@ -3414,7 +3471,8 @@ public class DarkSoulsTools : EditorWindow
             {
                 exportList.Add((U)obj.Serialize(obj.gameObject));
             }
-            exportList.Sort((o1, o2) => o1.Name.CompareTo(o2.Name));
+            //exportList.Sort((o1, o2) => o1.Name.CompareTo(o2.Name));
+            exportList.Reverse();
         }
     }
 
@@ -3455,6 +3513,7 @@ public class DarkSoulsTools : EditorWindow
             {
                 export.Regions.Regions.Add(obj.Serialize(new MSB1.Region(obj.name), obj.gameObject));
             }
+            export.Regions.Regions.Reverse();
         }
 
         // Events
@@ -3498,7 +3557,7 @@ public class DarkSoulsTools : EditorWindow
         {
             File.Delete(mapPath + ".temp");
         }
-        export.Write(mapPath + ".temp", SoulsFormats.DCX.Type.DarkSouls1);
+        export.Write(mapPath + ".temp", SoulsFormats.DCX.Type.None);
 
         // Make a copy of the previous map
         File.Copy(mapPath, mapPath + ".prev", true);
@@ -3529,11 +3588,12 @@ public class DarkSoulsTools : EditorWindow
         {
             foreach (var obj in parts)
             {
-                exportList.Add((U)obj.Serialize(obj.gameObject));
+                if (!obj.GetType().IsSubclassOf(typeof(T)))
+                    exportList.Add((U)obj.Serialize(obj.gameObject));
             }
             // Sort because engine acts weird if model names aren't in order
             exportList.Sort((o1, o2) => StringComparer.Ordinal.Compare(o1.Name, o2.Name));
-            //exportList.Reverse();
+            
         }
     }
 
@@ -3680,7 +3740,8 @@ public class DarkSoulsTools : EditorWindow
         {
             foreach (var obj in parts)
             {
-                exportList.Add((U)obj.Serialize(obj.gameObject));
+                if (!obj.GetType().IsSubclassOf(typeof(T)))
+                    exportList.Add((U)obj.Serialize(obj.gameObject));
             }
             // Sort because engine acts weird if model names aren't in order
             exportList.Sort((o1, o2) => o1.ModelName.CompareTo(o2.ModelName));
@@ -3822,7 +3883,8 @@ public class DarkSoulsTools : EditorWindow
         {
             foreach (var obj in parts)
             {
-                exportList.Add((U)obj.Serialize(obj.gameObject));
+                if (!obj.GetType().IsSubclassOf(typeof(T)))
+                    exportList.Add((U)obj.Serialize(obj.gameObject));
             }
             // Sort because engine acts weird if model names aren't in order
             exportList.Sort((o1, o2) => o1.ModelName.CompareTo(o2.ModelName));
@@ -4931,6 +4993,14 @@ public class DarkSoulsTools : EditorWindow
                     }
                 }
                 menu.ShowAsContext();
+            }
+        }
+
+        if (type == GameType.DarkSoulsIISOTFS)
+        {
+            if (GUILayout.Button("Import Enemy Generators"))
+            {
+                ImportDS2Generators();
             }
         }
 

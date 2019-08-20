@@ -16,6 +16,8 @@ public class MSB1MessageEvent : MSB1Event
     /// </summary>
     public short UnkT02;
 
+    public bool Hidden;
+
 
     public override void SetEvent(MSB1.Event bevt)
     {
@@ -23,6 +25,7 @@ public class MSB1MessageEvent : MSB1Event
         setBaseEvent(evt);
         MessageID = evt.MessageID;
         UnkT02 = evt.UnkT02;
+        Hidden = evt.Hidden;
     }
 
     public override MSB1.Event Serialize(GameObject parent)
@@ -31,6 +34,7 @@ public class MSB1MessageEvent : MSB1Event
         _Serialize(evt, parent);
         evt.MessageID = MessageID;
         evt.UnkT02 = UnkT02;
+        evt.Hidden = Hidden;
         return evt;
     }
 }

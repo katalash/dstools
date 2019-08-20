@@ -20,11 +20,45 @@ public abstract class MSBPartEditorBase : Editor
     protected enum MSBType
     {
         MSB1,
+        MSB2SOTFS,
         MSB3,
         MSBBB,
         MSBSekiro,
     }
     protected MSBType _MSBType = MSBType.MSB1;
+
+    static string GetModelAssetPath(MSBType type, string name)
+    {
+        string assetbase = "Assets";
+        switch (type)
+        {
+            case MSBType.MSB1:
+                assetbase += "/DS1";
+                break;
+            case MSBType.MSB2SOTFS:
+                assetbase += "/DS2SOTFS";
+                break;
+            case MSBType.MSB3:
+                assetbase += "/DS3";
+                break;
+            case MSBType.MSBBB:
+                assetbase += "/Bloodborne";
+                break;
+            case MSBType.MSBSekiro:
+                assetbase += "/Sekiro";
+                break;
+        }
+
+        if (name.StartsWith("o"))
+        {
+            return $@"{assetbase}/Obj/{name}.prefab";
+        }
+        else  if (name.StartsWith("c"))
+        {
+            return $@"{assetbase}/Chr/{name}.prefab";
+        }
+        return "";
+    }
 
     protected void DrawTreasureEditor()
     {
@@ -345,6 +379,39 @@ public abstract class MSBPartEditorBase : Editor
                 }
             }
             serializedObject.ApplyModifiedProperties();
+        }
+    }
+
+    protected void DrawRefreshModel()
+    {
+        if (targets.Count() == 1 && GUILayout.Button("Refresh Visible Model"))
+        {
+            var gtarg = ((MonoBehaviour)target).gameObject;
+            var prefabPath = GetModelAssetPath(_MSBType, serializedObject.FindProperty("ModelName").stringValue);
+            GameObject prefabObj = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+            if (prefabObj != null)
+            {
+                GameObject newObj = (GameObject)PrefabUtility.InstantiatePrefab(prefabObj);
+                Undo.RegisterCreatedObjectUndo(newObj, "created prefab");
+                PrefabUtility.SetPropertyModifications(newObj, PrefabUtility.GetPropertyModifications(gtarg));
+                var addedcomps = PrefabUtility.GetAddedComponents(gtarg);
+                foreach (var added in addedcomps)
+                {
+                    if (UnityEditorInternal.ComponentUtility.CopyComponent(added.instanceComponent))
+                    {
+                        UnityEditorInternal.ComponentUtility.PasteComponentAsNew(newObj);
+                    }
+                }
+                newObj.name = gtarg.name;
+                newObj.transform.position = gtarg.transform.position;
+                newObj.transform.rotation = gtarg.transform.rotation;
+                newObj.transform.localScale = gtarg.transform.localScale;
+                newObj.transform.parent = gtarg.transform.parent;
+                newObj.transform.SetSiblingIndex(gtarg.transform.GetSiblingIndex());
+                newObj.layer = gtarg.layer;
+                Undo.DestroyObjectImmediate(gtarg);
+                Selection.activeObject = newObj;
+            }
         }
     }
 

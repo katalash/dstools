@@ -53,7 +53,7 @@ public class MSB1CollisionPart : MSB1Part
         PlayRegionID = part.PlayRegionID;
 
         LockCamID1 = part.LockCamParamID1;
-        LockCamID2 = part.LockCamParamID1;
+        LockCamID2 = part.LockCamParamID2;
     }
 
     public override MSB1.Part Serialize(GameObject parent)

@@ -35,7 +35,7 @@ class ItemLotParam
     /// Initialize from DS3 item lot param
     /// </summary>
     /// <param name="lot"></param>
-    public ItemLotParam(PARAM64.Row lot)
+    public ItemLotParam(PARAM.Row lot)
     {
         for (int i = 0; i < 8; i++)
         {
@@ -92,7 +92,7 @@ class ItemLotParam
 /// </summary>
 class ItemLotParamUtils
 {
-    private static PARAM64 DS3Param = null;
+    private static PARAM DS3Param = null;
     private static DarkSoulsTools.GameType GameType = DarkSoulsTools.GameType.Undefined;
     private static string ParamPath = "";
 
@@ -106,8 +106,8 @@ class ItemLotParamUtils
             return;
         }
         BND4 paramBnd = SFUtil.DecryptDS3Regulation(DarkSoulsTools.GetOverridenPath(ParamPath));
-        DS3Param = PARAM64.Read(paramBnd.Files.Find(x => Path.GetFileName(x.Name) == "ItemLotParam.param").Bytes);
-        PARAM64.Layout layout = PARAM64.Layout.ReadXMLFile($@"{Application.dataPath.Replace('/', '\\')}\dstools\ParamLayouts\DS3\{DS3Param.ID}.xml");
+        DS3Param = PARAM.Read(paramBnd.Files.Find(x => Path.GetFileName(x.Name) == "ItemLotParam.param").Bytes);
+        PARAM.Layout layout = PARAM.Layout.ReadXMLFile($@"{Application.dataPath.Replace('/', '\\')}\dstools\ParamLayouts\DS3\{DS3Param.ID}.xml");
         DS3Param.SetLayout(layout);
 
         // Build and cache the item name list
