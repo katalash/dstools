@@ -373,12 +373,16 @@ public class DarkSoulsTools : EditorWindow
         {
             path = $@"{chrpath}\{chrid}.chrbnd";
         }
+        else if (File.Exists($@"{chrpath}\{chrid}.chr"))
+        {
+            path = $@"{chrpath}\{chrid}.chr";
+        }
         else
         {
             throw new FileNotFoundException("Could not find bnd for character " + chrid);
         }
 
-        if (type == GameType.DarkSoulsIII || type == GameType.Bloodborne || type == GameType.Sekiro)
+        if (type == GameType.DarkSoulsIISOTFS || type == GameType.DarkSoulsIII || type == GameType.Bloodborne || type == GameType.Sekiro)
         {
             chrbnd = BND4.Read(GetOverridenPath(path));
         }
@@ -442,12 +446,16 @@ public class DarkSoulsTools : EditorWindow
         {
             path = $@"{chrpath}\{chrid}.chrbnd";
         }
+        else if (File.Exists($@"{chrpath}\{chrid}.bnd"))
+        {
+            path = $@"{chrpath}\{chrid}.bnd";
+        }
         else
         {
             throw new FileNotFoundException("Could not find bnd for character " + chrid);
         }
 
-        if (type == GameType.DarkSoulsIII || type == GameType.Bloodborne || type == GameType.Sekiro)
+        if (type == GameType.DarkSoulsIISOTFS || type == GameType.DarkSoulsIII || type == GameType.Bloodborne || type == GameType.Sekiro)
         {
             chrbnd = BND4.Read(GetOverridenPath(path));
         }
@@ -457,11 +465,12 @@ public class DarkSoulsTools : EditorWindow
         }
 
         // Should only be one flver in a bnd
-        var flver = FLVER.Read(chrbnd.Files.Where(x => x.Name.ToUpper().EndsWith(".FLVER")).First().Bytes);
+        var ext = (type == GameType.DarkSoulsIISOTFS) ? ".FLV" : ".FLVER";
+        var flver = FLVER.Read(chrbnd.Files.Where(x => x.Name.ToUpper().EndsWith(ext)).First().Bytes);
         FLVERAssetLink link = ScriptableObject.CreateInstance<FLVERAssetLink>();
         link.Type = FLVERAssetLink.ContainerType.Chrbnd;
         link.ArchivePath = chrpath;
-        link.FlverPath = chrbnd.Files.Where(x => x.Name.ToUpper().EndsWith(".FLVER")).First().Name;
+        link.FlverPath = chrbnd.Files.Where(x => x.Name.ToUpper().EndsWith(ext)).First().Name;
         FlverUtilities.ImportFlver(flver, link, type, $@"Assets/{gameFolder}/Chr/{chrid}", $@"Assets/{gameFolder}/Chr/{chrid}");
     }
 
@@ -474,6 +483,12 @@ public class DarkSoulsTools : EditorWindow
         if (chrFiles.Count() == 0)
         {
             chrFiles = Directory.GetFiles(chrpath, @"*.chrbnd")
+                    .Select(Path.GetFileNameWithoutExtension)
+                    .ToArray();
+        }
+        if (chrFiles.Count() == 0)
+        {
+            chrFiles = Directory.GetFiles(chrpath, @"*.bnd")
                     .Select(Path.GetFileNameWithoutExtension)
                     .ToArray();
         }
@@ -3165,19 +3180,45 @@ public class DarkSoulsTools : EditorWindow
         var alc = assetLink.GetComponent<MSBAssetLink>();
         var mapid = alc.MapID;
 
+        // Attempt to load the game regulation
+        EnemyParamUtils.LoadParams($@"{Interroot}\enc_regulation.bnd.dcx");
+
         // Attempt to load the params
         var basePath = $@"{Interroot}\Param\";
-        //var generatorParam = PARAM.Read(GetOverridenPath($@"{basePath}\generatorparam_{mapid}.param"));
+        var generatorParam = PARAM.Read(GetOverridenPath($@"{basePath}\generatorparam_{mapid}.param"));
         var locationParam = PARAM.Read(GetOverridenPath($@"{basePath}\generatorlocation_{mapid}.param"));
-        //var registParam = PARAM.Read(GetOverridenPath($@"{basePath}\generatorregistparam_{mapid}.param"));
+        var registParam = PARAM.Read(GetOverridenPath($@"{basePath}\generatorregistparam_{mapid}.param"));
 
         // Load the layouts and apply them
-        //var generatorLayout = PARAM.Layout.ReadXMLFile($@"{Application.dataPath.Replace('/', '\\')}\dstools\ParamLayouts\DS2SOTFS\{generatorParam.ID}.xml");
+        var generatorLayout = PARAM.Layout.ReadXMLFile($@"{Application.dataPath.Replace('/', '\\')}\dstools\ParamLayouts\DS2SOTFS\{generatorParam.ID}.xml");
         var locationLayout = PARAM.Layout.ReadXMLFile($@"{Application.dataPath.Replace('/', '\\')}\dstools\ParamLayouts\DS2SOTFS\{locationParam.ID}.xml");
-        //var registLayout = PARAM.Layout.ReadXMLFile($@"{Application.dataPath.Replace('/', '\\')}\dstools\ParamLayouts\DS2SOTFS\{registParam.ID}.xml");
-        //generatorParam.SetLayout(generatorLayout);
+        var registLayout = PARAM.Layout.ReadXMLFile($@"{Application.dataPath.Replace('/', '\\')}\dstools\ParamLayouts\DS2SOTFS\{registParam.ID}.xml");
+        generatorParam.SetLayout(generatorLayout);
         locationParam.SetLayout(locationLayout);
-        //registParam.SetLayout(registLayout);
+        registParam.SetLayout(registLayout);
+
+        // Create a folder for enemy registrations
+        var registroot = GameObject.Find("/EnemyRegistrations");
+        if (registroot == null)
+        {
+            registroot = new GameObject("EnemyRegistrations");
+        }
+
+        // Deserialize the registrations while making a mapping of chr ids
+        var registrationChrDict = new Dictionary<long, string>();
+        for (int row = 0; row < registParam.Rows.Count; row++)
+        {
+            var registRow = registParam.Rows[row];
+
+            var gen = new GameObject($@"{registRow.ID}");
+            gen.transform.parent = registroot.transform;
+
+            gen.AddComponent<EnemyGeneratorRegistParam>();
+            gen.GetComponent<EnemyGeneratorRegistParam>().SetFromGeneratorParam(registRow.ID, registRow);
+
+            var chrid = EnemyParamUtils.GetChrIDForEnemy((long)((uint)registRow["EnemyParam"].Value));
+            registrationChrDict.Add(registRow.ID, chrid);
+        }
 
         // Create a folder for Enemies
         var genroot = GameObject.Find("/EnemyGenerators");
@@ -3198,18 +3239,43 @@ public class DarkSoulsTools : EditorWindow
         }
 
         // Deserialize the generators. All the rows should be the same ids with the same orders
-        for (int row = 0; row < locationParam.Rows.Count; row++)
+        int locrow = 0;
+        for (int row = 0; row < generatorParam.Rows.Count; row++, locrow++)
         {
-            var locationRow = locationParam.Rows[row];
+            while (locationParam.Rows[locrow].ID != generatorParam.Rows[row].ID)
+            {
+                locrow++;
+            }
+            var locationRow = locationParam.Rows[locrow];
+            var generatorRow = generatorParam.Rows[row];
+            long regist = (long)((uint)generatorRow["GeneratorRegistParam"].Value);
 
-            var gen = new GameObject($@"{locationRow.ID}");
+            GameObject gen = null;
+            if (!registrationChrDict.ContainsKey(regist) || registrationChrDict[regist] == null)
+            {
+                gen = new GameObject($@"{locationRow.ID}");
+            }
+            else
+            {
+                var src = AssetDatabase.LoadAssetAtPath<GameObject>($@"Assets/DS2SOTFS/Chr/c{registrationChrDict[regist]}.prefab");
+                if (src != null)
+                {
+                    gen = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)src);
+                    gen.name = $@"{locationRow.ID}";
+                }
+                else
+                {
+                    gen = new GameObject($@"{locationRow.ID}");
+                }
+            }
+            gen.layer = 11;
             gen.transform.parent = genroot.transform;
             gen.transform.localPosition = new Vector3((float)locationRow["PosX"].Value,
                 (float)locationRow["PosY"].Value, (float)locationRow["PosZ"].Value);
             gen.transform.localRotation = Quaternion.Euler(0.0f, (float)locationRow["RotY"].Value, 0.0f);
 
             gen.AddComponent<EnemyGeneratorParam>();
-            gen.GetComponent<EnemyGeneratorParam>().SetFromGeneratorParam(locationRow.ID, null, null, locationRow);
+            gen.GetComponent<EnemyGeneratorParam>().SetFromGeneratorParam(locationRow.ID, generatorRow, locationRow);
         }
     }
 
@@ -4821,7 +4887,14 @@ public class DarkSoulsTools : EditorWindow
             {
                 try
                 {
-                    ImportChrs(Interroot + $@"\chr", type);
+                    if (type == GameType.DarkSoulsIISOTFS)
+                    {
+                        ImportChrs(Interroot + $@"\model\chr", type);
+                    }
+                    else
+                    {
+                        ImportChrs(Interroot + $@"\chr", type);
+                    }
                 }
                 catch (Exception e)
                 {
