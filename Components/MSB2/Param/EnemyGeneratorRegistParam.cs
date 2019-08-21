@@ -31,5 +31,11 @@ public class EnemyGeneratorRegistParam : MonoBehaviour
 
     public void Serialize(PARAM.Row regist, GameObject parent)
     {
+        regist["EnemyParam"].Value = EnemyParam;
+        regist["Unk04"].Value = Unk04;
+        regist["Unk08"].Value = Unk08;
+        regist["Unk0C"].Value = Unk0C;
+        regist["Unk0E"].Value = Unk0E;
+        regist["Unk0F"].Value = Unk0F;
     }
 }

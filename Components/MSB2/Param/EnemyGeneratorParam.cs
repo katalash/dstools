@@ -121,7 +121,58 @@ public class EnemyGeneratorParam : MonoBehaviour
     }
 
 
-    public void Serialize(PARAM.Row generator, PARAM.Row genLocation, GameObject parent)
+    public void Serialize(PARAM.Row generator, PARAM.Row location, GameObject parent)
     {
+        location["Unk0C"].Value = LocationUnk0C;
+        location["Unk14"].Value = LocationUnk14;
+        location["Unk18"].Value = LocationUnk18;
+        location["Unk1C"].Value = LocationUnk1C;
+
+        generator["Unk00"].Value = Unk00;
+        generator["Unk01"].Value = Unk01;
+        generator["Unk02"].Value = Unk02;
+        generator["Unk03"].Value = Unk03;
+        generator["Unk04"].Value = Unk04;
+        generator["GeneratorRegistParam"].Value = GeneratorRegistrationParam;
+        generator["Unk0C"].Value = Unk0C;
+        generator["Unk0D"].Value = Unk0D;
+        generator["Unk0E"].Value = Unk0E;
+        generator["Unk0F"].Value = Unk0F;
+        generator["Unk10"].Value = Unk10;
+        generator["Unk14"].Value = Unk14;
+        generator["Unk18"].Value = Unk18;
+        generator["Unk1C"].Value = Unk1C;
+        generator["Unk20"].Value = Unk10;
+        generator["Unk24"].Value = Unk14;
+        generator["Unk28"].Value = Unk18;
+        generator["Unk2C"].Value = Unk1C;
+        generator["Unk30"].Value = Unk10;
+        generator["Unk34"].Value = Unk14;
+        generator["Unk38"].Value = Unk18;
+        generator["Unk3C"].Value = Unk1C;
+        generator["Unk40"].Value = Unk10;
+        generator["Unk44"].Value = Unk14;
+        generator["Unk48"].Value = Unk18;
+        generator["Unk4C"].Value = Unk1C;
+        generator["Unk50"].Value = Unk10;
+        generator["Unk54"].Value = Unk14;
+        generator["Unk58"].Value = Unk18;
+        generator["Unk5C"].Value = Unk1C;
+        generator["Unk60"].Value = Unk10;
+        generator["Unk64"].Value = Unk14;
+        generator["Unk68"].Value = Unk18;
+        generator["Unk6C"].Value = Unk1C;
+        generator["Unk70"].Value = Unk10;
+        generator["Unk74"].Value = Unk14;
+        generator["Unk78"].Value = Unk18;
+        generator["Unk7C"].Value = Unk1C;
+        generator["Unk80"].Value = Unk10;
+        generator["Unk84"].Value = Unk14;
+        generator["Unk88"].Value = Unk18;
+        generator["Unk8C"].Value = Unk1C;
+        generator["Unk90"].Value = Unk10;
+        generator["Unk94"].Value = Unk14;
+        generator["Unk98"].Value = Unk18;
+        generator["Unk9C"].Value = Unk1C;
     }
 }

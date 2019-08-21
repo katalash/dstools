@@ -12,11 +12,23 @@ class FMGUtils
     private static DarkSoulsTools.GameType GameType = DarkSoulsTools.GameType.Undefined;
     private static string FMGBndPath = "";
     private static FMG ItemFMG = null;
+    private static bool Failwarn = false;
 
     public static void ReloadFmgs()
     {
-        BND4 fmgBnd = BND4.Read(FMGBndPath);
-        ItemFMG = FMG.Read(fmgBnd.Files.Find(x => Path.GetFileName(x.Name) == "アイテム名.fmg").Bytes);
+        try
+        {
+            BND4 fmgBnd = BND4.Read(FMGBndPath);
+            ItemFMG = FMG.Read(fmgBnd.Files.Find(x => Path.GetFileName(x.Name) == "アイテム名.fmg").Bytes);
+        }
+        catch (Exception e)
+        {
+            if (!Failwarn)
+            {
+                Debug.Log("Failed to load item fmg file. Item names will not be shown.");
+                Failwarn = true;
+            }
+        }
     }
 
     public static void LoadFmgs(DarkSoulsTools.GameType gameType, string fmgPath)
