@@ -1,5 +1,7 @@
 # Welcome to DSTools
 DSTools is a Unity Editor plugin that aims to create an integrated modding solution for Dark Souls 1 (currently only Prepare to Die Edition is supported), Dark Souls 3, Bloodborne, and Sekiro. Currently the tools support editing existing maps for the games and allow you to move enemies and objects around, but aims to eventually allow the creation of completely new levels.
+
+**NOTICE: DSTools is effectively abandoned and no future updates are planned. DSTools is also left in a buggy state where various issues exist for various games. I'm leaving this up, but I don't plan to support issues with DSTools in the future. I am currently working on the successor to DSTools (currently called DS Map Studio) which is a standalone modding toolkit that aims to solve many of the issues of DSTools (and Unity).**
 ## Features
 * Import object, character, and map assets from Dark Souls 1, Dark Souls 3, Bloodborne, or Sekiro into Unity.
 * Import an entire map including object and enemy placement into a Unity scene.
